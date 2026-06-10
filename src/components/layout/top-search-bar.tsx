@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import {
   Menu,
   Search,
@@ -7,9 +8,38 @@ import {
   CircleHelp,
   Settings,
   Grid3X3,
+  LogOut,
+  User as UserIcon,
 } from "lucide-react";
+import { authClient } from "~/server/better-auth/client";
+import { useRouter } from "next/navigation";
 
 export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
+  const { data: session } = authClient.useSession();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+        },
+      },
+    });
+  };
+
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between px-6 w-full bg-white/80 backdrop-blur-md h-16 border-b shrink-0">
       {/* Left Section */}
@@ -64,12 +94,50 @@ export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: ()
         </button>
 
         {/* User Avatar */}
-        <div className="w-9 h-9 rounded-full overflow-hidden ml-2 cursor-pointer border">
-          <img
-            src="https://ui-avatars.com/api/?name=Aryan&background=2563eb&color=fff"
-            alt="User Avatar"
-            className="w-full h-full object-cover"
-          />
+        <div className="relative ml-2" ref={dropdownRef}>
+          <div 
+            className="w-9 h-9 rounded-full overflow-hidden cursor-pointer border border-gray-200 hover:ring-2 hover:ring-blue-100 transition-all flex items-center justify-center bg-blue-50 text-blue-600 font-semibold shadow-sm"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            {session?.user?.image ? (
+              <img
+                src={session.user.image}
+                alt={session?.user?.name || "User Avatar"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span>{session?.user?.name?.charAt(0)?.toUpperCase() || "U"}</span>
+            )}
+          </div>
+
+          {/* Dropdown Menu */}
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="px-4 py-3 border-b border-gray-50 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center shrink-0 border border-gray-200 text-blue-600 font-semibold">
+                  {session?.user?.image ? (
+                    <img src={session.user.image} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{session?.user?.name?.charAt(0)?.toUpperCase() || <UserIcon size={20} />}</span>
+                  )}
+                </div>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="font-semibold text-gray-900 text-sm truncate">{session?.user?.name || "Guest User"}</span>
+                  <span className="text-xs text-gray-500 truncate">{session?.user?.email || "Not signed in"}</span>
+                </div>
+              </div>
+              
+              <div className="p-2">
+                <button 
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <LogOut size={16} />
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

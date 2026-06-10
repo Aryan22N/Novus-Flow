@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import { authClient } from "~/server/better-auth/client";
 // Imported high-quality Lucide Icons
 import {
   Sparkles,
@@ -240,8 +241,8 @@ void main() {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <Link className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-primary transition-colors duration-200" href="/sign-in">Log in</Link>
-            <Link className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all shadow-sm" href="/inbox">Get Started</Link>
+            <button onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/inbox" })} className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer">Log in</button>
+            <button onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/inbox" })} className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all shadow-sm cursor-pointer">Get Started</button>
           </div>
         </div>
       </nav>
@@ -273,13 +274,13 @@ void main() {
             className="flex flex-col sm:flex-row items-center gap-4 opacity-0 animate-fade-in-up"
             style={{ animationDelay: '0.4s' }}
           >
-            <Link
-              className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 w-full sm:w-auto text-center flex items-center justify-center gap-2"
-              href="/inbox"
+            <button
+              onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/inbox" })}
+              className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 w-full sm:w-auto text-center flex items-center justify-center gap-2 cursor-pointer"
             >
               Get Started for Free
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </button>
             <Link
               className="bg-white text-on-surface border border-outline-variant px-6 py-3 rounded-lg font-medium hover:bg-slate-50 transition-colors w-full sm:w-auto text-center flex items-center justify-center gap-2"
               href="#"

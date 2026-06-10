@@ -15,7 +15,7 @@ export const posts = createTable(
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
     name: d.varchar({ length: 256 }),
-    createdById: d
+    workspaceId: d
       .varchar({ length: 255 })
       .notNull()
       .references(() => user.id),
@@ -26,7 +26,7 @@ export const posts = createTable(
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
   (t) => [
-    index("created_by_idx").on(t.createdById),
+    index("workspace_id_idx").on(t.workspaceId),
     index("name_idx").on(t.name),
   ],
 );
