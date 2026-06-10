@@ -241,8 +241,8 @@ void main() {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <button onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/inbox" })} className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer">Log in</button>
-            <button onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/inbox" })} className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all shadow-sm cursor-pointer">Get Started</button>
+            <button onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/onboarding" })} className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer">Log in</button>
+            <button onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/onboarding" })} className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all shadow-sm cursor-pointer">Get Started</button>
           </div>
         </div>
       </nav>
@@ -271,11 +271,11 @@ void main() {
             Experience the world's first AI-native email and calendar workspace. Built for speed, precision, and focus.
           </p>
           <div
-            className="flex flex-col sm:flex-row items-center gap-4 opacity-0 animate-fade-in-up"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center opacity-0 animate-slideUp"
             style={{ animationDelay: '0.4s' }}
           >
             <button
-              onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/inbox" })}
+              onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/onboarding" })}
               className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 w-full sm:w-auto text-center flex items-center justify-center gap-2 cursor-pointer"
             >
               Get Started for Free
