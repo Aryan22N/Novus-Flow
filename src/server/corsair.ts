@@ -14,7 +14,7 @@ export const corsair = createCorsair({
             credentials: {
                 clientId: process.env.GOOGLE_CLIENT_ID!,
                 clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-            }
+            },
         }),
         googlecalendar({
             authType: "oauth_2",
@@ -31,4 +31,4 @@ export const corsair = createCorsair({
         baseUrl: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
         redirectUri: "http://localhost:3000/api/corsair/callback"
     }
-});
+});

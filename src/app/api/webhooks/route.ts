@@ -1,6 +1,7 @@
 import { processWebhook } from "corsair";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { corsair } from "../../../server/corsair";
 
@@ -24,14 +25,15 @@ export async function POST(request: NextRequest) {
             body = text && text.trim() ? text : {};
         }
 
-        // Replace with your tenant resolution logic
-        const tenantId = "aryan";
+        // Resolve tenantId from query params, fallback to undefined so Corsair handles it if possible
+        const { searchParams } = new URL(request.url);
+        const tenantId = searchParams.get("tenantId") || searchParams.get("accountId") || undefined;
 
         const result = await processWebhook(
             corsair,
             headers,
             body,
-            { tenantId }
+            tenantId ? { tenantId } : {}
         );
 
         console.info(
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
         }
 
         // No matching webhook
-        if (!result.response) {
+        if (!result.plugin) {
             return NextResponse.json(
                 {
                     success: false,
@@ -62,7 +64,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        return NextResponse.json(result.response, {
+        // Revalidate the inbox so the Next.js cache is dropped
+        // and the frontend picks up new messages immediately
+        if (result.plugin === "gmail") {
+            revalidatePath("/inbox");
+        }
+
+        return NextResponse.json(result.response || { success: true }, {
             status: 200,
             headers: nextHeaders,
         });

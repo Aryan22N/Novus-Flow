@@ -33,7 +33,7 @@ export default function EmailRow({
 
   return (
     <div className={containerClasses}>
-      <div className="flex items-center gap-3 w-1/4 min-w-[200px]">
+      <div className="flex items-center  gap-3 w-1/4 min-w-[200px]">
         {avatarSrc ? (
           <img alt={`${title} Avatar`} className="w-8 h-8 rounded-full" src={avatarSrc} />
         ) : (
@@ -62,7 +62,7 @@ export default function EmailRow({
         <span className={`px-2 py-0.5 rounded-full text-label-caps ${tagClass}`}>
           {tagLabel}
         </span>
-        <span className={`text-body-sm whitespace-nowrap ${isAi ? "font-semibold text-on-surface" : "text-on-surface-variant"}`}>
+        <span className={`text-body-sm whitespace-nowrap ${isAi ? "font-bold text-on-surface" : "text-on-surface-variant"}`}>
           {time}
         </span>
       </div>

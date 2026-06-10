@@ -11,6 +11,8 @@ import AiPanel from "~/components/ai/ai-panel";
 
 export default function InboxPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   return (
     <div className="bg-background text-on-background flex flex-col h-screen overflow-hidden">
@@ -18,10 +20,10 @@ export default function InboxPage() {
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar isOpen={isSidebarOpen} />
         <main className="flex-1 overflow-hidden p-6 bg-surface transition-all flex flex-col">
-          <InboxHeader />
+          <InboxHeader page={page} onPageChange={setPage} total={total} />
           <div className="flex gap-6 flex-1 min-h-0">
-            <EmailList />
-            <div className="flex-1 flex flex-col gap-6">
+            <EmailList page={page} onTotalChange={setTotal} />
+            <div className="flex-[0.4] flex flex-col gap-6">
               <UpcomingMeetings />
               <AiRecommendations />
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Brain,
   ChevronRight,
@@ -13,12 +13,23 @@ import {
   ArrowUp,
 } from "lucide-react";
 
-export default function AiPanel() {
-  const [isExpanded, setIsExpanded] = useState(true);
+interface AiPanelProps {
+  defaultOpen?: boolean;
+  threadId?: string;
+}
+
+export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultOpen);
+
+  useEffect(() => {
+    if (threadId) {
+      setIsExpanded(true);
+    }
+  }, [threadId]);
 
   if (!isExpanded) {
     return (
-      <aside className="w-12 bg-surface-container-lowest border-l border-outline-variant flex flex-col shrink-0 h-full transition-all duration-200 overflow-hidden">
+      <aside className="w-12 bg-[#f7f9fc] border-l border-outline-variant flex flex-col shrink-0 h-full transition-all duration-200 overflow-hidden">
         <div className="flex flex-col items-center py-4 gap-4 h-full">
           <button
             className="p-2 rounded-full hover:bg-surface-container-high text-primary"
@@ -63,7 +74,7 @@ export default function AiPanel() {
         {/* User Message */}
         <div className="flex justify-end">
           <div className="bg-surface-container-high text-on-surface px-4 py-2 rounded-2xl rounded-tr-sm max-w-[85%] text-body-md border border-outline-variant/30">
-            Summarize today's important emails.
+            {threadId ? `Analyze email thread: ${threadId}` : "Summarize today's important emails."}
           </div>
         </div>
 

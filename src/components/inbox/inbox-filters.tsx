@@ -1,21 +1,38 @@
-import { RefreshCw, MoreVertical } from "lucide-react";
+import {
+  Inbox,
+  Tag,
+  Calendar,
+  Users,
+  Bell,
+} from "lucide-react";
 
 export default function InboxFilters() {
   return (
     <div className="flex items-center justify-between">
-      <div className="flex gap-2">
-        <button className="px-4 py-1.5 rounded-full text-body-sm font-semibold bg-secondary-container text-on-secondary-container">All</button>
-        <button className="px-4 py-1.5 rounded-full text-body-sm font-medium bg-transparent hover:bg-surface-container-high text-on-surface-variant transition-colors">Action Required</button>
-        <button className="px-4 py-1.5 rounded-full text-body-sm font-medium bg-transparent hover:bg-surface-container-high text-on-surface-variant transition-colors">Meetings</button>
-        <button className="px-4 py-1.5 rounded-full text-body-sm font-medium bg-transparent hover:bg-surface-container-high text-on-surface-variant transition-colors">Waiting</button>
-      </div>
-      <div className="flex items-center gap-2">
-        <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500 transition-colors">
-          <RefreshCw size={18} />
+      <div className="flex gap-4">
+        <button className="flex items-center gap-2 px-4 py-1.5 text-[16px] font-medium hover:bg-surface-container-high text-[#2656C9] border-b-3 border-[#2656C9] transition-colors">
+          <Inbox size={18} />
+          Primary
         </button>
 
-        <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500 transition-colors">
-          <MoreVertical size={18} />
+        <button className="flex items-center gap-2 px-4 py-1.5 text-[16px] font-medium hover:bg-surface-container-high text-on-surface-variant transition-colors">
+          <Tag size={18} />
+          Promotions
+        </button>
+
+        <button className="flex items-center gap-2 px-4 py-1.5 text-[16px] font-medium hover:bg-surface-container-high text-on-surface-variant transition-colors">
+          <Calendar size={18} />
+          Meetings
+        </button>
+
+        <button className="flex items-center gap-2 px-4 py-1.5 text-[16px] font-medium hover:bg-surface-container-high text-on-surface-variant transition-colors">
+          <Users size={18} />
+          Socials
+        </button>
+
+        <button className="flex items-center gap-2 px-4 py-1.5 text-[16px] font-medium hover:bg-surface-container-high text-on-surface-variant transition-colors">
+          <Bell size={18} />
+          Updates
         </button>
       </div>
     </div>

@@ -41,10 +41,10 @@ export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: ()
   };
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-6 w-full bg-white/80 backdrop-blur-md h-16 border-b shrink-0">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-6 w-full bg-[#f7f9fc] backdrop-blur-md h-16 shrink-0">
       {/* Left Section */}
       <div className="flex items-center gap-4 w-1/4">
-        <button 
+        <button
           className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           onClick={onToggleSidebar}
         >
@@ -58,10 +58,10 @@ export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: ()
 
       {/* Search Section */}
       <div className="flex-1 max-w-2xl px-4">
-        <div className="relative flex items-center w-full h-12 rounded-full bg-gray-100 border border-transparent focus-within:bg-white focus-within:border-blue-200 focus-within:shadow-sm transition-all">
+        <div className="relative  flex items-center w-full h-12 rounded-full bg-gray-100 border border-transparent focus-within:bg-white focus-within:border-blue-200 focus-within:shadow-sm transition-all">
           <Search
             size={18}
-            className="absolute left-4 text-gray-500"
+            className="absolute bg-[#EAEEF5] left-4 text-gray-500"
           />
 
           <input
@@ -95,7 +95,7 @@ export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: ()
 
         {/* User Avatar */}
         <div className="relative ml-2" ref={dropdownRef}>
-          <div 
+          <div
             className="w-9 h-9 rounded-full overflow-hidden cursor-pointer border border-gray-200 hover:ring-2 hover:ring-blue-100 transition-all flex items-center justify-center bg-blue-50 text-blue-600 font-semibold shadow-sm"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
@@ -126,9 +126,9 @@ export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: ()
                   <span className="text-xs text-gray-500 truncate">{session?.user?.email || "Not signed in"}</span>
                 </div>
               </div>
-              
+
               <div className="p-2">
-                <button 
+                <button
                   onClick={handleSignOut}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                 >

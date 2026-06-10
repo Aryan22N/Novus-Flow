@@ -3,10 +3,24 @@
 import { authClient } from "~/server/better-auth/client";
 import { useRouter } from "next/navigation";
 import { Mail, Calendar, ArrowRight } from "lucide-react";
+import { api } from "~/trpc/react";
+import { useEffect } from "react";
 
 export default function OnboardingPage() {
-    const { data: session, isPending } = authClient.useSession();
+    const { data: session, isPending: isSessionPending } = authClient.useSession();
     const router = useRouter();
+    const { data: hasConnectedAccounts, isPending: isCheckingAccounts } = api.account.hasConnectedAccounts.useQuery(
+        undefined,
+        { enabled: !!session?.user }
+    );
+
+    useEffect(() => {
+        if (hasConnectedAccounts) {
+            router.push("/inbox");
+        }
+    }, [hasConnectedAccounts, router]);
+
+    const isPending = isSessionPending || isCheckingAccounts || hasConnectedAccounts;
 
     if (isPending) {
         return (
@@ -37,7 +51,7 @@ export default function OnboardingPage() {
                         )}
                     </div>
                     <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome, {session.user.name?.split(' ')[0]}!</h1>
-                    <p className="text-slate-500">Let's set up your workspace by connecting your essential accounts.</p>
+                    <p className="text-slate-500">Let&apos;s set up your workspace by connecting your essential accounts.</p>
                 </div>
 
                 <div className="space-y-4">

@@ -19,13 +19,13 @@ export async function GET(req: NextRequest) {
 
     const tenantId = session.user.id;
     const redirectUri = "http://localhost:3000/api/corsair/callback";
-    
+
     try {
         const { url } = await generateOAuthUrl(corsair, plugin, {
             tenantId,
             redirectUri,
         });
-        
+
         return NextResponse.redirect(url);
     } catch (error) {
         console.error("Error generating connect link:", error);
