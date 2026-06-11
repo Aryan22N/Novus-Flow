@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
+import { sentMail } from "~/server/db/schema";
 import { corsair } from "~/server/corsair";
 import { randomUUID } from "crypto";
 
@@ -418,4 +419,74 @@ export const emailRouter = createTRPCRouter({
 
     return { synced, total: messageIds.length };
   }),
+
+  sendEmail: protectedProcedure
+    .input(
+      z.object({
+        to: z.string().min(1, "Recipient is required"),
+        cc: z.string().optional(),
+        bcc: z.string().optional(),
+        subject: z.string().min(1, "Subject is required"),
+        body: z.string(),
+        isHtml: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const client = corsair.withTenant(tenantId);
+
+      // Build RFC 2822 email message
+      const contentType = input.isHtml ? "text/html" : "text/plain";
+      const lines: string[] = [
+        `To: ${input.to}`,
+        ...(input.cc ? [`Cc: ${input.cc}`] : []),
+        ...(input.bcc ? [`Bcc: ${input.bcc}`] : []),
+        `Subject: ${input.subject}`,
+        `Content-Type: ${contentType}; charset=UTF-8`,
+        `MIME-Version: 1.0`,
+        ``,
+        input.body,
+      ];
+      const raw = lines.join("\r\n");
+
+      // Base64url encode (required by Gmail API)
+      const encoded = Buffer.from(raw)
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+      // Send via Corsair Gmail client
+      const result = await client.gmail.api.messages.send({
+        raw: encoded,
+      }) as { id?: string } | null;
+
+      if (result?.id) {
+        await ctx.db.insert(sentMail).values({
+          id: randomUUID(),
+          tenantId,
+          to: input.to,
+          cc: input.cc ?? null,
+          bcc: input.bcc ?? null,
+          subject: input.subject,
+          body: input.body,
+          messageId: result.id,
+        });
+      }
+
+      return { messageId: result?.id ?? null };
+    }),
+
+  getSentEmails: protectedProcedure
+    .query(async ({ ctx }) => {
+      const tenantId = ctx.session.user.id;
+      
+      const emails = await ctx.db
+        .select()
+        .from(sentMail)
+        .where(eq(sentMail.tenantId, tenantId))
+        .orderBy(desc(sentMail.createdAt));
+        
+      return emails;
+    }),
 });

@@ -61,7 +61,7 @@ export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: ()
         <div className="relative  flex items-center w-full h-12 rounded-full bg-gray-100 border border-transparent focus-within:bg-white focus-within:border-blue-200 focus-within:shadow-sm transition-all">
           <Search
             size={18}
-            className="absolute bg-[#EAEEF5] left-4 text-gray-500"
+            className="absolute  left-4 text-gray-500"
           />
 
           <input

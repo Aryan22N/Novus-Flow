@@ -104,4 +104,18 @@ export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, { fields: [session.userId], references: [user.id] }),
 }));
 
+export const sentMail = pgTable("sent_mail", {
+  id: text("id").primaryKey(),
+  tenantId: text("tenant_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  to: text("to").notNull(),
+  cc: text("cc"),
+  bcc: text("bcc"),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  messageId: text("message_id"),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
+});
+
 export * from "./corsair-schema";

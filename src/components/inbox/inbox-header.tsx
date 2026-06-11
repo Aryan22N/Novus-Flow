@@ -43,7 +43,7 @@ export default function InboxHeader({
   const isLast = page >= pageCount || total === 0;
 
   return (
-    <div className="mb-4 flex shrink-0 flex-col gap-4">
+    <div className="mb-4 rounded-lg bg-[#ffffff]  flex shrink-0 flex-col gap-4">
       <div className="flex items-center justify-between">
         {/* Left Actions */}
         <div className="flex items-center gap-2">
