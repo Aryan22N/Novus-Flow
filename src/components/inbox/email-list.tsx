@@ -13,10 +13,7 @@ interface EmailListProps {
 }
 
 export default function EmailList({ page, onTotalChange }: EmailListProps) {
-  const { data, isPending } = api.email.getInboxThreads.useQuery(
-    { page },
-    { refetchInterval: 60_000 } // re-check DB every 60 s
-  );
+  const { data, isPending } = api.email.getInboxThreads.useQuery({ page });
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   // Surface total count to parent for the pagination label in InboxHeader
@@ -37,12 +34,26 @@ export default function EmailList({ page, onTotalChange }: EmailListProps) {
     }
   }, []);
 
-  const markRead = (id: string) => {
+  const utils = api.useUtils();
+  const markReadMutation = api.email.markThreadAsRead.useMutation({
+    onSuccess: () => {
+      void utils.email.getUnreadCount.invalidate();
+      void utils.email.getInboxThreads.invalidate();
+    },
+  });
+
+  const handleEmailClick = (threadId: string, isUnread: boolean) => {
+    // Persist read state to localStorage immediately
     setReadIds((prev) => {
-      const next = new Set(prev).add(id);
+      const next = new Set(prev).add(threadId);
       localStorage.setItem("readEmails", JSON.stringify(Array.from(next)));
       return next;
     });
+
+    // Fire DB + Gmail mutation only if it was unread
+    if (isUnread) {
+      markReadMutation.mutate({ threadId });
+    }
   };
 
   const emails = data?.emails;
@@ -60,18 +71,19 @@ export default function EmailList({ page, onTotalChange }: EmailListProps) {
       ) : (
         emails?.map((email) => {
           const threadId = email.threadId || email.id;
+          const isUnread = email.unread && !readIds.has(threadId);
           return (
             <Link
-              href={`/inbox/${threadId}`}
               key={email.id}
-              onClick={() => markRead(threadId)}
+              href={`/inbox/${threadId}`}
+              onClick={() => handleEmailClick(threadId, !!isUnread)}
             >
               <InboxRow
                 sender={email.sender}
                 subject={email.subject}
                 snippet={email.snippet}
                 date={isToday(email.date) ? format(email.date, "h:mm a").toLowerCase() : format(email.date, "MMM d")}
-                unread={email.unread && !readIds.has(threadId)}
+                unread={!!isUnread}
               />
             </Link>
           );

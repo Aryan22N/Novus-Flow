@@ -2,8 +2,124 @@ import { processWebhook } from "corsair";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { eq, and } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 import { corsair } from "../../../server/corsair";
+import { db } from "../../../server/db";
+import { corsairEntities, corsairAccounts } from "../../../server/db/corsair-schema";
+import { user as userTable } from "../../../server/db/schema";
+
+/**
+ * Syncs a single Gmail message (received via Pub/Sub push) into the DB.
+ * Handles messageReceived, messageLabelChanged (upsert) and messageDeleted (delete).
+ *
+ * Account lookup:
+ *   Google Pub/Sub sends `emailAddress` (the Gmail address of the user).
+ *   The config in corsairAccounts is fully encrypted, so we can't search it.
+ *   Instead we resolve:  user.email == emailAddress  →  user.id == corsairAccounts.tenantId
+ *   This works because users sign in with Google OAuth, so their user.email IS their Gmail.
+ */
+async function syncGmailEvent(event: {
+    type: "messageReceived" | "messageDeleted" | "messageLabelChanged";
+    emailAddress: string;
+    historyId: string;
+    message: Record<string, unknown>;
+    labelsAdded?: string[];
+    labelsRemoved?: string[];
+}) {
+    const msgId = event.message.id as string | undefined;
+    if (!msgId) {
+        console.warn("[gmail/pubsub] event has no message.id, skipping");
+        return;
+    }
+
+    // 1. Find the user whose email matches the Gmail address in the push event
+    const userRow = await db
+        .select({ id: userTable.id })
+        .from(userTable)
+        .where(eq(userTable.email, event.emailAddress))
+        .limit(1);
+
+    const tenantId = userRow[0]?.id;
+    if (!tenantId) {
+        console.warn(`[gmail/pubsub] No user found for emailAddress=${event.emailAddress}`);
+        return;
+    }
+
+    // 2. Find the corsair account for this tenant
+    const accountRow = await db
+        .select({ id: corsairAccounts.id })
+        .from(corsairAccounts)
+        .where(eq(corsairAccounts.tenantId, tenantId))
+        .limit(1);
+
+    if (!accountRow[0]) {
+        console.warn(`[gmail/pubsub] No corsair account found for tenantId=${tenantId}`);
+        return;
+    }
+
+    const accountId = accountRow[0].id;
+
+    if (event.type === "messageDeleted") {
+        // Remove the message from our local store
+        await db
+            .delete(corsairEntities)
+            .where(
+                and(
+                    eq(corsairEntities.accountId, accountId),
+                    eq(corsairEntities.entityId, msgId),
+                    eq(corsairEntities.entityType, "messages")
+                )
+            );
+        console.info(`[gmail/pubsub] Deleted message ${msgId} from DB`);
+        return;
+    }
+
+    // messageReceived or messageLabelChanged — upsert the full message
+    const fullMsg = event.message;
+    const version = event.historyId ?? String((fullMsg.historyId as string | undefined) ?? "1");
+
+    const existing = await db
+        .select({ id: corsairEntities.id })
+        .from(corsairEntities)
+        .where(
+            and(
+                eq(corsairEntities.accountId, accountId),
+                eq(corsairEntities.entityId, msgId),
+                eq(corsairEntities.entityType, "messages")
+            )
+        )
+        .limit(1);
+
+    if (existing.length > 0) {
+        await db
+            .update(corsairEntities)
+            .set({
+                data: fullMsg,
+                updatedAt: new Date(),
+                version,
+            })
+            .where(
+                and(
+                    eq(corsairEntities.accountId, accountId),
+                    eq(corsairEntities.entityId, msgId),
+                    eq(corsairEntities.entityType, "messages")
+                )
+            );
+        console.info(`[gmail/pubsub] Updated message ${msgId} (${event.type})`);
+    } else {
+        await db.insert(corsairEntities).values({
+            id: randomUUID(),
+            accountId,
+            entityId: msgId,
+            entityType: "messages",
+            version,
+            data: fullMsg,
+        });
+        console.info(`[gmail/pubsub] Inserted new message ${msgId} (${event.type})`);
+    }
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -19,7 +135,7 @@ export async function POST(request: NextRequest) {
         let body: string | Record<string, unknown>;
 
         if (contentType?.includes("application/json")) {
-            body = await request.json();
+            body = await request.json() as Record<string, unknown>;
         } else {
             const text = await request.text();
             body = text && text.trim() ? text : {};
@@ -64,9 +180,25 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Revalidate the inbox so the Next.js cache is dropped
-        // and the frontend picks up new messages immediately
-        if (result.plugin === "gmail") {
+        // Gmail Pub/Sub push: sync the message into the DB and revalidate the inbox
+        if (result.plugin === "gmail" && result.action === "messageChanged") {
+            const event = result.body as {
+                type: "messageReceived" | "messageDeleted" | "messageLabelChanged";
+                emailAddress: string;
+                historyId: string;
+                message: Record<string, unknown>;
+                labelsAdded?: string[];
+                labelsRemoved?: string[];
+            } | null;
+
+            if (event?.type && event.message) {
+                // Fire-and-forget — we don't want a DB error to break the 200 ack to Google
+                syncGmailEvent(event).catch((err) =>
+                    console.error("[gmail/pubsub] syncGmailEvent failed:", err)
+                );
+            }
+
+            // Always revalidate the inbox so the Next.js cache is dropped
             revalidatePath("/inbox");
         }
 
@@ -93,4 +225,4 @@ export async function GET() {
         message: "Webhook endpoint is active",
         timestamp: new Date().toISOString(),
     });
-}
+}

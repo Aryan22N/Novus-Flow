@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { formatDistanceToNow } from "date-fns";
 import TopSearchBar from "~/components/layout/top-search-bar";
@@ -34,6 +34,19 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
 
   const { data: thread, isPending } = api.email.getThread.useQuery({ threadId: params.threadId });
+  const utils = api.useUtils();
+  const markReadMutation = api.email.markThreadAsRead.useMutation({
+    onSuccess: () => {
+      void utils.email.getUnreadCount.invalidate();
+      void utils.email.getInboxThreads.invalidate();
+    },
+  });
+
+  useEffect(() => {
+    if (thread && thread.messages.some(m => m.unread)) {
+      markReadMutation.mutate({ threadId: params.threadId });
+    }
+  }, [thread, params.threadId]);
 
   return (
     <div className="bg-white text-[#202124] flex flex-col h-screen overflow-hidden antialiased select-none">

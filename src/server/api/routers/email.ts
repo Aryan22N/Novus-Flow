@@ -164,6 +164,90 @@ export const emailRouter = createTRPCRouter({
       };
     }),
 
+  getUnreadCount: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.session.user.id;
+    const messages = await ctx.db
+      .select({ entity: corsairEntities })
+      .from(corsairEntities)
+      .innerJoin(
+        corsairAccounts,
+        and(
+          eq(corsairEntities.accountId, corsairAccounts.id),
+          eq(corsairAccounts.tenantId, tenantId)
+        )
+      )
+      .where(eq(corsairEntities.entityType, "messages"));
+
+    const seen = new Set<string>();
+    const unreadCount = messages
+      .filter(({ entity: message }) => {
+        if (seen.has(message.entityId)) return false;
+        seen.add(message.entityId);
+        const data = message.data as any;
+        return data?.labelIds?.includes("UNREAD");
+      }).length;
+
+    return { count: unreadCount };
+  }),
+
+  markThreadAsRead: protectedProcedure
+    .input(z.object({ threadId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const client = corsair.withTenant(tenantId);
+
+      // Get all message entities belonging to this thread and tenant
+      const messages = await ctx.db
+        .select({ entity: corsairEntities })
+        .from(corsairEntities)
+        .innerJoin(
+          corsairAccounts,
+          and(
+            eq(corsairEntities.accountId, corsairAccounts.id),
+            eq(corsairAccounts.tenantId, tenantId)
+          )
+        )
+        .where(
+          sql`${corsairEntities.entityType} = 'messages' AND ${corsairEntities.data}->>'threadId' = ${input.threadId}`
+        );
+
+      // Modify the thread labels in Gmail (batch remove UNREAD label)
+      const messageIds = messages
+        .map(({ entity: msg }) => msg.entityId)
+        .filter(Boolean);
+
+      if (messageIds.length > 0) {
+        try {
+          await client.gmail.api.messages.batchModify({
+            ids: messageIds,
+            removeLabelIds: ["UNREAD"],
+          });
+        } catch (err) {
+          console.error(`Failed to remove UNREAD label from messages in Gmail:`, err);
+        }
+      }
+
+      // Update local DB cache so that getUnreadCount reflects this immediately
+      for (const { entity: msg } of messages) {
+        const data = msg.data as any;
+        if (data?.labelIds?.includes("UNREAD")) {
+          const updatedLabelIds = (data.labelIds as string[]).filter((label) => label !== "UNREAD");
+          await ctx.db
+            .update(corsairEntities)
+            .set({
+              data: {
+                ...data,
+                labelIds: updatedLabelIds,
+              },
+              updatedAt: new Date(),
+            })
+            .where(eq(corsairEntities.id, msg.id));
+        }
+      }
+
+      return { success: true };
+    }),
+
   getThread: protectedProcedure
     .input(z.object({ threadId: z.string() }))
     .query(async ({ ctx, input }) => {
