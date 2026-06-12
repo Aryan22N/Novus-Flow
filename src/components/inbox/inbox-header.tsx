@@ -16,6 +16,8 @@ interface InboxHeaderProps {
   onPageChange: (page: number) => void;
   total?: number;
   pageSize?: number;
+  category: string;
+  onCategoryChange: (category: string) => void;
 }
 
 export default function InboxHeader({
@@ -23,6 +25,8 @@ export default function InboxHeader({
   onPageChange,
   total = 0,
   pageSize = 50,
+  category,
+  onCategoryChange,
 }: InboxHeaderProps) {
   const utils = api.useUtils();
 
@@ -43,7 +47,7 @@ export default function InboxHeader({
   const isLast = page >= pageCount || total === 0;
 
   return (
-    <div className="mb-4 rounded-lg bg-[#ffffff]  flex shrink-0 flex-col gap-4">
+    <div className="mb-4 p-3 rounded-lg bg-[#ffffff]  flex shrink-0 flex-col gap-4">
       <div className="flex items-center justify-between">
         {/* Left Actions */}
         <div className="flex items-center gap-2">
@@ -94,7 +98,7 @@ export default function InboxHeader({
         </div>
       </div>
 
-      <InboxFilters />
+      <InboxFilters category={category} onCategoryChange={onCategoryChange} />
     </div>
   );
 }

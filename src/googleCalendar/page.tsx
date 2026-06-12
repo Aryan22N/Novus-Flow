@@ -1,7 +1,12 @@
+"use client";
+
 import Link from 'next/link';
-import React from 'react';
+import React, { useState } from 'react';
+import AppSidebar from '~/components/layout/app-sidebar';
 
 export default function googlecalendar() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
     return (
         <>
             <style>{`
@@ -76,7 +81,11 @@ export default function googlecalendar() {
                     data-purpose="top-navigation"
                 >
                     <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-google-hover rounded-full" title="Main menu">
+                        <button 
+                            className="p-2 hover:bg-google-hover rounded-full" 
+                            title="Main menu"
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        >
                             <svg className="w-6 h-6 text-google-text" focusable="false" viewBox="0 0 24 24">
                                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
                             </svg>
@@ -157,8 +166,86 @@ export default function googlecalendar() {
                 </header>
 
                 <main className="main-content">
-                    {/* Left Sidebar */}
-                    <aside className="w-64 border-r border-google-border flex-shrink-0 p-4 flex flex-col gap-6" data-purpose="sidebar-navigation">
+                    <AppSidebar isOpen={isSidebarOpen} />
+
+
+                    {/* Calendar Grid */}
+                    <section className="flex-1 overflow-hidden flex flex-col bg-white" data-purpose="calendar-month-view">
+                        {/* Day Headers */}
+                        <div className="grid grid-cols-7 border-b border-google-border flex-shrink-0" data-purpose="grid-headers">
+                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">SUN<br /><span className="text-xs">31</span></div>
+                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">MON<br /><span className="text-xs">Jun 1</span></div>
+                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">TUE<br /><span className="text-xs">2</span></div>
+                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">WED<br /><span className="text-xs">3</span></div>
+                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">THU<br /><span className="text-xs">4</span></div>
+                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">FRI<br /><span className="text-xs">5</span></div>
+                            <div className="text-center py-2 text-[11px] font-medium text-google-gray">SAT<br /><span className="text-xs">6</span></div>
+                        </div>
+
+                        {/* Main Grid */}
+                        <div className="flex-1 grid grid-cols-7 grid-rows-5 calendar-grid" data-purpose="grid-body">
+                            {/* Row 1 */}
+                            <div className="p-2 relative min-h-[120px]"></div>
+                            <div className="p-2 relative min-h-[120px]"></div>
+                            <div className="p-2 relative min-h-[120px]"></div>
+                            <div className="p-2 relative min-h-[120px]"></div>
+                            <div className="p-2 relative min-h-[120px]"></div>
+                            <div className="p-2 relative min-h-[120px]"></div>
+                            <div className="p-2 relative min-h-[120px] no-border-right"></div>
+
+                            {/* Row 2 */}
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">7</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">8</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">9</span></div>
+                            <div className="p-2 relative min-h-[120px]">
+                                <span className="text-xs font-medium text-google-text">10</span>
+                                <div className="mt-1 flex items-center gap-1 cursor-pointer hover:bg-google-hover rounded px-1 py-0.5">
+                                    <div className="w-2.5 h-2.5 bg-primary rounded-full"></div>
+                                    <span className="text-[11px] font-medium">6:30pm meeting</span>
+                                </div>
+                            </div>
+                            <div className="p-2 relative min-h-[120px]">
+                                <div className="flex justify-center">
+                                    <span className="current-day-circle text-xs font-medium">11</span>
+                                </div>
+                            </div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">12</span></div>
+                            <div className="p-2 relative min-h-[120px] no-border-right"><span className="text-xs font-medium text-google-text">13</span></div>
+
+                            {/* Row 3 */}
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">14</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">15</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">16</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">17</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">18</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">19</span></div>
+                            <div className="p-2 relative min-h-[120px] no-border-right"><span className="text-xs font-medium text-google-text">20</span></div>
+
+                            {/* Row 4 */}
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">21</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">22</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">23</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">24</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">25</span></div>
+                            <div className="p-2 relative min-h-[120px]">
+                                <span className="text-xs font-medium text-google-text">26</span>
+                                <div className="event-badge-green mt-1">Muharram/Ashura (tentativ</div>
+                            </div>
+                            <div className="p-2 relative min-h-[120px] no-border-right"><span className="text-xs font-medium text-google-text">27</span></div>
+
+                            {/* Row 5 */}
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">28</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">29</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">30</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-gray-400">Jul 1</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-gray-400">2</span></div>
+                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-gray-400">3</span></div>
+                            <div className="p-2 relative min-h-[120px] no-border-right"><span className="text-xs font-medium text-gray-400">4</span></div>
+                        </div>
+                    </section>
+
+                    {/* Right Sidebar (Calendar Specific) */}
+                    <aside className="w-64 border-l border-google-border flex-shrink-0 p-4 flex flex-col gap-6" data-purpose="sidebar-navigation">
                         <button className="flex items-center shadow-md border border-google-border py-2 px-4 rounded-full gap-3 hover:shadow-lg transition-shadow">
                             <svg height="36" viewBox="0 0 36 36" width="36">
                                 <path d="M16 16v14h4V20z" fill="#34A853"></path>
@@ -278,81 +365,6 @@ export default function googlecalendar() {
                             </div>
                         </div>
                     </aside>
-
-                    {/* Calendar Grid */}
-                    <section className="flex-1 overflow-hidden flex flex-col bg-white" data-purpose="calendar-month-view">
-                        {/* Day Headers */}
-                        <div className="grid grid-cols-7 border-b border-google-border flex-shrink-0" data-purpose="grid-headers">
-                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">SUN<br /><span className="text-xs">31</span></div>
-                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">MON<br /><span className="text-xs">Jun 1</span></div>
-                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">TUE<br /><span className="text-xs">2</span></div>
-                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">WED<br /><span className="text-xs">3</span></div>
-                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">THU<br /><span className="text-xs">4</span></div>
-                            <div className="text-center py-2 text-[11px] font-medium text-google-gray border-r border-google-border">FRI<br /><span className="text-xs">5</span></div>
-                            <div className="text-center py-2 text-[11px] font-medium text-google-gray">SAT<br /><span className="text-xs">6</span></div>
-                        </div>
-
-                        {/* Main Grid */}
-                        <div className="flex-1 grid grid-cols-7 grid-rows-5 calendar-grid" data-purpose="grid-body">
-                            {/* Row 1 */}
-                            <div className="p-2 relative min-h-[120px]"></div>
-                            <div className="p-2 relative min-h-[120px]"></div>
-                            <div className="p-2 relative min-h-[120px]"></div>
-                            <div className="p-2 relative min-h-[120px]"></div>
-                            <div className="p-2 relative min-h-[120px]"></div>
-                            <div className="p-2 relative min-h-[120px]"></div>
-                            <div className="p-2 relative min-h-[120px] no-border-right"></div>
-
-                            {/* Row 2 */}
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">7</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">8</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">9</span></div>
-                            <div className="p-2 relative min-h-[120px]">
-                                <span className="text-xs font-medium text-google-text">10</span>
-                                <div className="mt-1 flex items-center gap-1 cursor-pointer hover:bg-google-hover rounded px-1 py-0.5">
-                                    <div className="w-2.5 h-2.5 bg-primary rounded-full"></div>
-                                    <span className="text-[11px] font-medium">6:30pm meeting</span>
-                                </div>
-                            </div>
-                            <div className="p-2 relative min-h-[120px]">
-                                <div className="flex justify-center">
-                                    <span className="current-day-circle text-xs font-medium">11</span>
-                                </div>
-                            </div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">12</span></div>
-                            <div className="p-2 relative min-h-[120px] no-border-right"><span className="text-xs font-medium text-google-text">13</span></div>
-
-                            {/* Row 3 */}
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">14</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">15</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">16</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">17</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">18</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">19</span></div>
-                            <div className="p-2 relative min-h-[120px] no-border-right"><span className="text-xs font-medium text-google-text">20</span></div>
-
-                            {/* Row 4 */}
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">21</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">22</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">23</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">24</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">25</span></div>
-                            <div className="p-2 relative min-h-[120px]">
-                                <span className="text-xs font-medium text-google-text">26</span>
-                                <div className="event-badge-green mt-1">Muharram/Ashura (tentativ</div>
-                            </div>
-                            <div className="p-2 relative min-h-[120px] no-border-right"><span className="text-xs font-medium text-google-text">27</span></div>
-
-                            {/* Row 5 */}
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">28</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">29</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-google-text">30</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-gray-400">Jul 1</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-gray-400">2</span></div>
-                            <div className="p-2 relative min-h-[120px]"><span className="text-xs font-medium text-gray-400">3</span></div>
-                            <div className="p-2 relative min-h-[120px] no-border-right"><span className="text-xs font-medium text-gray-400">4</span></div>
-                        </div>
-                    </section>
                 </main>
 
                 {/* Floating Button Right Bottom */}

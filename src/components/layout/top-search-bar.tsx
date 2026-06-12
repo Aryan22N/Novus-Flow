@@ -55,7 +55,7 @@ export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: ()
           <img
             src="/Nexus_Flow_logo.png"
             alt="Logo"
-            className="w-32 h-auto ml-2 object-contain select-none"
+            className="w-32 h-auto object-contain select-none"
           />
         </Link>
       </div>

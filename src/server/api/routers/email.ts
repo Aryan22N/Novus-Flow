@@ -90,7 +90,13 @@ function parsePayload(payload: any) {
 
 export const emailRouter = createTRPCRouter({
   getInboxThreads: protectedProcedure
-    .input(z.object({ page: z.number().int().min(1).default(1) }))
+    .input(
+      z.object({
+        page: z.number().int().min(1).default(1),
+        category: z.string().optional(),
+        isStarred: z.boolean().optional(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
       const PAGE_SIZE = 50;
@@ -125,6 +131,14 @@ export const emailRouter = createTRPCRouter({
           const dateHeader = getHeader(headers, "Date");
           const headerTimestamp = dateHeader ? new Date(dateHeader).getTime() : NaN;
 
+          const getEmailCategory = (labelIds?: string[]) => {
+            if (!labelIds) return "primary";
+            if (labelIds.includes("CATEGORY_PROMOTIONS")) return "promotions";
+            if (labelIds.includes("CATEGORY_SOCIAL")) return "socials";
+            if (labelIds.includes("CATEGORY_UPDATES")) return "updates";
+            return "primary";
+          };
+
           return {
             id: message.entityId,
             threadId: data.threadId,
@@ -139,6 +153,10 @@ export const emailRouter = createTRPCRouter({
             snippet: data.snippet ?? "",
 
             unread: data.labelIds?.includes("UNREAD"),
+            
+            isStarred: data.labelIds?.includes("STARRED"),
+            
+            category: getEmailCategory(data.labelIds),
 
             date: new Date(
               data.internalDate
@@ -151,6 +169,8 @@ export const emailRouter = createTRPCRouter({
         })
         .filter((email) => {
           if (seen.has(email.id)) return false;
+          if (input.category && email.category !== input.category) return false;
+          if (input.isStarred && !email.isStarred) return false;
           seen.add(email.id);
           return true;
         })
@@ -167,6 +187,109 @@ export const emailRouter = createTRPCRouter({
         pageSize: PAGE_SIZE,
         pageCount: Math.ceil(total / PAGE_SIZE),
       };
+    }),
+
+  getUnreadCounts: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.session.user.id;
+    const messages = await ctx.db
+      .select({ entity: corsairEntities })
+      .from(corsairEntities)
+      .innerJoin(
+        corsairAccounts,
+        and(
+          eq(corsairEntities.accountId, corsairAccounts.id),
+          eq(corsairAccounts.tenantId, tenantId)
+        )
+      )
+      .where(eq(corsairEntities.entityType, "messages"));
+
+    const counts = {
+      primary: 0,
+      promotions: 0,
+      socials: 0,
+      updates: 0,
+      meetings: 0,
+    };
+
+    const seen = new Set<string>();
+
+    for (const { entity } of messages) {
+      const data = entity.data as any;
+      if (!data?.payload) continue;
+      if (!data.labelIds?.includes("UNREAD")) continue;
+      if (seen.has(entity.entityId)) continue;
+      seen.add(entity.entityId);
+
+      const labelIds = data.labelIds as string[];
+      let cat = "primary";
+      if (labelIds.includes("CATEGORY_PROMOTIONS")) cat = "promotions";
+      else if (labelIds.includes("CATEGORY_SOCIAL")) cat = "socials";
+      else if (labelIds.includes("CATEGORY_UPDATES")) cat = "updates";
+
+      counts[cat as keyof typeof counts]++;
+    }
+
+    return counts;
+  }),
+
+  toggleStar: protectedProcedure
+    .input(z.object({ messageId: z.string(), isStarred: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const client = corsair.withTenant(tenantId);
+
+      try {
+        // 1. Update in Gmail
+        await client.gmail.api.messages.modify({
+          id: input.messageId,
+          addLabelIds: input.isStarred ? ["STARRED"] : [],
+          removeLabelIds: input.isStarred ? [] : ["STARRED"],
+        });
+
+        // 2. Update local DB cache so UI reflects immediately without a full sync
+        const messageRows = await ctx.db
+          .select({ entity: corsairEntities, id: corsairEntities.id })
+          .from(corsairEntities)
+          .innerJoin(
+            corsairAccounts,
+            and(
+              eq(corsairEntities.accountId, corsairAccounts.id),
+              eq(corsairAccounts.tenantId, tenantId)
+            )
+          )
+          .where(
+            and(
+              eq(corsairEntities.entityType, "messages"),
+              eq(corsairEntities.entityId, input.messageId)
+            )
+          )
+          .limit(1);
+
+        if (messageRows.length > 0) {
+          const row = messageRows[0]!;
+          const data = row.entity.data as any;
+          let labelIds = data.labelIds as string[] | undefined;
+          if (!labelIds) labelIds = [];
+
+          if (input.isStarred && !labelIds.includes("STARRED")) {
+            labelIds.push("STARRED");
+          } else if (!input.isStarred) {
+            labelIds = labelIds.filter((l) => l !== "STARRED");
+          }
+
+          data.labelIds = labelIds;
+
+          await ctx.db
+            .update(corsairEntities)
+            .set({ data })
+            .where(eq(corsairEntities.id, row.id));
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error("Failed to toggle star:", error);
+        throw new Error("Failed to toggle star");
+      }
     }),
 
   getUnreadCount: protectedProcedure.query(async ({ ctx }) => {

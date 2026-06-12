@@ -7,6 +7,8 @@ interface InboxRowProps {
     snippet: string;
     date: string;
     unread?: boolean;
+    isStarred?: boolean;
+    onToggleStar?: (e: React.MouseEvent) => void;
 }
 
 export default function InboxRow({
@@ -15,12 +17,14 @@ export default function InboxRow({
     snippet,
     date,
     unread,
+    isStarred,
+    onToggleStar,
 }: InboxRowProps) {
     return (
         <div
             className={clsx(
-                "grid grid-cols-[40px_40px_250px_1fr_100px] items-center border-b border-gray-200 px-4 py-3 hover:shadow-sm cursor-pointer",
-                "transition-all duration-700 ease-in-out",
+                "group relative grid grid-cols-[40px_40px_250px_1fr_100px] items-center border-b border-gray-200 px-4 py-3 hover:shadow-lg hover:border-1 hover:z-10 cursor-pointer",
+                "transition-all duration-300 ease-in-out",
                 unread ? "bg-white font-semibold" : "bg-[#F3F6FB] font-normal"
             )}
             style={{
@@ -36,8 +40,17 @@ export default function InboxRow({
             </div>
 
             {/* Star */}
-            <div>
-                <Star size={18} className="text-gray-400 hover:text-yellow-500" />
+            <div 
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleStar?.(e); }}
+                className="flex items-center justify-center p-1 rounded-full hover:bg-gray-100 transition-colors"
+            >
+                <Star 
+                    size={18} 
+                    className={clsx(
+                        "transition-colors",
+                        isStarred ? "text-yellow-400 fill-yellow-400" : "text-gray-400 hover:text-gray-600"
+                    )} 
+                />
             </div>
 
             {/* Sender */}

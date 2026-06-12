@@ -28,7 +28,7 @@ export default function EmailRow({
   time,
   isAi = false,
 }: EmailRowProps) {
-  const containerClasses = `group flex items-center p-3 border-b border-surface-container-highest hover:bg-surface-container-low transition-colors cursor-pointer ${isAi ? "ai-gradient ai-border m-1 rounded-md" : ""
+  const containerClasses = `group flex items-center p-3 border-b border-surface-container-highest hover:bg-surface-container-low  transition-colors cursor-pointer ${isAi ? "ai-gradient ai-border m-1 rounded-md" : ""
     }`;
 
   return (

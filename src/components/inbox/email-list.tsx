@@ -9,11 +9,17 @@ import { format, isToday } from "date-fns";
 
 interface EmailListProps {
   page: number;
+  category?: string;
+  isStarredOnly?: boolean;
   onTotalChange?: (total: number) => void;
 }
 
-export default function EmailList({ page, onTotalChange }: EmailListProps) {
-  const { data, isPending } = api.email.getInboxThreads.useQuery({ page });
+export default function EmailList({ page, category, isStarredOnly, onTotalChange }: EmailListProps) {
+  const { data, isPending } = api.email.getInboxThreads.useQuery({ 
+    page, 
+    category, 
+    isStarred: isStarredOnly 
+  });
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   // Surface total count to parent for the pagination label in InboxHeader
@@ -51,6 +57,35 @@ export default function EmailList({ page, onTotalChange }: EmailListProps) {
       void utils.email.getInboxThreads.invalidate();
     },
   });
+
+  const toggleStarMutation = api.email.toggleStar.useMutation({
+    onMutate: async ({ messageId, isStarred }) => {
+      await utils.email.getInboxThreads.cancel({ page, category, isStarred: isStarredOnly });
+      const previousData = utils.email.getInboxThreads.getData({ page, category, isStarred: isStarredOnly });
+      utils.email.getInboxThreads.setData({ page, category, isStarred: isStarredOnly }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          emails: old.emails.map((e) =>
+            e.id === messageId ? { ...e, isStarred } : e
+          ),
+        };
+      });
+      return { previousData };
+    },
+    onError: (err, newTodo, context) => {
+      utils.email.getInboxThreads.setData({ page, category, isStarred: isStarredOnly }, context?.previousData);
+    },
+    onSettled: () => {
+      void utils.email.getInboxThreads.invalidate();
+    },
+  });
+
+  const handleToggleStar = (e: React.MouseEvent, messageId: string, currentIsStarred: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleStarMutation.mutate({ messageId, isStarred: !currentIsStarred });
+  };
 
   const handleEmailClick = (threadId: string, isUnread: boolean) => {
     // Persist read state to localStorage immediately
@@ -94,6 +129,8 @@ export default function EmailList({ page, onTotalChange }: EmailListProps) {
                 snippet={email.snippet}
                 date={isToday(email.date) ? format(email.date, "h:mm a").toLowerCase() : format(email.date, "MMM d")}
                 unread={!!isUnread}
+                isStarred={email.isStarred}
+                onToggleStar={(e) => handleToggleStar(e, email.id, !!email.isStarred)}
               />
             </Link>
           );
