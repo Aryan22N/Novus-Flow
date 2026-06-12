@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { authClient } from "~/server/better-auth/client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const { data: session } = authClient.useSession();
@@ -41,20 +42,24 @@ export default function TopSearchBar({ onToggleSidebar }: { onToggleSidebar?: ()
   };
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-6 w-full bg-[#f7f9fc] backdrop-blur-md h-16 shrink-0">
+    <header className="sticky top-0.5 z-50 flex items-center justify-between px-6 w-full bg-[#f7f9fc] backdrop-blur-md h-16 shrink-0">
       {/* Left Section */}
-      <div className="flex items-center gap-4 w-1/4">
+      <div className="flex items-center w-1/4">
         <button
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          className="pl-2 rounded-full mt-2 hover:bg-gray-100 transition-colors focus:outline-none"
           onClick={onToggleSidebar}
         >
-          <Menu size={20} className="text-gray-600" />
+          <Menu size={23} className="text-gray-600" />
         </button>
-
-        <span className="text-lg font-bold text-blue-600">
-          Nexus Flow
-        </span>
+        <Link href="/inbox">
+          <img
+            src="/Nexus_Flow_logo.png"
+            alt="Logo"
+            className="w-32 h-auto ml-2 object-contain select-none"
+          />
+        </Link>
       </div>
+
 
       {/* Search Section */}
       <div className="flex-1 max-w-2xl px-4">

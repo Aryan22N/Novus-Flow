@@ -4,7 +4,7 @@ import { useState } from "react";
 import TopSearchBar from "~/components/layout/top-search-bar";
 import AppSidebar from "~/components/layout/app-sidebar";
 import SentMailList from "~/components/sent/sent-mail-list";
-import UpcomingMeetings from "~/components/calendar/upcoming-meetings";
+import UpcomingMeetings from "~/components/calendar_inbox/upcoming-meetings";
 import AiRecommendations from "~/components/ai/ai-recommendations";
 import AiPanel from "~/components/ai/ai-panel";
 

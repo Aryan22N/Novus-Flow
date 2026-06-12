@@ -5,7 +5,7 @@ import TopSearchBar from "~/components/layout/top-search-bar";
 import AppSidebar from "~/components/layout/app-sidebar";
 import InboxHeader from "~/components/inbox/inbox-header";
 import EmailList from "~/components/inbox/email-list";
-import UpcomingMeetings from "~/components/calendar/upcoming-meetings";
+import UpcomingMeetings from "~/components/calendar_inbox/upcoming-meetings";
 import AiRecommendations from "~/components/ai/ai-recommendations";
 import AiPanel from "~/components/ai/ai-panel";
 

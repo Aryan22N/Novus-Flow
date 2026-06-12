@@ -53,7 +53,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
           </Link>
 
           <Link
-            href="/calendar"
+            href="/Calendar"
             className={`flex items-center gap-4 text-black hover:bg-[#DFDFE3] transition-all duration-300 ${isOpen ? "px-6 py-3 rounded-r-full" : "justify-center w-12 h-12 rounded-full"}`}
           >
             <Calendar size={18} className="shrink-0" />
