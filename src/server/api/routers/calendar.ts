@@ -1,8 +1,45 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
 import { corsair } from "~/server/corsair";
+import crypto from "crypto";
+
+function parseMeetingTime(timeStr: string): { start: Date; end: Date } {
+  let start = new Date(timeStr);
+  
+  if (isNaN(start.getTime())) {
+    const today = new Date();
+    const timeLower = timeStr.toLowerCase();
+    
+    let targetDate = new Date();
+    if (timeLower.includes("tomorrow")) {
+      targetDate.setDate(today.getDate() + 1);
+    } else if (timeLower.includes("next week")) {
+      targetDate.setDate(today.getDate() + 7);
+    }
+    
+    const timeRegex = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i;
+    const match = timeStr.match(timeRegex);
+    if (match) {
+      let hours = parseInt(match[1]!, 10);
+      const minutes = match[2] ? parseInt(match[2]!, 10) : 0;
+      const ampm = match[3]?.toLowerCase();
+      
+      if (ampm === "pm" && hours < 12) hours += 12;
+      if (ampm === "am" && hours === 12) hours = 0;
+      
+      targetDate.setHours(hours, minutes, 0, 0);
+      start = targetDate;
+    } else {
+      start = new Date();
+      start.setHours(start.getHours() + 1, 0, 0, 0);
+    }
+  }
+  
+  const end = new Date(start.getTime() + 30 * 60 * 1000); // default 30 mins
+  return { start, end };
+}
 
 
 export const calendarRouter = createTRPCRouter({
@@ -28,31 +65,6 @@ export const calendarRouter = createTRPCRouter({
       const timeMin = new Date(year, month - 1, 1).toISOString();
       const timeMax = new Date(year, month, 0, 23, 59, 59).toISOString(); // last day of month
 
-      // ── 1. Try local DB cache ─────────────────────────────────────────────
-      const dbRows = await ctx.db
-        .select({ entity: corsairEntities })
-        .from(corsairEntities)
-        .innerJoin(
-          corsairAccounts,
-          and(
-            eq(corsairEntities.accountId, corsairAccounts.id),
-            eq(corsairAccounts.tenantId, tenantId)
-          )
-        )
-        .where(
-          sql`${corsairEntities.entityType} = 'events'
-            AND (
-              (${corsairEntities.data}->>'start' IS NOT NULL
-                AND (${corsairEntities.data}->'start'->>'dateTime')::text >= ${timeMin}
-                AND (${corsairEntities.data}->'start'->>'dateTime')::text <= ${timeMax}
-              )
-              OR
-              (${corsairEntities.data}->'start'->>'date' >= ${timeMin.substring(0, 10)}
-                AND ${corsairEntities.data}->'start'->>'date' <= ${timeMax.substring(0, 10)}
-              )
-            )`
-        );
-
       const parseEvent = (data: any) => {
         const startRaw = data?.start?.dateTime ?? data?.start?.date ?? null;
         const endRaw = data?.end?.dateTime ?? data?.end?.date ?? null;
@@ -70,18 +82,48 @@ export const calendarRouter = createTRPCRouter({
         };
       };
 
-      if (dbRows.length > 0) {
-        // Deduplicate + filter out any cancelled events that weren't yet purged by sync
-        const seen = new Set<string>();
-        const events = dbRows
-          .map(({ entity }) => parseEvent(entity.data))
-          .filter((ev) => {
-            if (!ev.id || seen.has(ev.id)) return false;
-            if (ev.status === "cancelled") return false; // skip deleted events
-            seen.add(ev.id);
-            return true;
-          });
-        return { events, source: "cache" as const };
+      // ── 1. Try local DB cache ─────────────────────────────────────────────
+      try {
+        const dbRows = await ctx.db
+          .select({ entity: corsairEntities })
+          .from(corsairEntities)
+          .innerJoin(
+            corsairAccounts,
+            and(
+              eq(corsairEntities.accountId, corsairAccounts.id),
+              eq(corsairAccounts.tenantId, tenantId)
+            )
+          )
+          .where(
+            sql`${corsairEntities.entityType} = 'events'
+              AND (
+                (${corsairEntities.data}->>'start' IS NOT NULL
+                  AND (${corsairEntities.data}->'start'->>'dateTime') IS NOT NULL
+                  AND (${corsairEntities.data}->'start'->>'dateTime')::timestamptz >= ${timeMin}::timestamptz
+                  AND (${corsairEntities.data}->'start'->>'dateTime')::timestamptz <= ${timeMax}::timestamptz
+                )
+                OR
+                ((${corsairEntities.data}->'start'->>'date') >= ${timeMin.substring(0, 10)}
+                  AND (${corsairEntities.data}->'start'->>'date') <= ${timeMax.substring(0, 10)}
+                )
+              )`
+          );
+
+        if (dbRows.length > 0) {
+          // Deduplicate + filter out any cancelled events that weren't yet purged by sync
+          const seen = new Set<string>();
+          const events = dbRows
+            .map(({ entity }) => parseEvent(entity.data))
+            .filter((ev) => {
+              if (!ev.id || seen.has(ev.id)) return false;
+              if (ev.status === "cancelled") return false; // skip deleted events
+              seen.add(ev.id);
+              return true;
+            });
+          return { events, source: "cache" as const };
+        }
+      } catch (dbErr) {
+        console.error("[calendar.getEvents] DB cache fetch failed:", dbErr);
       }
 
       // ── 2. Fallback: live fetch from Google Calendar API ──────────────────
@@ -125,7 +167,8 @@ export const calendarRouter = createTRPCRouter({
       const tenantId = ctx.session.user.id;
       const client = corsair.withTenant(tenantId);
 
-      const timeMin = new Date().toISOString();
+      const now = new Date();
+      const timeMin = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const timeMax = new Date(
         Date.now() + input.daysAhead * 24 * 60 * 60 * 1000
       ).toISOString();
@@ -142,15 +185,16 @@ export const calendarRouter = createTRPCRouter({
 
       const items = result?.items ?? [];
 
-      // Get the account row
-      const accountRow = await ctx.db
+      // Get all account rows for the tenant (to handle duplicates)
+      const accountRows = await ctx.db
         .select({ id: corsairAccounts.id })
         .from(corsairAccounts)
-        .where(eq(corsairAccounts.tenantId, tenantId))
-        .limit(1);
+        .where(eq(corsairAccounts.tenantId, tenantId));
 
-      const accountId = accountRow[0]?.id;
-      if (!accountId) return { synced: 0, deleted: 0, total: 0 };
+      if (accountRows.length === 0) return { synced: 0, deleted: 0, total: 0 };
+      
+      const accountIds = accountRows.map(r => r.id);
+      const primaryAccountId = accountIds[0]!;
 
       // Separate cancelled (deleted) events from active ones
       const cancelledIds = items
@@ -169,7 +213,7 @@ export const calendarRouter = createTRPCRouter({
             .delete(corsairEntities)
             .where(
               and(
-                eq(corsairEntities.accountId, accountId),
+                inArray(corsairEntities.accountId, accountIds),
                 eq(corsairEntities.entityId, eventId),
                 eq(corsairEntities.entityType, "events")
               )
@@ -187,24 +231,39 @@ export const calendarRouter = createTRPCRouter({
       // ── 3. Find DB events in this time window that Google didn't return ───
       //    These are fully purged events (not even returned as cancelled).
       const dbRows = await ctx.db
-        .select({ entityId: corsairEntities.entityId })
+        .select({ entityId: corsairEntities.entityId, accountId: corsairEntities.accountId })
         .from(corsairEntities)
         .where(
           and(
-            eq(corsairEntities.accountId, accountId),
-            eq(corsairEntities.entityType, "events")
+            inArray(corsairEntities.accountId, accountIds),
+            eq(corsairEntities.entityType, "events"),
+            sql`(
+              (${corsairEntities.data}->>'start' IS NOT NULL
+                AND (${corsairEntities.data}->'start'->>'dateTime') IS NOT NULL
+                AND (${corsairEntities.data}->'start'->>'dateTime')::timestamptz >= ${timeMin}::timestamptz
+                AND (${corsairEntities.data}->'start'->>'dateTime')::timestamptz <= ${timeMax}::timestamptz
+              )
+              OR
+              ((${corsairEntities.data}->'start'->>'date') >= ${timeMin.substring(0, 10)}
+                AND (${corsairEntities.data}->'start'->>'date') <= ${timeMax.substring(0, 10)}
+              )
+            )`
           )
         );
 
+      console.log(`[syncEvents] Found ${dbRows.length} events in DB for this window`);
+      console.log(`[syncEvents] activeIds count: ${activeIds.size}, cancelledIds count: ${cancelledIds.length}`);
+
       for (const row of dbRows) {
         if (!activeIds.has(row.entityId) && !cancelledIds.includes(row.entityId)) {
+          console.log(`[syncEvents] Purging stale event ${row.entityId}`);
           // This event is no longer returned by Google for this window → purge it
           try {
             await ctx.db
               .delete(corsairEntities)
               .where(
                 and(
-                  eq(corsairEntities.accountId, accountId),
+                  eq(corsairEntities.accountId, row.accountId),
                   eq(corsairEntities.entityId, row.entityId),
                   eq(corsairEntities.entityType, "events")
                 )
@@ -225,7 +284,7 @@ export const calendarRouter = createTRPCRouter({
             .from(corsairEntities)
             .where(
               and(
-                eq(corsairEntities.accountId, accountId),
+                inArray(corsairEntities.accountId, accountIds),
                 eq(corsairEntities.entityId, event.id),
                 eq(corsairEntities.entityType, "events")
               )
@@ -238,7 +297,7 @@ export const calendarRouter = createTRPCRouter({
               .set({ data: event, updatedAt: new Date(), version: event.etag ?? "1" })
               .where(
                 and(
-                  eq(corsairEntities.accountId, accountId),
+                  inArray(corsairEntities.accountId, accountIds),
                   eq(corsairEntities.entityId, event.id),
                   eq(corsairEntities.entityType, "events")
                 )
@@ -246,7 +305,7 @@ export const calendarRouter = createTRPCRouter({
           } else {
             await ctx.db.insert(corsairEntities).values({
               id: crypto.randomUUID(),
-              accountId,
+              accountId: primaryAccountId,
               entityId: event.id,
               entityType: "events",
               version: event.etag ?? "1",
@@ -260,6 +319,64 @@ export const calendarRouter = createTRPCRouter({
       }
 
       return { synced, deleted, total: items.length };
+    }),
+
+  /**
+   * Create a new event on Google Calendar via Corsair API.
+   */
+  createEvent: protectedProcedure
+    .input(
+      z.object({
+        summary: z.string(),
+        description: z.string().optional(),
+        meetingTime: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const client = corsair.withTenant(tenantId);
+
+      const { start, end } = parseMeetingTime(input.meetingTime);
+
+      try {
+        const result = await client.googlecalendar.api.events.create({
+          calendarId: "primary",
+          event: {
+            summary: input.summary,
+            description: input.description ?? "",
+            start: {
+              dateTime: start.toISOString(),
+            },
+            end: {
+              dateTime: end.toISOString(),
+            },
+          },
+        });
+
+        // Sync directly into database cache
+        const accountRow = await ctx.db
+          .select({ id: corsairAccounts.id })
+          .from(corsairAccounts)
+          .where(eq(corsairAccounts.tenantId, tenantId))
+          .limit(1);
+
+        const accountId = accountRow[0]?.id;
+        if (accountId && result && result.id) {
+          await ctx.db.insert(corsairEntities).values({
+            id: crypto.randomUUID(),
+            accountId,
+            entityId: result.id,
+            entityType: "events",
+            version: (result as any).etag ?? "1",
+            data: result,
+          });
+        }
+
+        return { success: true, event: result };
+      } catch (err) {
+        console.error("[calendar.createEvent] failed:", err);
+        throw new Error(err instanceof Error ? err.message : "Failed to create event in Google Calendar");
+      }
     }),
 
 

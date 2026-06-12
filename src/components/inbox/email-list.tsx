@@ -35,6 +35,16 @@ export default function EmailList({ page, onTotalChange }: EmailListProps) {
   }, []);
 
   const utils = api.useUtils();
+  const { mutate: refreshInbox } = api.email.refreshInbox.useMutation({
+    onSuccess: () => {
+      void utils.email.getInboxThreads.invalidate();
+    },
+  });
+
+  useEffect(() => {
+    refreshInbox();
+  }, [refreshInbox]);
+
   const markReadMutation = api.email.markThreadAsRead.useMutation({
     onSuccess: () => {
       void utils.email.getUnreadCount.invalidate();

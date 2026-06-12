@@ -1,0 +1,275 @@
+import { z } from "zod";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import { eq, desc, sql, and } from "drizzle-orm";
+import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
+import { TRPCError } from "@trpc/server";
+import { getAiProvider } from "./ai-provider";
+
+function getHeader(
+  headers: { name: string; value: string }[],
+  name: string
+) {
+  return headers.find(
+    (header) => header.name.toLowerCase() === name.toLowerCase()
+  )?.value;
+}
+
+function extractSender(fromHeader?: string) {
+  if (!fromHeader) return "Unknown";
+  const match = fromHeader.match(/^(.+?)\s*</);
+  if (match?.[1]) {
+    return match[1].replace(/"/g, "");
+  }
+  return fromHeader;
+}
+
+function decodeBase64Url(base64UrlStr: string) {
+  try {
+    const base64 = base64UrlStr.replace(/-/g, "+").replace(/_/g, "/");
+    return Buffer.from(base64, "base64").toString("utf-8");
+  } catch (e) {
+    return "";
+  }
+}
+
+interface Attachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
+interface ThreadMessage {
+  id: string;
+  threadId: string;
+  sender: string;
+  senderEmail: string;
+  to?: string;
+  cc?: string;
+  subject: string;
+  snippet: string;
+  htmlBody: string;
+  plainBody: string;
+  attachments: Attachment[];
+  unread: boolean;
+  date: Date;
+}
+
+function parsePayload(payload: any) {
+  let htmlBody = "";
+  let plainBody = "";
+  let attachments: Attachment[] = [];
+
+  function traverse(part: any) {
+    if (!part) return;
+
+    if (part.filename && part.body?.attachmentId) {
+      attachments.push({
+        id: part.body.attachmentId,
+        filename: part.filename,
+        mimeType: part.mimeType,
+        size: part.body.size || 0,
+      });
+    }
+
+    if (part.mimeType === "text/html" && part.body?.data) {
+      htmlBody = decodeBase64Url(part.body.data);
+    } else if (part.mimeType === "text/plain" && part.body?.data) {
+      plainBody = decodeBase64Url(part.body.data);
+    }
+
+    if (part.parts) {
+      for (const p of part.parts) {
+        traverse(p);
+      }
+    }
+  }
+
+  traverse(payload);
+
+  if (!payload?.parts && payload?.body?.data) {
+    if (payload.mimeType === "text/html") {
+      htmlBody = decodeBase64Url(payload.body.data);
+    } else if (payload.mimeType === "text/plain") {
+      plainBody = decodeBase64Url(payload.body.data);
+    }
+  }
+
+  return { htmlBody, plainBody, attachments };
+}
+
+async function fetchThreadMessages(ctx: any, threadId: string, tenantId: string): Promise<ThreadMessage[]> {
+  const messagesResult = await ctx.db
+    .select({ entity: corsairEntities })
+    .from(corsairEntities)
+    .innerJoin(
+      corsairAccounts,
+      and(
+        eq(corsairEntities.accountId, corsairAccounts.id),
+        eq(corsairAccounts.tenantId, tenantId)
+      )
+    )
+    .where(
+      sql`${corsairEntities.entityType} = 'messages' AND ${corsairEntities.data}->>'threadId' = ${threadId}`
+    )
+    .orderBy(desc(corsairEntities.createdAt));
+
+  const seenIds = new Set<string>();
+  const dedupedResult = messagesResult.filter(({ entity }: any) => {
+    if (seenIds.has(entity.entityId)) return false;
+    seenIds.add(entity.entityId);
+    return true;
+  });
+
+  const messages: ThreadMessage[] = dedupedResult.map(({ entity: message }: any) => {
+    const data = message.data as any;
+    const headers = data?.payload?.headers ?? [];
+
+    const from = getHeader(headers, "From");
+    const to = getHeader(headers, "To");
+    const cc = getHeader(headers, "Cc");
+    const subject = data.subject ?? getHeader(headers, "Subject") ?? "(no subject)";
+
+    const { htmlBody, plainBody, attachments } = parsePayload(data.payload);
+
+    const dateHeader = getHeader(headers, "Date");
+    const headerTimestamp = dateHeader ? new Date(dateHeader).getTime() : NaN;
+
+    return {
+      id: message.entityId,
+      threadId: data.threadId,
+      sender: extractSender(from),
+      senderEmail: from?.match(/<(.+?)>/)?.[1] ?? from,
+      to,
+      cc,
+      subject,
+      snippet: data.snippet ?? "",
+      htmlBody,
+      plainBody,
+      attachments,
+      unread: data.labelIds?.includes("UNREAD"),
+      date: new Date(
+        data.internalDate
+          ? Number(data.internalDate)
+          : !Number.isNaN(headerTimestamp)
+            ? headerTimestamp
+            : data.createdAt || Date.now()
+      ),
+    };
+  });
+
+  messages.reverse();
+  return messages;
+}
+
+export const aiRouter = createTRPCRouter({
+  analyzeThread: publicProcedure
+    .input(z.object({ threadId: z.string().nullish() }).optional())
+    .query(async ({ ctx, input }) => {
+      if (!input?.threadId || !ctx.session?.user) {
+        return null;
+      }
+      const tenantId = ctx.session.user.id;
+      const messages = await fetchThreadMessages(ctx, input.threadId, tenantId);
+
+      if (messages.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Thread messages not found or empty.",
+        });
+      }
+
+      const threadText = messages
+        .map((m: ThreadMessage) => `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`)
+        .join("\n\n---\n\n");
+
+      try {
+        const provider = getAiProvider();
+        const result = await provider.analyzeThread(threadText);
+        return result;
+      } catch (error: any) {
+        console.error("AI analysis failed:", error);
+        const isRateLimit = error.message?.includes("429") || error.message?.toLowerCase().includes("quota") || error.message?.toLowerCase().includes("rate limit");
+        throw new TRPCError({
+          code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
+          message: isRateLimit
+            ? "AI rate limit or quota exceeded. Please wait a moment before trying again, or switch model providers in your config."
+            : `Failed to analyze thread with AI: ${error.message || "Unknown error"}.`,
+        });
+      }
+    }),
+
+  generateReplyDraft: protectedProcedure
+    .input(z.object({ threadId: z.string(), userBriefPrompt: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const messages = await fetchThreadMessages(ctx, input.threadId, tenantId);
+
+      if (messages.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Thread messages not found or empty.",
+        });
+      }
+
+      const threadText = messages
+        .map((m: ThreadMessage) => `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`)
+        .join("\n\n---\n\n");
+
+      try {
+        const provider = getAiProvider();
+        const result = await provider.generateReplyDraft(threadText, input.userBriefPrompt);
+        return result;
+      } catch (error: any) {
+        console.error("AI reply draft generation failed:", error);
+        const isRateLimit = error.message?.includes("429") || error.message?.toLowerCase().includes("quota") || error.message?.toLowerCase().includes("rate limit");
+        throw new TRPCError({
+          code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
+          message: isRateLimit
+            ? "AI rate limit or quota exceeded. Please wait a moment before trying again."
+            : `Failed to generate reply draft with AI: ${error.message || "Unknown error"}.`,
+        });
+      }
+    }),
+
+  getSuggestedReplies: publicProcedure
+    .input(z.object({ threadId: z.string(), messageId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      if (!ctx.session?.user) {
+        return [
+          "Thank you for the email. I have reviewed my activity.",
+          "It was me, thanks for checking.",
+          "I don't recognize this device. What are the next steps?"
+        ];
+      }
+      const tenantId = ctx.session.user.id;
+      const messages = await fetchThreadMessages(ctx, input.threadId, tenantId);
+      const targetMsgIndex = messages.findIndex((m) => m.id === input.messageId);
+      if (targetMsgIndex === -1) {
+        return [
+          "Thank you for the email. I have reviewed my activity.",
+          "It was me, thanks for checking.",
+          "I don't recognize this device. What are the next steps?"
+        ];
+      }
+
+      // Get message sequence up to the target message
+      const contextMessages = messages.slice(0, targetMsgIndex + 1);
+      const threadText = contextMessages
+        .map((m: ThreadMessage) => `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`)
+        .join("\n\n---\n\n");
+
+      try {
+        const provider = getAiProvider();
+        const result = await provider.generateSuggestions(threadText);
+        return result.suggestions;
+      } catch (error) {
+        console.error("AI suggested replies generation failed:", error);
+        return [
+          "Thank you for the email. I have reviewed my activity.",
+          "It was me, thanks for checking.",
+          "I don't recognize this device. What are the next steps?"
+        ];
+      }
+    }),
+});

@@ -23,7 +23,7 @@ export default function InboxPage() {
           <InboxHeader page={page} onPageChange={setPage} total={total} />
           <div className="flex gap-6 flex-1 min-h-0">
             <EmailList page={page} onTotalChange={setTotal} />
-            <div className="flex-[0.4] flex flex-col gap-6">
+            <div className="flex-[0.42] flex flex-col gap-6 min-w-0">
               <UpcomingMeetings />
               <AiRecommendations />
             </div>

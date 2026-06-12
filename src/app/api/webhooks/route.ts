@@ -2,7 +2,7 @@ import { processWebhook } from "corsair";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 import { corsair } from "../../../server/corsair";
@@ -77,8 +77,23 @@ async function syncGmailEvent(event: {
     }
 
     // messageReceived or messageLabelChanged — upsert the full message
-    const fullMsg = event.message;
+    let fullMsg = event.message;
     const version = event.historyId ?? String((fullMsg.historyId as string | undefined) ?? "1");
+
+    try {
+        const client = corsair.withTenant(tenantId);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fetchedMsg = await client.gmail.api.messages.get({
+            id: msgId,
+            format: "full",
+        }) as any;
+        
+        if (fetchedMsg) {
+            fullMsg = fetchedMsg;
+        }
+    } catch (e) {
+        console.error(`[gmail/pubsub] Failed to fetch full message ${msgId}:`, e);
+    }
 
     const existing = await db
         .select({ id: corsairEntities.id })
@@ -142,21 +157,23 @@ async function syncCalendarEvent(emailAddress: string) {
     }
 
     // 2. Find the corsair account for this tenant
-    const accountRow = await db
+    const accountRows = await db
         .select({ id: corsairAccounts.id })
         .from(corsairAccounts)
-        .where(eq(corsairAccounts.tenantId, tenantId))
-        .limit(1);
+        .where(eq(corsairAccounts.tenantId, tenantId));
 
-    const accountId = accountRow[0]?.id;
-    if (!accountId) {
-        console.warn(`[calendar/webhook] No corsair account for tenantId=${tenantId}`);
+    if (accountRows.length === 0) {
+        console.error(`[calendar/webhook] No account found for tenantId: ${tenantId}`);
         return;
     }
 
-    // 3. Fetch events for the next 90 days from Google Calendar API
+    const accountIds = accountRows.map(r => r.id);
+    const primaryAccountId = accountIds[0]!;
+
+    // 3. Fetch events from start of month to 90 days ahead
     const client = corsair.withTenant(tenantId);
-    const timeMin = new Date().toISOString();
+    const now = new Date();
+    const timeMin = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const timeMax = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
 
     const result = await client.googlecalendar.api.events.getMany({
@@ -165,12 +182,72 @@ async function syncCalendarEvent(emailAddress: string) {
         maxResults: 250,
         singleEvents: true,
         orderBy: "startTime",
+        showDeleted: true,
     }) as { items?: Record<string, unknown>[] } | null;
 
     const items = result?.items ?? [];
 
-    // 4. Upsert each event into corsair_entities
-    for (const event of items) {
+    const cancelledIds = items
+        .filter((e: any) => e?.status === "cancelled" && e?.id)
+        .map((e: any) => e.id as string);
+
+    const activeItems = items.filter(
+        (e: any) => e?.id && e?.status !== "cancelled"
+    );
+
+    // 4. Delete explicitly cancelled events
+    for (const eventId of cancelledIds) {
+        await db
+            .delete(corsairEntities)
+            .where(
+                and(
+                    inArray(corsairEntities.accountId, accountIds),
+                    eq(corsairEntities.entityId, eventId),
+                    eq(corsairEntities.entityType, "events")
+                )
+            );
+    }
+
+    const activeIds = new Set(activeItems.map((e: any) => e.id as string));
+
+    // 5. Purge stale events in this time window that Google didn't return
+    const dbRows = await db
+        .select({ entityId: corsairEntities.entityId, accountId: corsairEntities.accountId })
+        .from(corsairEntities)
+        .where(
+            and(
+                inArray(corsairEntities.accountId, accountIds),
+                eq(corsairEntities.entityType, "events"),
+                sql`(
+                  (${corsairEntities.data}->>'start' IS NOT NULL
+                    AND (${corsairEntities.data}->'start'->>'dateTime') IS NOT NULL
+                    AND (${corsairEntities.data}->'start'->>'dateTime')::timestamptz >= ${timeMin}::timestamptz
+                    AND (${corsairEntities.data}->'start'->>'dateTime')::timestamptz <= ${timeMax}::timestamptz
+                  )
+                  OR
+                  ((${corsairEntities.data}->'start'->>'date') >= ${timeMin.substring(0, 10)}
+                    AND (${corsairEntities.data}->'start'->>'date') <= ${timeMax.substring(0, 10)}
+                  )
+                )`
+            )
+        );
+
+    for (const row of dbRows) {
+        if (!activeIds.has(row.entityId) && !cancelledIds.includes(row.entityId)) {
+            await db
+                .delete(corsairEntities)
+                .where(
+                    and(
+                        eq(corsairEntities.accountId, row.accountId),
+                        eq(corsairEntities.entityId, row.entityId),
+                        eq(corsairEntities.entityType, "events")
+                    )
+                );
+        }
+    }
+
+    // 6. Upsert active events
+    for (const event of activeItems) {
         const eventId = event.id as string | undefined;
         if (!eventId) continue;
 
@@ -179,7 +256,7 @@ async function syncCalendarEvent(emailAddress: string) {
             .from(corsairEntities)
             .where(
                 and(
-                    eq(corsairEntities.accountId, accountId),
+                    inArray(corsairEntities.accountId, accountIds),
                     eq(corsairEntities.entityId, eventId),
                     eq(corsairEntities.entityType, "events")
                 )
@@ -192,7 +269,7 @@ async function syncCalendarEvent(emailAddress: string) {
                 .set({ data: event, updatedAt: new Date(), version: (event.etag as string) ?? "1" })
                 .where(
                     and(
-                        eq(corsairEntities.accountId, accountId),
+                        inArray(corsairEntities.accountId, accountIds),
                         eq(corsairEntities.entityId, eventId),
                         eq(corsairEntities.entityType, "events")
                     )
@@ -200,7 +277,7 @@ async function syncCalendarEvent(emailAddress: string) {
         } else {
             await db.insert(corsairEntities).values({
                 id: randomUUID(),
-                accountId,
+                accountId: primaryAccountId,
                 entityId: eventId,
                 entityType: "events",
                 version: (event.etag as string) ?? "1",
@@ -209,7 +286,7 @@ async function syncCalendarEvent(emailAddress: string) {
         }
     }
 
-    console.info(`[calendar/webhook] Synced ${items.length} events for tenant=${tenantId}`);
+    console.info(`[calendar/webhook] Synced calendar events for tenant=${tenantId}`);
 }
 
 
@@ -311,6 +388,7 @@ export async function POST(request: NextRequest) {
             }
 
             revalidatePath("/Calendar");
+            revalidatePath("/inbox");
         }
 
         return NextResponse.json(result.response || { success: true }, {

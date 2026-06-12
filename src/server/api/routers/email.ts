@@ -111,6 +111,10 @@ export const emailRouter = createTRPCRouter({
       const seen = new Set<string>();
 
       const allEmails = messages
+        .filter(({ entity: message }) => {
+          const data = message.data as any;
+          return !!data?.payload;
+        })
         .map(({ entity: message }) => {
           const data = message.data as any;
 
@@ -130,7 +134,7 @@ export const emailRouter = createTRPCRouter({
             senderEmail:
               from?.match(/<(.+?)>/)?.[1] ?? from,
 
-            subject: data.subject ?? "(no subject)",
+            subject: getHeader(headers, "Subject") ?? "(no subject)",
 
             snippet: data.snippet ?? "",
 

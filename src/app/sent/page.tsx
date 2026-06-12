@@ -24,7 +24,7 @@ export default function SentPage() {
           </div>
           <div className="flex gap-6 flex-1 min-h-0">
             <SentMailList />
-            <div className="flex-[0.4] flex flex-col gap-6">
+            <div className="flex-[0.28] flex flex-col gap-6 min-w-0">
               <UpcomingMeetings />
               <AiRecommendations />
             </div>
