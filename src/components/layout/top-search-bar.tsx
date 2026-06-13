@@ -69,7 +69,7 @@ export default function TopSearchBar({
 
       {/* Search Section */}
       <div className="max-w-2xl flex-1 px-4">
-        <div className="relative flex h-12 w-full items-center rounded-full border border-transparent bg-gray-100 transition-all focus-within:border-blue-200 focus-within:bg-white focus-within:shadow-sm">
+        <div className="relative flex h-12 w-full items-center rounded-full border border-transparent bg-[#EAEEF5] transition-all focus-within:border-blue-200 focus-within:bg-white focus-within:shadow-sm">
           <Search size={18} className="absolute left-4 text-gray-500" />
 
           <input

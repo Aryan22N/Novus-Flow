@@ -20,7 +20,7 @@ export default function InboxPage() {
       <TopSearchBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       <div className="flex flex-1">
         <AppSidebar isOpen={isSidebarOpen} />
-        <main className="bg-surface flex flex-1 flex-col p-6 transition-all">
+        <main className="bg-surface flex flex-1 flex-col p-1 transition-all">
           <InboxHeader
             page={page}
             onPageChange={setPage}

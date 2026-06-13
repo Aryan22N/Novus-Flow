@@ -8,37 +8,12 @@ import { eq, desc, sql, and } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
 import { TRPCError } from "@trpc/server";
 import { getAiProvider } from "./ai-provider";
-
-function getHeader(headers: { name: string; value: string }[], name: string) {
-  return headers.find(
-    (header) => header.name.toLowerCase() === name.toLowerCase(),
-  )?.value;
-}
-
-function extractSender(fromHeader?: string) {
-  if (!fromHeader) return "Unknown";
-  const match = fromHeader.match(/^(.+?)\s*</);
-  if (match?.[1]) {
-    return match[1].replace(/"/g, "");
-  }
-  return fromHeader;
-}
-
-function decodeBase64Url(base64UrlStr: string) {
-  try {
-    const base64 = base64UrlStr.replace(/-/g, "+").replace(/_/g, "/");
-    return Buffer.from(base64, "base64").toString("utf-8");
-  } catch (e) {
-    return "";
-  }
-}
-
-interface Attachment {
-  id: string;
-  filename: string;
-  mimeType: string;
-  size: number;
-}
+import {
+  getHeader,
+  extractSender,
+  parsePayload,
+  type Attachment,
+} from "~/server/utils/email-parsing";
 
 interface ThreadMessage {
   id: string;
@@ -54,49 +29,6 @@ interface ThreadMessage {
   attachments: Attachment[];
   unread: boolean;
   date: Date;
-}
-
-function parsePayload(payload: any) {
-  let htmlBody = "";
-  let plainBody = "";
-  let attachments: Attachment[] = [];
-
-  function traverse(part: any) {
-    if (!part) return;
-
-    if (part.filename && part.body?.attachmentId) {
-      attachments.push({
-        id: part.body.attachmentId,
-        filename: part.filename,
-        mimeType: part.mimeType,
-        size: part.body.size || 0,
-      });
-    }
-
-    if (part.mimeType === "text/html" && part.body?.data) {
-      htmlBody = decodeBase64Url(part.body.data);
-    } else if (part.mimeType === "text/plain" && part.body?.data) {
-      plainBody = decodeBase64Url(part.body.data);
-    }
-
-    if (part.parts) {
-      for (const p of part.parts) {
-        traverse(p);
-      }
-    }
-  }
-
-  traverse(payload);
-
-  if (!payload?.parts && payload?.body?.data) {
-    if (payload.mimeType === "text/html") {
-      htmlBody = decodeBase64Url(payload.body.data);
-    } else if (payload.mimeType === "text/plain") {
-      plainBody = decodeBase64Url(payload.body.data);
-    }
-  }
-
-  return { htmlBody, plainBody, attachments };
 }
 
 async function fetchThreadMessages(

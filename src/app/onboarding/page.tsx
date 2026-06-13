@@ -4,7 +4,7 @@ import { authClient } from "~/server/better-auth/client";
 import { useRouter } from "next/navigation";
 import { Mail, Calendar, ArrowRight } from "lucide-react";
 import { api } from "~/trpc/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function OnboardingPage() {
   const { data: session, isPending: isSessionPending } =
@@ -15,11 +15,19 @@ export default function OnboardingPage() {
       enabled: !!session?.user,
     });
 
+  const registerWebhook = api.calendar.registerWebhook.useMutation();
+  const hasTriggeredRef = useRef(false);
+
   useEffect(() => {
-    if (hasConnectedAccounts) {
-      router.push("/inbox");
+    if (hasConnectedAccounts && !hasTriggeredRef.current) {
+      hasTriggeredRef.current = true;
+      registerWebhook.mutate(undefined, {
+        onSettled: () => {
+          router.push("/inbox");
+        },
+      });
     }
-  }, [hasConnectedAccounts, router]);
+  }, [hasConnectedAccounts, router, registerWebhook]);
 
   const isPending =
     isSessionPending || isCheckingAccounts || hasConnectedAccounts;

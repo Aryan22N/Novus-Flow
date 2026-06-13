@@ -382,7 +382,7 @@ export async function POST(request: NextRequest) {
 
       if (event?.type && event.message) {
         // Fire-and-forget — we don't want a DB error to break the 200 ack to Google
-        syncGmailEvent(event).catch((err) =>
+        void syncGmailEvent(event).catch((err) =>
           console.error("[gmail/pubsub] syncGmailEvent failed:", err),
         );
       }
@@ -402,7 +402,7 @@ export async function POST(request: NextRequest) {
       const emailAddress = body?.emailAddress ?? body?.calendarId ?? null;
 
       if (emailAddress) {
-        syncCalendarEvent(emailAddress).catch((err) =>
+        void syncCalendarEvent(emailAddress).catch((err) =>
           console.error("[calendar/webhook] syncCalendarEvent failed:", err),
         );
       }

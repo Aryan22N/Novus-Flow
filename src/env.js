@@ -22,6 +22,7 @@ export const env = createEnv({
     OPENAI_API_KEY: z.string().min(1),
     GEMINI_API_KEY: z.string().optional(),
     AI_PROVIDER: z.enum(["openai", "gemini"]).default("openai"),
+    CORSAIR_KEK: z.string(),
   },
 
   /**
@@ -30,7 +31,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_APP_URL: z.string().url(),
   },
 
   /**
@@ -49,6 +50,8 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     AI_PROVIDER: process.env.AI_PROVIDER,
+    CORSAIR_KEK: process.env.CORSAIR_KEK,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

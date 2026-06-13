@@ -3,6 +3,7 @@ import { corsair } from "~/server/corsair";
 import { getSession } from "~/server/better-auth/server";
 import { headers } from "next/headers";
 import { generateOAuthUrl } from "corsair/oauth";
+import { env } from "~/env";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
   }
 
   const tenantId = session.user.id;
-  const redirectUri = "http://localhost:3000/api/corsair/callback";
+  const redirectUri = `${env.NEXT_PUBLIC_APP_URL}/api/corsair/callback`;
 
   try {
     const { url } = await generateOAuthUrl(corsair, plugin, {

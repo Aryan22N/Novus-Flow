@@ -49,10 +49,10 @@ function formatEventDateTime(startIso: string | null, allDay: boolean): string {
   const timeLabel = allDay
     ? "All day"
     : d.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
 
   if (isToday) {
     return timeLabel;
@@ -199,7 +199,7 @@ export default function UpcomingMeetings() {
   }, [calendarData]);
 
   return (
-    <div className="bg-surface-container-lowest border-outline-variant flex h-[350px] flex-col rounded-xl border p-4 shrink-0">
+    <div className="bg-surface-container-lowest border-outline-variant flex h-[300px] flex-col rounded-xl border p-4 shrink-0">
       <h3 className="text-title-sm font-title-sm text-on-surface mb-4 flex shrink-0 items-center gap-2 select-none">
         <CalendarDays size={18} className="text-secondary" />
         Upcoming Meetings
