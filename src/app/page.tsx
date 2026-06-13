@@ -13,7 +13,7 @@ import {
   Users,
   Search,
   SlidersHorizontal,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -36,13 +36,15 @@ export default function HomePage() {
     }
 
     let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(syncSize);
       resizeObserver.observe(canvas);
     }
     syncSize();
 
-    const gl = canvas.getContext('webgl') || (canvas.getContext('experimental-webgl') as WebGLRenderingContext | null);
+    const gl =
+      canvas.getContext("webgl") ||
+      (canvas.getContext("experimental-webgl") as WebGLRenderingContext | null);
     if (!gl) return;
 
     const vs = `attribute vec2 a_position;
@@ -108,15 +110,19 @@ void main() {
 
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+      gl.STATIC_DRAW,
+    );
 
-    const pos = gl.getAttribLocation(prog, 'a_position');
+    const pos = gl.getAttribLocation(prog, "a_position");
     gl.enableVertexAttribArray(pos);
     gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
 
-    const uTime = gl.getUniformLocation(prog, 'u_time');
-    const uRes = gl.getUniformLocation(prog, 'u_resolution');
-    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+    const uTime = gl.getUniformLocation(prog, "u_time");
+    const uRes = gl.getUniformLocation(prog, "u_resolution");
+    const uMouse = gl.getUniformLocation(prog, "u_mouse");
 
     let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
 
@@ -130,10 +136,10 @@ void main() {
       }
     };
 
-    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener("mousemove", onMouseMove);
 
     function render(t: number) {
-      if (typeof ResizeObserver === 'undefined') syncSize();
+      if (typeof ResizeObserver === "undefined") syncSize();
       if (!gl || !canvas) return;
 
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -149,7 +155,7 @@ void main() {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener("mousemove", onMouseMove);
       if (resizeObserver && canvas) {
         resizeObserver.unobserve(canvas);
       }
@@ -157,23 +163,29 @@ void main() {
   }, []);
 
   useEffect(() => {
-    const nav = document.getElementById('navbar');
+    const nav = document.getElementById("navbar");
     const handleScroll = () => {
       if (!nav) return;
       if (window.scrollY > 20) {
-        nav.classList.add('shadow-sm');
-        nav.classList.replace('bg-background/80', 'bg-surface-container-lowest/95');
+        nav.classList.add("shadow-sm");
+        nav.classList.replace(
+          "bg-background/80",
+          "bg-surface-container-lowest/95",
+        );
       } else {
-        nav.classList.remove('shadow-sm');
-        nav.classList.replace('bg-surface-container-lowest/95', 'bg-background/80');
+        nav.classList.remove("shadow-sm");
+        nav.classList.replace(
+          "bg-surface-container-lowest/95",
+          "bg-background/80",
+        );
       }
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <div className="bg-surface font-body-md text-on-surface antialiased overflow-x-hidden relative min-h-screen">
+    <div className="bg-surface font-body-md text-on-surface relative min-h-screen overflow-x-hidden antialiased">
       <style>{`
         .glass-panel {
             background: rgba(255, 255, 255, 0.7);
@@ -209,83 +221,124 @@ void main() {
       `}</style>
 
       {/* Background Shader */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none opacity-40">
-        <div className="absolute inset-0 w-full h-full" style={{ display: 'block' }}>
+      <div className="pointer-events-none fixed inset-0 z-[-1] opacity-40">
+        <div
+          className="absolute inset-0 h-full w-full"
+          style={{ display: "block" }}
+        >
           <canvas
             ref={canvasRef}
             id="shader-canvas-ANIMATION_19"
-            style={{ display: 'block', width: '100%', height: '100%' }}
+            style={{ display: "block", width: "100%", height: "100%" }}
           ></canvas>
         </div>
       </div>
 
       {/* Navigation */}
       <nav
-        className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 transition-all duration-300"
+        className="bg-background/80 border-outline-variant/30 fixed top-0 z-50 w-full border-b backdrop-blur-md transition-all duration-300"
         id="navbar"
       >
-        <div className="flex justify-between items-center w-full px-4 py-4 max-w-7xl mx-auto">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4">
           {/* Brand Logo with native Lucide Sparkles fallback layout */}
-          <Link className="flex items-center gap-2 group" href="/">
-            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white group-hover:opacity-80 transition-opacity">
+          <Link className="group flex items-center gap-2" href="/">
+            <div className="from-primary to-secondary flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br text-white transition-opacity group-hover:opacity-80">
               <Sparkles className="h-4 w-4" />
             </div>
-            <span className="text-xl font-bold text-on-surface tracking-tight">Nexus Flow</span>
+            <span className="text-on-surface text-xl font-bold tracking-tight">
+              Nexus Flow
+            </span>
           </Link>
 
           {/* Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors duration-200" href="#features">Features</Link>
-            <Link className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors duration-200" href="#pricing">Pricing</Link>
+          <div className="hidden items-center gap-8 md:flex">
+            <Link
+              className="text-on-surface-variant hover:text-primary text-sm font-medium transition-colors duration-200"
+              href="#features"
+            >
+              Features
+            </Link>
+            <Link
+              className="text-on-surface-variant hover:text-primary text-sm font-medium transition-colors duration-200"
+              href="#pricing"
+            >
+              Pricing
+            </Link>
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <button onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/onboarding" })} className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer">Log in</button>
-            <button onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/onboarding" })} className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all shadow-sm cursor-pointer">Get Started</button>
+            <button
+              onClick={async () =>
+                await authClient.signIn.social({
+                  provider: "google",
+                  callbackURL: "/onboarding",
+                })
+              }
+              className="text-on-surface-variant hover:text-primary hidden cursor-pointer text-sm font-medium transition-colors duration-200 md:block"
+            >
+              Log in
+            </button>
+            <button
+              onClick={async () =>
+                await authClient.signIn.social({
+                  provider: "google",
+                  callbackURL: "/onboarding",
+                })
+              }
+              className="bg-primary hover:bg-opacity-90 cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all"
+            >
+              Get Started
+            </button>
           </div>
         </div>
       </nav>
 
       <main className="pt-32 pb-24">
         {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-4 relative z-10 flex flex-col items-center text-center">
+        <section className="relative z-10 mx-auto flex max-w-7xl flex-col items-center px-4 text-center">
           <div
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold tracking-wide uppercase mb-8 opacity-0 animate-fade-in-up"
-            style={{ animationDelay: '0.1s' }}
+            className="animate-fade-in-up mb-8 inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold tracking-wide text-blue-600 uppercase opacity-0"
+            style={{ animationDelay: "0.1s" }}
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span>Introducing Nexus Flow AI</span>
           </div>
           <h1
-            className="text-4xl md:text-6xl font-extrabold leading-tight tracking-tight text-on-surface max-w-4xl mb-6 opacity-0 animate-fade-in-up"
-            style={{ animationDelay: '0.2s' }}
+            className="text-on-surface animate-fade-in-up mb-6 max-w-4xl text-4xl leading-tight font-extrabold tracking-tight opacity-0 md:text-6xl"
+            style={{ animationDelay: "0.2s" }}
           >
             The Intelligent <br className="hidden md:block" />
             <span className="ai-gradient-text">Flow of Work.</span>
           </h1>
           <p
-            className="text-lg text-on-surface-variant max-w-2xl mb-10 opacity-0 animate-fade-in-up"
-            style={{ animationDelay: '0.3s' }}
+            className="text-on-surface-variant animate-fade-in-up mb-10 max-w-2xl text-lg opacity-0"
+            style={{ animationDelay: "0.3s" }}
           >
-            Experience the world's first AI-native email and calendar workspace. Built for speed, precision, and focus.
+            Experience the world's first AI-native email and calendar workspace.
+            Built for speed, precision, and focus.
           </p>
           <div
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center opacity-0 animate-slideUp"
-            style={{ animationDelay: '0.4s' }}
+            className="animate-slideUp flex flex-col items-center justify-center gap-4 opacity-0 sm:flex-row"
+            style={{ animationDelay: "0.4s" }}
           >
             <button
-              onClick={async () => await authClient.signIn.social({ provider: "google", callbackURL: "/onboarding" })}
-              className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 w-full sm:w-auto text-center flex items-center justify-center gap-2 cursor-pointer"
+              onClick={async () =>
+                await authClient.signIn.social({
+                  provider: "google",
+                  callbackURL: "/onboarding",
+                })
+              }
+              className="from-primary to-secondary flex w-full transform cursor-pointer items-center justify-center gap-2 rounded-lg bg-gradient-to-r px-6 py-3 text-center font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg sm:w-auto"
             >
               Get Started for Free
               <ArrowRight className="h-4 w-4" />
             </button>
             <Link
-              className="bg-white text-on-surface border border-outline-variant px-6 py-3 rounded-lg font-medium hover:bg-slate-50 transition-colors w-full sm:w-auto text-center flex items-center justify-center gap-2"
+              className="text-on-surface border-outline-variant flex w-full items-center justify-center gap-2 rounded-lg border bg-white px-6 py-3 text-center font-medium transition-colors hover:bg-slate-50 sm:w-auto"
               href="#"
             >
-              <PlayCircle className="h-4 w-4 text-on-surface-variant" />
+              <PlayCircle className="text-on-surface-variant h-4 w-4" />
               Watch the Film
             </Link>
           </div>
@@ -293,77 +346,87 @@ void main() {
 
         {/* Product Preview Mockup */}
         <section
-          className="max-w-[1200px] mx-auto mt-20 px-4 md:px-8 opacity-0 animate-fade-in-up"
-          style={{ animationDelay: '0.6s' }}
+          className="animate-fade-in-up mx-auto mt-20 max-w-[1200px] px-4 opacity-0 md:px-8"
+          style={{ animationDelay: "0.6s" }}
         >
-          <div className="glass-panel rounded-xl border border-outline-variant/50 overflow-hidden shadow-2xl animate-float relative">
+          <div className="glass-panel border-outline-variant/50 animate-float relative overflow-hidden rounded-xl border shadow-2xl">
             {/* Browser/App Header */}
-            <div className="h-10 bg-slate-100/80 border-b border-outline-variant/30 flex items-center px-4 gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <div className="w-3 h-3 rounded-full bg-green-400"></div>
+            <div className="border-outline-variant/30 flex h-10 items-center gap-2 border-b bg-slate-100/80 px-4">
+              <div className="h-3 w-3 rounded-full bg-red-400"></div>
+              <div className="h-3 w-3 rounded-full bg-amber-400"></div>
+              <div className="h-3 w-3 rounded-full bg-green-400"></div>
             </div>
             {/* App Layout */}
             <div className="flex h-[600px] bg-white text-left">
               {/* Sidebar Nav */}
-              <div className="w-16 bg-slate-50 border-r border-outline-variant/30 flex flex-col items-center py-4 gap-6">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+              <div className="border-outline-variant/30 flex w-16 flex-col items-center gap-6 border-r bg-slate-50 py-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                   <Inbox className="h-4 w-4" />
                 </div>
-                <div className="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors">
+                <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600">
                   <Calendar className="h-4 w-4" />
                 </div>
-                <div className="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600 flex items-center justify-center cursor-pointer transition-colors">
+                <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600">
                   <Users className="h-4 w-4" />
                 </div>
               </div>
               {/* Main Content (Priority Inbox) */}
-              <div className="flex-1 flex flex-col bg-white">
+              <div className="flex flex-1 flex-col bg-white">
                 {/* Top Bar */}
-                <div className="h-14 border-b border-outline-variant/30 flex items-center px-6 justify-between">
-                  <div className="font-semibold text-slate-700">Priority Inbox</div>
+                <div className="border-outline-variant/30 flex h-14 items-center justify-between border-b px-6">
+                  <div className="font-semibold text-slate-700">
+                    Priority Inbox
+                  </div>
                   <div className="flex items-center gap-4 text-slate-400">
-                    <Search className="h-4 w-4 cursor-pointer hover:text-slate-600 transition-colors" />
-                    <SlidersHorizontal className="h-4 w-4 cursor-pointer hover:text-slate-600 transition-colors" />
+                    <Search className="h-4 w-4 cursor-pointer transition-colors hover:text-slate-600" />
+                    <SlidersHorizontal className="h-4 w-4 cursor-pointer transition-colors hover:text-slate-600" />
                   </div>
                 </div>
                 {/* Email List */}
-                <div className="flex-1 overflow-hidden p-4 flex flex-col gap-2">
+                <div className="flex flex-1 flex-col gap-2 overflow-hidden p-4">
                   {/* AI Highlighted Item */}
-                  <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                  <div className="flex items-start gap-4 rounded-lg border border-blue-100 bg-blue-50/50 p-4">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                       <Briefcase className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex justify-between items-baseline mb-1">
-                        <div className="font-medium text-slate-800">Q3 Strategy Review</div>
+                      <div className="mb-1 flex items-baseline justify-between">
+                        <div className="font-medium text-slate-800">
+                          Q3 Strategy Review
+                        </div>
                         <div className="text-xs text-slate-400">10:42 AM</div>
                       </div>
-                      <div className="text-xs text-slate-500 mb-2">Sarah Jenkins, Team Alpha</div>
-                      <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-white border border-blue-100 text-xs font-medium text-blue-700 shadow-sm">
+                      <div className="mb-2 text-xs text-slate-500">
+                        Sarah Jenkins, Team Alpha
+                      </div>
+                      <div className="inline-flex items-center gap-1.5 rounded border border-blue-100 bg-white px-2 py-1 text-xs font-medium text-blue-700 shadow-sm">
                         <Sparkles className="h-3 w-3 text-blue-500" />
                         AI Summary: Action items for upcoming board meeting.
                       </div>
                     </div>
                   </div>
                   {/* Standard Items */}
-                  <div className="p-4 rounded-lg bg-white border border-transparent hover:border-slate-100 flex items-start gap-4 transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center flex-shrink-0">
+                  <div className="flex items-start gap-4 rounded-lg border border-transparent bg-white p-4 transition-colors hover:border-slate-100">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                       <Users className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex justify-between items-baseline mb-1">
-                        <div className="font-medium text-slate-800">Design System Updates</div>
+                      <div className="mb-1 flex items-baseline justify-between">
+                        <div className="font-medium text-slate-800">
+                          Design System Updates
+                        </div>
                         <div className="text-xs text-slate-400">Yesterday</div>
                       </div>
-                      <div className="text-xs text-slate-500">Review the new token structure before launch.</div>
+                      <div className="text-xs text-slate-500">
+                        Review the new token structure before launch.
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
               {/* Collapsed Nexus Assistant Rail */}
-              <div className="w-12 bg-slate-50 border-l border-outline-variant/30 flex flex-col items-center py-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all">
+              <div className="border-outline-variant/30 flex w-12 flex-col items-center border-l bg-slate-50 py-4">
+                <div className="from-primary to-secondary flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br text-white shadow-sm transition-all hover:shadow-md">
                   <Sparkles className="h-4 w-4" />
                 </div>
               </div>
@@ -372,41 +435,58 @@ void main() {
         </section>
 
         {/* Feature Grid */}
-        <section className="max-w-7xl mx-auto px-4 mt-32 text-left" id="features">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-on-surface mb-4">Orchestrate your workflow</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto">A unified workspace designed to minimize context switching and maximize deep work.</p>
+        <section
+          className="mx-auto mt-32 max-w-7xl px-4 text-left"
+          id="features"
+        >
+          <div className="mb-16 text-center">
+            <h2 className="text-on-surface mb-4 text-3xl font-bold">
+              Orchestrate your workflow
+            </h2>
+            <p className="mx-auto max-w-2xl text-slate-500">
+              A unified workspace designed to minimize context switching and
+              maximize deep work.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Feature 1 */}
-            <div className="glass-panel p-8 rounded-xl border border-outline-variant/40 transition-all duration-300 ai-glow-hover flex flex-col">
-              <div className="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
+            <div className="glass-panel border-outline-variant/40 ai-glow-hover flex flex-col rounded-xl border p-8 transition-all duration-300">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                 <SlidersHorizontal className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-semibold text-on-surface mb-3">Priority Management</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                AI-driven categorization that clears the noise. Focus only on what matters right now.
+              <h3 className="text-on-surface mb-3 text-lg font-semibold">
+                Priority Management
+              </h3>
+              <p className="text-sm leading-relaxed text-slate-500">
+                AI-driven categorization that clears the noise. Focus only on
+                what matters right now.
               </p>
             </div>
             {/* Feature 2 */}
-            <div className="glass-panel p-8 rounded-xl border border-outline-variant/40 transition-all duration-300 ai-glow-hover flex flex-col">
-              <div className="w-12 h-12 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-6">
+            <div className="glass-panel border-outline-variant/40 ai-glow-hover flex flex-col rounded-xl border p-8 transition-all duration-300">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                 <Calendar className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-semibold text-on-surface mb-3">Unified Calendar</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                Side-by-side orchestration of your time and communication in a single fluid interface.
+              <h3 className="text-on-surface mb-3 text-lg font-semibold">
+                Unified Calendar
+              </h3>
+              <p className="text-sm leading-relaxed text-slate-500">
+                Side-by-side orchestration of your time and communication in a
+                single fluid interface.
               </p>
             </div>
             {/* Feature 3 */}
-            <div className="glass-panel p-8 rounded-xl border border-outline-variant/40 transition-all duration-300 ai-glow-hover flex flex-col relative overflow-hidden">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
-              <div className="w-12 h-12 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-6 relative z-10">
+            <div className="glass-panel border-outline-variant/40 ai-glow-hover relative flex flex-col overflow-hidden rounded-xl border p-8 transition-all duration-300">
+              <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-purple-500/10 blur-2xl"></div>
+              <div className="relative z-10 mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-semibold text-on-surface mb-3 relative z-10">Nexus Assistant</h3>
-              <p className="text-sm text-slate-500 leading-relaxed relative z-10">
-                A persistent intelligence that summarizes threads, drafts responses, and schedules meetings.
+              <h3 className="text-on-surface relative z-10 mb-3 text-lg font-semibold">
+                Nexus Assistant
+              </h3>
+              <p className="relative z-10 text-sm leading-relaxed text-slate-500">
+                A persistent intelligence that summarizes threads, drafts
+                responses, and schedules meetings.
               </p>
             </div>
           </div>
@@ -414,17 +494,39 @@ void main() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-outline-variant/30 mt-auto w-full">
-        <div className="flex flex-col md:flex-row justify-between items-center w-full px-4 py-12 max-w-7xl mx-auto gap-6">
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="font-bold text-on-surface">Nexus Flow</span>
-            <span className="text-xs text-slate-400">© 2026 Nexus Flow. All rights reserved.</span>
+      <footer className="border-outline-variant/30 mt-auto w-full border-t bg-white">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-6 px-4 py-12 md:flex-row">
+          <div className="flex flex-col items-center gap-2 md:items-start">
+            <span className="text-on-surface font-bold">Nexus Flow</span>
+            <span className="text-xs text-slate-400">
+              © 2026 Nexus Flow. All rights reserved.
+            </span>
           </div>
           <div className="flex flex-wrap justify-center gap-6">
-            <Link className="text-xs text-slate-400 hover:text-on-surface transition-colors" href="#">Privacy Policy</Link>
-            <Link className="text-xs text-slate-400 hover:text-on-surface transition-colors" href="#">Terms of Service</Link>
-            <Link className="text-xs text-slate-400 hover:text-on-surface transition-colors" href="#">Security</Link>
-            <Link className="text-xs text-slate-400 hover:text-on-surface transition-colors" href="#">Contact</Link>
+            <Link
+              className="hover:text-on-surface text-xs text-slate-400 transition-colors"
+              href="#"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              className="hover:text-on-surface text-xs text-slate-400 transition-colors"
+              href="#"
+            >
+              Terms of Service
+            </Link>
+            <Link
+              className="hover:text-on-surface text-xs text-slate-400 transition-colors"
+              href="#"
+            >
+              Security
+            </Link>
+            <Link
+              className="hover:text-on-surface text-xs text-slate-400 transition-colors"
+              href="#"
+            >
+              Contact
+            </Link>
           </div>
         </div>
       </footer>

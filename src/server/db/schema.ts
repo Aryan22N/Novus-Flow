@@ -115,7 +115,27 @@ export const sentMail = pgTable("sent_mail", {
   subject: text("subject").notNull(),
   body: text("body").notNull(),
   messageId: text("message_id"),
-  createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const draftMail = pgTable("draft_mail", {
+  id: text("id").primaryKey(),
+  tenantId: text("tenant_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  to: text("to"),
+  cc: text("cc"),
+  bcc: text("bcc"),
+  subject: text("subject"),
+  body: text("body"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
 });
 
 export * from "./corsair-schema";

@@ -41,17 +41,24 @@ interface CacheEntry {
   eventId?: string;
 }
 
-export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps) {
+export default function AiPanel({
+  defaultOpen = false,
+  threadId,
+}: AiPanelProps) {
   const [isExpanded, setIsExpanded] = useState(defaultOpen);
   const [meetingTime, setMeetingTime] = useState("");
   const [isScheduled, setIsScheduled] = useState(false);
   const [userBriefPrompt, setUserBriefPrompt] = useState("");
   const [generatedDraft, setGeneratedDraft] = useState("");
   const [copied, setCopied] = useState(false);
-  const [completedTasks, setCompletedTasks] = useState<Record<number, boolean>>({});
+  const [completedTasks, setCompletedTasks] = useState<Record<number, boolean>>(
+    {},
+  );
 
   // Local state for active analysis data (sourced either from cache or from query)
-  const [activeAnalysis, setActiveAnalysis] = useState<CacheEntry["analysis"] | null>(null);
+  const [activeAnalysis, setActiveAnalysis] = useState<
+    CacheEntry["analysis"] | null
+  >(null);
   const [isCacheLoading, setIsCacheLoading] = useState(true);
   const [hasCache, setHasCache] = useState(false);
 
@@ -103,11 +110,15 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
   }, [threadId]);
 
   // Helper to update any field in the cache entry for the current threadId
-  const updateCache = (updates: Partial<Omit<CacheEntry, "analysis" | "timestamp">>) => {
+  const updateCache = (
+    updates: Partial<Omit<CacheEntry, "analysis" | "timestamp">>,
+  ) => {
     if (!threadId || !activeAnalysis) return;
     try {
       const cachedDataStr = localStorage.getItem("superman_ai_analysis_cache");
-      const cache = cachedDataStr ? (JSON.parse(cachedDataStr) as Record<string, CacheEntry>) : {};
+      const cache = cachedDataStr
+        ? (JSON.parse(cachedDataStr) as Record<string, CacheEntry>)
+        : {};
       const currentEntry = cache[threadId];
       if (currentEntry) {
         cache[threadId] = {
@@ -115,7 +126,10 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
           ...updates,
           timestamp: Date.now(),
         };
-        localStorage.setItem("superman_ai_analysis_cache", JSON.stringify(cache));
+        localStorage.setItem(
+          "superman_ai_analysis_cache",
+          JSON.stringify(cache),
+        );
       }
     } catch (err) {
       console.error("Error updating localStorage cache:", err);
@@ -123,9 +137,16 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
   };
 
   // Fetch AI thread analysis automatically when threadId is loaded and not cached
-  const { data: analysis, isLoading: isQueryLoading, error } = api.ai.analyzeThread.useQuery(
+  const {
+    data: analysis,
+    isLoading: isQueryLoading,
+    error,
+  } = api.ai.analyzeThread.useQuery(
     { threadId },
-    { enabled: !!threadId && !isCacheLoading && !hasCache, refetchOnWindowFocus: false }
+    {
+      enabled: !!threadId && !isCacheLoading && !hasCache,
+      refetchOnWindowFocus: false,
+    },
   );
 
   const isLoading = isCacheLoading || (isQueryLoading && !hasCache);
@@ -171,8 +192,12 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
       setHasCache(true);
 
       try {
-        const cachedDataStr = localStorage.getItem("superman_ai_analysis_cache");
-        const cache = cachedDataStr ? (JSON.parse(cachedDataStr) as Record<string, CacheEntry>) : {};
+        const cachedDataStr = localStorage.getItem(
+          "superman_ai_analysis_cache",
+        );
+        const cache = cachedDataStr
+          ? (JSON.parse(cachedDataStr) as Record<string, CacheEntry>)
+          : {};
         cache[threadId] = {
           analysis,
           generatedDraft: analysis.defaultDraft,
@@ -182,7 +207,10 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
           userBriefPrompt: "",
           timestamp: Date.now(),
         };
-        localStorage.setItem("superman_ai_analysis_cache", JSON.stringify(cache));
+        localStorage.setItem(
+          "superman_ai_analysis_cache",
+          JSON.stringify(cache),
+        );
       } catch (err) {
         console.error("Error writing to localStorage cache:", err);
       }
@@ -233,7 +261,8 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
   const handleScheduleMeeting = () => {
     if (!meetingTime.trim()) return;
     scheduleMutation.mutate({
-      summary: activeAnalysis?.meetingDetails.proposedTopic || "AI Scheduled Sync",
+      summary:
+        activeAnalysis?.meetingDetails.proposedTopic || "AI Scheduled Sync",
       description: `Meeting scheduled by Nexus Assistant from thread: ${threadId}\n\nSummary:\n${activeAnalysis?.summary.replace(/<[^>]*>/g, "")}`,
       meetingTime: meetingTime,
     });
@@ -246,10 +275,10 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
 
   if (!isExpanded) {
     return (
-      <aside className="w-12 bg-[#f7f9fc] border-l border-outline-variant flex flex-col shrink-0 h-full transition-all duration-200 overflow-hidden">
-        <div className="flex flex-col items-center py-4 gap-4 h-full">
+      <aside className="border-outline-variant flex h-full w-12 shrink-0 flex-col overflow-hidden border-l bg-[#f7f9fc] transition-all duration-200">
+        <div className="flex h-full flex-col items-center gap-4 py-4">
           <button
-            className="p-2 rounded-full hover:bg-surface-container-high text-primary"
+            className="hover:bg-surface-container-high text-primary rounded-full p-2"
             onClick={() => setIsExpanded(true)}
             title="Open AI Panel"
             suppressHydrationWarning
@@ -257,7 +286,7 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
             <Brain size={20} />
           </button>
 
-          <div className="[writing-mode:vertical-lr] text-label-caps font-bold text-on-surface-variant tracking-widest uppercase select-none">
+          <div className="text-label-caps text-on-surface-variant font-bold tracking-widest uppercase select-none [writing-mode:vertical-lr]">
             Nexus Assistant
           </div>
         </div>
@@ -266,11 +295,11 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
   }
 
   return (
-    <aside className="w-[380px] bg-surface-container-lowest border-l border-outline-variant flex flex-col shrink-0 h-full transition-all duration-200 shadow-xl">
+    <aside className="bg-surface-container-lowest border-outline-variant flex h-full w-[380px] shrink-0 flex-col border-l shadow-xl transition-all duration-200">
       {/* Header */}
-      <div className="p-4 border-b border-outline-variant flex items-center justify-between">
+      <div className="border-outline-variant flex items-center justify-between border-b p-4">
         <button
-          className="text-on-surface-variant hover:bg-surface-container-high p-1.5 rounded transition-colors"
+          className="text-on-surface-variant hover:bg-surface-container-high rounded p-1.5 transition-colors"
           onClick={() => setIsExpanded(false)}
           title="Close AI Panel"
           suppressHydrationWarning
@@ -278,80 +307,94 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
           <ChevronRight size={20} />
         </button>
 
-        <div className="flex items-center gap-2 text-primary select-none">
+        <div className="text-primary flex items-center gap-2 select-none">
           <Brain size={20} className="animate-pulse" />
           <h2 className="text-title-sm font-title-sm font-bold">
             Nexus Assistant
           </h2>
         </div>
 
-        <button className="text-on-surface-variant hover:bg-surface-container-high p-1.5 rounded transition-colors" suppressHydrationWarning>
+        <button
+          className="text-on-surface-variant hover:bg-surface-container-high rounded p-1.5 transition-colors"
+          suppressHydrationWarning
+        >
           <MoreHorizontal size={20} />
         </button>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
+      <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">
         {!threadId ? (
           // Welcome View when no email is selected
-          <div className="flex flex-col items-center justify-center text-center h-full py-12 px-4 gap-4 select-none">
-            <div className="p-4 rounded-full bg-primary/10 text-primary">
-              <Sparkle size={32} className="animate-spin" style={{ animationDuration: "3s" }} />
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-4 py-12 text-center select-none">
+            <div className="bg-primary/10 text-primary rounded-full p-4">
+              <Sparkle
+                size={32}
+                className="animate-spin"
+                style={{ animationDuration: "3s" }}
+              />
             </div>
             <div>
-              <h3 className="text-title-sm font-bold text-on-surface">No Email Selected</h3>
+              <h3 className="text-title-sm text-on-surface font-bold">
+                No Email Selected
+              </h3>
               <p className="text-body-sm text-on-surface-variant mt-1.5 leading-relaxed">
-                Select an email thread from your inbox, and Nexus Assistant will automatically analyze it for summaries, tasks, and scheduling options.
+                Select an email thread from your inbox, and Nexus Assistant will
+                automatically analyze it for summaries, tasks, and scheduling
+                options.
               </p>
             </div>
           </div>
         ) : isLoading ? (
           // Shimmering Skeleton Loader during API analysis
-          <div className="animate-pulse flex flex-col gap-5 w-full">
+          <div className="flex w-full animate-pulse flex-col gap-5">
             <div className="flex items-center gap-2">
-              <Loader2 size={16} className="animate-spin text-primary" />
-              <span className="text-xs text-primary font-semibold uppercase tracking-wider">Analyzing Thread...</span>
+              <Loader2 size={16} className="text-primary animate-spin" />
+              <span className="text-primary text-xs font-semibold tracking-wider uppercase">
+                Analyzing Thread...
+              </span>
             </div>
 
             {/* Summary Skeleton */}
-            <div className="border border-outline-variant/30 rounded-2xl p-4 bg-surface-container-low/50 flex flex-col gap-3">
-              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div className="border-outline-variant/30 bg-surface-container-low/50 flex flex-col gap-3 rounded-2xl border p-4">
+              <div className="h-4 w-1/3 rounded bg-gray-200"></div>
               <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
-                <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                <div className="h-3 bg-gray-200 rounded w-4/5"></div>
+                <div className="h-3 w-full rounded bg-gray-200"></div>
+                <div className="h-3 w-5/6 rounded bg-gray-200"></div>
+                <div className="h-3 w-4/5 rounded bg-gray-200"></div>
               </div>
             </div>
 
             {/* Tasks Skeleton */}
-            <div className="border border-outline-variant/30 rounded-2xl p-4 bg-surface-container-low/50 flex flex-col gap-3">
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="border-outline-variant/30 bg-surface-container-low/50 flex flex-col gap-3 rounded-2xl border p-4">
+              <div className="h-4 w-1/4 rounded bg-gray-200"></div>
               <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 w-2/3 rounded bg-gray-200"></div>
+                <div className="h-3 w-3/4 rounded bg-gray-200"></div>
               </div>
             </div>
 
             {/* Reply Skeleton */}
-            <div className="border border-outline-variant/30 rounded-2xl p-4 bg-surface-container-low/50 flex flex-col gap-3">
-              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-              <div className="h-12 bg-gray-200 rounded w-full"></div>
+            <div className="border-outline-variant/30 bg-surface-container-low/50 flex flex-col gap-3 rounded-2xl border p-4">
+              <div className="h-4 w-1/3 rounded bg-gray-200"></div>
+              <div className="h-12 w-full rounded bg-gray-200"></div>
             </div>
           </div>
         ) : error && !activeAnalysis ? (
           // Error State View
-          <div className="p-4 border border-red-200 bg-red-50 text-red-800 rounded-2xl flex flex-col gap-2">
-            <h4 className="font-bold text-body-md">Analysis Failed</h4>
+          <div className="flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800">
+            <h4 className="text-body-md font-bold">Analysis Failed</h4>
             <p className="text-body-sm text-red-700">
-              There was an error communicating with OpenAI to analyze this thread. Please verify your API Key and network.
+              There was an error communicating with OpenAI to analyze this
+              thread. Please verify your API Key and network.
             </p>
           </div>
         ) : activeAnalysis ? (
           // Analysis Loaded State
           <div className="flex flex-col gap-5">
             {/* 1. Summary Card */}
-            <div className="border border-outline-variant/30 rounded-2xl p-4 bg-surface-container-low/50 flex flex-col gap-2.5 ai-border hover-lift">
-              <div className="flex items-center gap-1.5 text-primary font-semibold text-body-md border-b border-outline-variant/20 pb-1.5 select-none">
+            <div className="border-outline-variant/30 bg-surface-container-low/50 ai-border hover-lift flex flex-col gap-2.5 rounded-2xl border p-4">
+              <div className="text-primary text-body-md border-outline-variant/20 flex items-center gap-1.5 border-b pb-1.5 font-semibold select-none">
                 <Sparkles size={16} />
                 <span>Thread Summary</span>
               </div>
@@ -362,28 +405,34 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
             </div>
 
             {/* 2. Actionable Tasks Card */}
-            <div className="border border-outline-variant/30 rounded-2xl p-4 bg-surface-container-low/50 flex flex-col gap-2.5 ai-border hover-lift">
-              <div className="flex items-center gap-1.5 text-primary font-semibold text-body-md border-b border-outline-variant/20 pb-1.5 select-none">
+            <div className="border-outline-variant/30 bg-surface-container-low/50 ai-border hover-lift flex flex-col gap-2.5 rounded-2xl border p-4">
+              <div className="text-primary text-body-md border-outline-variant/20 flex items-center gap-1.5 border-b pb-1.5 font-semibold select-none">
                 <ClipboardCheck size={16} />
                 <span>Actionable Tasks</span>
               </div>
               {activeAnalysis.tasks.length === 0 ? (
-                <p className="text-xs text-on-surface-variant italic select-none">No tasks detected in this email.</p>
+                <p className="text-on-surface-variant text-xs italic select-none">
+                  No tasks detected in this email.
+                </p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {activeAnalysis.tasks.map((task, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-body-sm text-on-surface-variant">
+                    <li
+                      key={idx}
+                      className="text-body-sm text-on-surface-variant flex items-start gap-2.5"
+                    >
                       <input
                         type="checkbox"
                         id={`task-${idx}`}
                         checked={!!completedTasks[idx]}
                         onChange={() => toggleTask(idx)}
-                        className="mt-1 h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                        className="text-primary focus:ring-primary mt-1 h-3.5 w-3.5 cursor-pointer rounded border-gray-300"
                       />
                       <label
                         htmlFor={`task-${idx}`}
-                        className={`leading-tight cursor-pointer transition-all select-none ${completedTasks[idx] ? "line-through opacity-50" : ""
-                          }`}
+                        className={`cursor-pointer leading-tight transition-all select-none ${
+                          completedTasks[idx] ? "line-through opacity-50" : ""
+                        }`}
                       >
                         {task}
                       </label>
@@ -395,63 +444,78 @@ export default function AiPanel({ defaultOpen = false, threadId }: AiPanelProps)
 
             {/* 3. Meeting Scheduler Card */}
             {activeAnalysis.isMeetingRelated && (
-              <div className="border border-outline-variant/30 rounded-2xl p-4 bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20 flex flex-col gap-2.5 hover-lift">
-                <div className="flex items-center gap-1.5 text-secondary font-semibold text-body-md border-b border-outline-variant/20 pb-1.5 select-none">
+              <div className="border-outline-variant/30 from-primary/5 to-secondary/5 border-primary/20 hover-lift flex flex-col gap-2.5 rounded-2xl border bg-gradient-to-br p-4">
+                <div className="text-secondary text-body-md border-outline-variant/20 flex items-center gap-1.5 border-b pb-1.5 font-semibold select-none">
                   <CalendarCheck size={16} />
                   <span>Schedule Meeting</span>
                 </div>
 
                 <div className="text-body-sm text-on-surface-variant leading-normal">
-                  <p className="font-semibold text-xs text-secondary mb-1 uppercase tracking-wider select-none">Proposed Topic</p>
+                  <p className="text-secondary mb-1 text-xs font-semibold tracking-wider uppercase select-none">
+                    Proposed Topic
+                  </p>
                   <p className="text-body-sm font-medium italic select-text">
-                    "{activeAnalysis.meetingDetails.proposedTopic || "Sync meeting"}"
+                    "
+                    {activeAnalysis.meetingDetails.proposedTopic ||
+                      "Sync meeting"}
+                    "
                   </p>
                 </div>
 
-                {activeAnalysis.meetingDetails.suggestedDateTimes && activeAnalysis.meetingDetails.suggestedDateTimes.length > 0 && (
-                  <div className="mt-1.5">
-                    <p className="text-xs font-semibold text-on-surface-variant/80 mb-1.5 select-none">Extracted Times (click to autofill):</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {activeAnalysis.meetingDetails.suggestedDateTimes.map((time, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleSuggestedTimeClick(time)}
-                          className="text-xs bg-white hover:bg-primary/5 text-primary border border-outline-variant/50 hover:border-primary/50 px-2.5 py-1 rounded-full transition-all cursor-pointer font-medium"
-                          suppressHydrationWarning
-                        >
-                          {time}
-                        </button>
-                      ))}
+                {activeAnalysis.meetingDetails.suggestedDateTimes &&
+                  activeAnalysis.meetingDetails.suggestedDateTimes.length >
+                    0 && (
+                    <div className="mt-1.5">
+                      <p className="text-on-surface-variant/80 mb-1.5 text-xs font-semibold select-none">
+                        Extracted Times (click to autofill):
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {activeAnalysis.meetingDetails.suggestedDateTimes.map(
+                          (time, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleSuggestedTimeClick(time)}
+                              className="hover:bg-primary/5 text-primary border-outline-variant/50 hover:border-primary/50 cursor-pointer rounded-full border bg-white px-2.5 py-1 text-xs font-medium transition-all"
+                              suppressHydrationWarning
+                            >
+                              {time}
+                            </button>
+                          ),
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <div className="flex gap-2 items-center mt-3">
+                <div className="mt-3 flex items-center gap-2">
                   <input
                     type="text"
                     value={meetingTime}
                     onChange={(e) => handleMeetingTimeChange(e.target.value)}
                     placeholder="Enter meeting time..."
-                    className="flex-1 text-body-sm px-3 py-1.5 border border-outline-variant rounded bg-white focus:outline-none focus:border-primary transition-colors placeholder:text-on-surface-variant/50"
+                    className="text-body-sm border-outline-variant focus:border-primary placeholder:text-on-surface-variant/50 flex-1 rounded border bg-white px-3 py-1.5 transition-colors focus:outline-none"
                     suppressHydrationWarning
                   />
                   <button
                     onClick={handleScheduleMeeting}
                     disabled={scheduleMutation.isPending || !meetingTime.trim()}
-                    className="bg-secondary hover:bg-secondary/90 text-white text-label-caps font-semibold py-1.5 px-3 rounded transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+                    className="bg-secondary hover:bg-secondary/90 text-label-caps flex cursor-pointer items-center justify-center gap-1.5 rounded px-3 py-1.5 font-semibold text-white transition-colors disabled:opacity-50"
                     suppressHydrationWarning
                   >
-                    {scheduleMutation.isPending && <Loader2 size={12} className="animate-spin" />}
+                    {scheduleMutation.isPending && (
+                      <Loader2 size={12} className="animate-spin" />
+                    )}
                     {scheduleMutation.isPending ? "Scheduling..." : "Schedule"}
                   </button>
                 </div>
 
                 {isScheduled && (
-                  <div className="mt-3.5 p-3 bg-green-50 border border-green-200 text-green-800 rounded-xl flex items-center gap-2 text-body-sm animate-fadeIn">
-                    <Check size={16} className="text-green-600 shrink-0" />
+                  <div className="text-body-sm animate-fadeIn mt-3.5 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-3 text-green-800">
+                    <Check size={16} className="shrink-0 text-green-600" />
                     <div>
                       <span className="font-semibold">Meeting Scheduled!</span>
-                      <div className="text-xs text-green-700 mt-0.5">Time: {meetingTime}</div>
+                      <div className="mt-0.5 text-xs text-green-700">
+                        Time: {meetingTime}
+                      </div>
                     </div>
                   </div>
                 )}

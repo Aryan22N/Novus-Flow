@@ -1,16 +1,17 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
 import { TRPCError } from "@trpc/server";
 import { getAiProvider } from "./ai-provider";
 
-function getHeader(
-  headers: { name: string; value: string }[],
-  name: string
-) {
+function getHeader(headers: { name: string; value: string }[], name: string) {
   return headers.find(
-    (header) => header.name.toLowerCase() === name.toLowerCase()
+    (header) => header.name.toLowerCase() === name.toLowerCase(),
   )?.value;
 }
 
@@ -98,7 +99,11 @@ function parsePayload(payload: any) {
   return { htmlBody, plainBody, attachments };
 }
 
-async function fetchThreadMessages(ctx: any, threadId: string, tenantId: string): Promise<ThreadMessage[]> {
+async function fetchThreadMessages(
+  ctx: any,
+  threadId: string,
+  tenantId: string,
+): Promise<ThreadMessage[]> {
   const messagesResult = await ctx.db
     .select({ entity: corsairEntities })
     .from(corsairEntities)
@@ -106,11 +111,11 @@ async function fetchThreadMessages(ctx: any, threadId: string, tenantId: string)
       corsairAccounts,
       and(
         eq(corsairEntities.accountId, corsairAccounts.id),
-        eq(corsairAccounts.tenantId, tenantId)
-      )
+        eq(corsairAccounts.tenantId, tenantId),
+      ),
     )
     .where(
-      sql`${corsairEntities.entityType} = 'messages' AND ${corsairEntities.data}->>'threadId' = ${threadId}`
+      sql`${corsairEntities.entityType} = 'messages' AND ${corsairEntities.data}->>'threadId' = ${threadId}`,
     )
     .orderBy(desc(corsairEntities.createdAt));
 
@@ -121,42 +126,45 @@ async function fetchThreadMessages(ctx: any, threadId: string, tenantId: string)
     return true;
   });
 
-  const messages: ThreadMessage[] = dedupedResult.map(({ entity: message }: any) => {
-    const data = message.data as any;
-    const headers = data?.payload?.headers ?? [];
+  const messages: ThreadMessage[] = dedupedResult.map(
+    ({ entity: message }: any) => {
+      const data = message.data as any;
+      const headers = data?.payload?.headers ?? [];
 
-    const from = getHeader(headers, "From");
-    const to = getHeader(headers, "To");
-    const cc = getHeader(headers, "Cc");
-    const subject = data.subject ?? getHeader(headers, "Subject") ?? "(no subject)";
+      const from = getHeader(headers, "From");
+      const to = getHeader(headers, "To");
+      const cc = getHeader(headers, "Cc");
+      const subject =
+        data.subject ?? getHeader(headers, "Subject") ?? "(no subject)";
 
-    const { htmlBody, plainBody, attachments } = parsePayload(data.payload);
+      const { htmlBody, plainBody, attachments } = parsePayload(data.payload);
 
-    const dateHeader = getHeader(headers, "Date");
-    const headerTimestamp = dateHeader ? new Date(dateHeader).getTime() : NaN;
+      const dateHeader = getHeader(headers, "Date");
+      const headerTimestamp = dateHeader ? new Date(dateHeader).getTime() : NaN;
 
-    return {
-      id: message.entityId,
-      threadId: data.threadId,
-      sender: extractSender(from),
-      senderEmail: from?.match(/<(.+?)>/)?.[1] ?? from,
-      to,
-      cc,
-      subject,
-      snippet: data.snippet ?? "",
-      htmlBody,
-      plainBody,
-      attachments,
-      unread: data.labelIds?.includes("UNREAD"),
-      date: new Date(
-        data.internalDate
-          ? Number(data.internalDate)
-          : !Number.isNaN(headerTimestamp)
-            ? headerTimestamp
-            : data.createdAt || Date.now()
-      ),
-    };
-  });
+      return {
+        id: message.entityId,
+        threadId: data.threadId,
+        sender: extractSender(from),
+        senderEmail: from?.match(/<(.+?)>/)?.[1] ?? from,
+        to,
+        cc,
+        subject,
+        snippet: data.snippet ?? "",
+        htmlBody,
+        plainBody,
+        attachments,
+        unread: data.labelIds?.includes("UNREAD"),
+        date: new Date(
+          data.internalDate
+            ? Number(data.internalDate)
+            : !Number.isNaN(headerTimestamp)
+              ? headerTimestamp
+              : data.createdAt || Date.now(),
+        ),
+      };
+    },
+  );
 
   messages.reverse();
   return messages;
@@ -180,7 +188,10 @@ export const aiRouter = createTRPCRouter({
       }
 
       const threadText = messages
-        .map((m: ThreadMessage) => `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`)
+        .map(
+          (m: ThreadMessage) =>
+            `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`,
+        )
         .join("\n\n---\n\n");
 
       try {
@@ -189,7 +200,10 @@ export const aiRouter = createTRPCRouter({
         return result;
       } catch (error: any) {
         console.error("AI analysis failed:", error);
-        const isRateLimit = error.message?.includes("429") || error.message?.toLowerCase().includes("quota") || error.message?.toLowerCase().includes("rate limit");
+        const isRateLimit =
+          error.message?.includes("429") ||
+          error.message?.toLowerCase().includes("quota") ||
+          error.message?.toLowerCase().includes("rate limit");
         throw new TRPCError({
           code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
           message: isRateLimit
@@ -213,16 +227,25 @@ export const aiRouter = createTRPCRouter({
       }
 
       const threadText = messages
-        .map((m: ThreadMessage) => `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`)
+        .map(
+          (m: ThreadMessage) =>
+            `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`,
+        )
         .join("\n\n---\n\n");
 
       try {
         const provider = getAiProvider();
-        const result = await provider.generateReplyDraft(threadText, input.userBriefPrompt);
+        const result = await provider.generateReplyDraft(
+          threadText,
+          input.userBriefPrompt,
+        );
         return result;
       } catch (error: any) {
         console.error("AI reply draft generation failed:", error);
-        const isRateLimit = error.message?.includes("429") || error.message?.toLowerCase().includes("quota") || error.message?.toLowerCase().includes("rate limit");
+        const isRateLimit =
+          error.message?.includes("429") ||
+          error.message?.toLowerCase().includes("quota") ||
+          error.message?.toLowerCase().includes("rate limit");
         throw new TRPCError({
           code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
           message: isRateLimit
@@ -239,24 +262,29 @@ export const aiRouter = createTRPCRouter({
         return [
           "Thank you for the email. I have reviewed my activity.",
           "It was me, thanks for checking.",
-          "I don't recognize this device. What are the next steps?"
+          "I don't recognize this device. What are the next steps?",
         ];
       }
       const tenantId = ctx.session.user.id;
       const messages = await fetchThreadMessages(ctx, input.threadId, tenantId);
-      const targetMsgIndex = messages.findIndex((m) => m.id === input.messageId);
+      const targetMsgIndex = messages.findIndex(
+        (m) => m.id === input.messageId,
+      );
       if (targetMsgIndex === -1) {
         return [
           "Thank you for the email. I have reviewed my activity.",
           "It was me, thanks for checking.",
-          "I don't recognize this device. What are the next steps?"
+          "I don't recognize this device. What are the next steps?",
         ];
       }
 
       // Get message sequence up to the target message
       const contextMessages = messages.slice(0, targetMsgIndex + 1);
       const threadText = contextMessages
-        .map((m: ThreadMessage) => `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`)
+        .map(
+          (m: ThreadMessage) =>
+            `From: ${m.sender} <${m.senderEmail}>\nSubject: ${m.subject}\nSnippet: ${m.snippet}\nContent:\n${m.plainBody || m.snippet}`,
+        )
         .join("\n\n---\n\n");
 
       try {
@@ -268,7 +296,7 @@ export const aiRouter = createTRPCRouter({
         return [
           "Thank you for the email. I have reviewed my activity.",
           "It was me, thanks for checking.",
-          "I don't recognize this device. What are the next steps?"
+          "I don't recognize this device. What are the next steps?",
         ];
       }
     }),

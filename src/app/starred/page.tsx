@@ -16,15 +16,26 @@ export default function StarredPage() {
   const [category, setCategory] = useState("primary");
 
   return (
-    <div className="bg-background text-on-background flex flex-col h-screen overflow-hidden">
+    <div className="bg-background text-on-background flex h-screen flex-col overflow-hidden">
       <TopSearchBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar isOpen={isSidebarOpen} />
-        <main className="flex-1 overflow-hidden p-6 bg-surface transition-all flex flex-col">
-          <InboxHeader page={page} onPageChange={setPage} total={total} category={category} onCategoryChange={setCategory} />
-          <div className="flex gap-6 flex-1 min-h-0">
-            <EmailList page={page} category={category} isStarredOnly={true} onTotalChange={setTotal} />
-            <div className="flex-[0.42] flex flex-col gap-6 min-w-0">
+        <main className="bg-surface flex flex-1 flex-col overflow-hidden p-6 transition-all">
+          <InboxHeader
+            page={page}
+            onPageChange={setPage}
+            total={total}
+            category={category}
+            onCategoryChange={setCategory}
+          />
+          <div className="flex min-h-0 flex-1 gap-6">
+            <EmailList
+              page={page}
+              category={category}
+              isStarredOnly={true}
+              onTotalChange={setTotal}
+            />
+            <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
               <UpcomingMeetings />
               <AiRecommendations />
             </div>

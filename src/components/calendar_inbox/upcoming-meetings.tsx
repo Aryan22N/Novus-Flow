@@ -48,13 +48,20 @@ function formatEventDateTime(startIso: string | null, allDay: boolean): string {
   const isToday = d.toDateString() === today.toDateString();
   const timeLabel = allDay
     ? "All day"
-    : d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    : d.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
 
   if (isToday) {
     return timeLabel;
   }
 
-  const dateLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const dateLabel = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
   return `${dateLabel}, ${timeLabel}`;
 }
 
@@ -66,9 +73,11 @@ export default function UpcomingMeetings() {
   const month = now.getMonth() + 1; // 1-based
 
   // Query events from database/Google Calendar for the current month
-  const { data: calendarData, isLoading: isEventsLoading, refetch } = api.calendar.getEvents.useQuery(
-    { year, month }
-  );
+  const {
+    data: calendarData,
+    isLoading: isEventsLoading,
+    refetch,
+  } = api.calendar.getEvents.useQuery({ year, month });
 
   const syncMutation = api.calendar.syncEvents.useMutation({
     onSuccess: () => {
@@ -92,29 +101,34 @@ export default function UpcomingMeetings() {
 
   useEffect(() => {
     // 1. Process Google Calendar events (live/cached in DB)
-    const liveMeetings: MeetingItem[] = (calendarData?.events ?? []).map((ev) => {
-      // Clean description: remove HTML tags, keep only first line or first 60 chars
-      let cleanDesc = ev.description ? ev.description.replace(/<[^>]*>/g, "").trim() : "";
-      if (cleanDesc.includes("\n")) {
-        cleanDesc = cleanDesc.split("\n")[0]!.trim();
-      }
-      if (cleanDesc.length > 60) {
-        cleanDesc = cleanDesc.slice(0, 60) + "...";
-      }
+    const liveMeetings: MeetingItem[] = (calendarData?.events ?? []).map(
+      (ev) => {
+        // Clean description: remove HTML tags, keep only first line or first 60 chars
+        let cleanDesc = ev.description
+          ? ev.description.replace(/<[^>]*>/g, "").trim()
+          : "";
+        if (cleanDesc.includes("\n")) {
+          cleanDesc = cleanDesc.split("\n")[0]!.trim();
+        }
+        if (cleanDesc.length > 60) {
+          cleanDesc = cleanDesc.slice(0, 60) + "...";
+        }
 
-      const subtext = ev.location
-        ? `📍 ${ev.location}${cleanDesc ? ` · ${cleanDesc}` : ""}`
-        : cleanDesc || "Google Calendar Event";
+        const subtext = ev.location
+          ? `📍 ${ev.location}${cleanDesc ? ` · ${cleanDesc}` : ""}`
+          : cleanDesc || "Google Calendar Event";
 
-      return {
-        id: ev.id,
-        title: ev.title.length > 30 ? ev.title.slice(0, 30) + "..." : ev.title,
-        time: formatEventDateTime(ev.start, ev.allDay),
-        type: "live" as const,
-        subtext: subtext.length > 60 ? subtext.slice(0, 60) + "..." : subtext,
-        htmlLink: ev.htmlLink,
-      };
-    });
+        return {
+          id: ev.id,
+          title:
+            ev.title.length > 30 ? ev.title.slice(0, 30) + "..." : ev.title,
+          time: formatEventDateTime(ev.start, ev.allDay),
+          type: "live" as const,
+          subtext: subtext.length > 60 ? subtext.slice(0, 60) + "..." : subtext,
+          htmlLink: ev.htmlLink,
+        };
+      },
+    );
 
     // 2. Read local cache to find any meeting scheduled via AI panel in the current session
     const aiMeetings: MeetingItem[] = [];
@@ -128,7 +142,7 @@ export default function UpcomingMeetings() {
             // Self-healing: If we have an eventId, verify that the event still exists in Google Calendar
             if (entry.eventId && calendarData) {
               const existsInCalendar = (calendarData.events ?? []).some(
-                (ev) => ev.id === entry.eventId
+                (ev) => ev.id === entry.eventId,
               );
               if (!existsInCalendar) {
                 // The event was deleted from Google Calendar. Reset local cache entry.
@@ -143,7 +157,9 @@ export default function UpcomingMeetings() {
               }
             }
 
-            let title = entry.analysis.meetingDetails.proposedTopic || "AI Scheduled Sync";
+            let title =
+              entry.analysis.meetingDetails.proposedTopic ||
+              "AI Scheduled Sync";
             if (title.length > 30) {
               title = title.slice(0, 30) + "...";
             }
@@ -152,7 +168,7 @@ export default function UpcomingMeetings() {
             const isAlreadyInLive = liveMeetings.some(
               (lm) =>
                 lm.title.toLowerCase() === title.toLowerCase() ||
-                lm.time.includes(entry.meetingTime)
+                lm.time.includes(entry.meetingTime),
             );
 
             if (!isAlreadyInLive) {
@@ -168,7 +184,10 @@ export default function UpcomingMeetings() {
         }
 
         if (cacheChanged) {
-          localStorage.setItem("superman_ai_analysis_cache", JSON.stringify(cache));
+          localStorage.setItem(
+            "superman_ai_analysis_cache",
+            JSON.stringify(cache),
+          );
         }
       }
     } catch (err) {
@@ -180,28 +199,37 @@ export default function UpcomingMeetings() {
   }, [calendarData]);
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 flex flex-col h-[52%]">
-      <h3 className="text-title-sm font-title-sm text-on-surface mb-4 flex items-center gap-2 shrink-0 select-none">
+    <div className="bg-surface-container-lowest border-outline-variant flex h-[52%] flex-col rounded-xl border p-4">
+      <h3 className="text-title-sm font-title-sm text-on-surface mb-4 flex shrink-0 items-center gap-2 select-none">
         <CalendarDays size={18} className="text-secondary" />
         Upcoming Meetings
       </h3>
 
-      <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
         {meetings.map((meeting) => {
           if (meeting.type === "live") {
             return (
-              <div key={meeting.id} className="border-l-4 border-primary bg-surface-container-low p-3 rounded-r-lg hover:shadow-sm transition-shadow">
-                <div className="flex justify-between items-start mb-1 gap-2">
-                  <span className="text-body-md font-bold text-on-surface truncate flex-1" title={meeting.title}>
+              <div
+                key={meeting.id}
+                className="border-primary bg-surface-container-low rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-sm"
+              >
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <span
+                    className="text-body-md text-on-surface flex-1 truncate font-bold"
+                    title={meeting.title}
+                  >
                     {meeting.title}
                   </span>
-                  <div className="flex items-center gap-1 text-body-sm text-on-surface-variant shrink-0 whitespace-nowrap">
+                  <div className="text-body-sm text-on-surface-variant flex shrink-0 items-center gap-1 whitespace-nowrap">
                     <Clock3 size={14} />
                     <span>{meeting.time}</span>
                   </div>
                 </div>
                 {meeting.subtext && (
-                  <p className="text-body-sm text-on-surface-variant mb-2 truncate" title={meeting.subtext}>
+                  <p
+                    className="text-body-sm text-on-surface-variant mb-2 truncate"
+                    title={meeting.subtext}
+                  >
                     {meeting.subtext}
                   </p>
                 )}
@@ -210,7 +238,7 @@ export default function UpcomingMeetings() {
                     href={meeting.htmlLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-primary text-white text-body-sm px-3 py-1.5 rounded hover:bg-primary-container transition-colors w-full font-semibold flex items-center justify-center gap-2 cursor-pointer text-center"
+                    className="bg-primary text-body-sm hover:bg-primary-container flex w-full cursor-pointer items-center justify-center gap-2 rounded px-3 py-1.5 text-center font-semibold text-white transition-colors"
                   >
                     Join Meeting (Google Calendar)
                     <ExternalLink size={14} />
@@ -221,23 +249,31 @@ export default function UpcomingMeetings() {
           } else {
             // AI Panel scheduled meeting card
             return (
-              <div key={meeting.id} className="border-l-4 border-secondary bg-surface-container-low p-3 rounded-r-lg hover:shadow-sm transition-shadow animate-fadeIn">
-                <div className="flex justify-between items-start mb-1 gap-2">
-                  <span className="text-body-md font-bold text-on-surface truncate flex-1" title={meeting.title}>
+              <div
+                key={meeting.id}
+                className="border-secondary bg-surface-container-low animate-fadeIn rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-sm"
+              >
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <span
+                    className="text-body-md text-on-surface flex-1 truncate font-bold"
+                    title={meeting.title}
+                  >
                     {meeting.title}
                   </span>
-                  <div className="flex items-center gap-1 text-body-sm text-on-surface-variant shrink-0 whitespace-nowrap">
+                  <div className="text-body-sm text-on-surface-variant flex shrink-0 items-center gap-1 whitespace-nowrap">
                     <Clock3 size={14} />
                     <span>{meeting.time}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-body-sm text-on-surface-variant mb-2">
+                <div className="text-body-sm text-on-surface-variant mb-2 flex items-center gap-1">
                   <Users size={14} className="text-secondary" />
-                  <span className="text-xs text-secondary font-medium">{meeting.subtext}</span>
+                  <span className="text-secondary text-xs font-medium">
+                    {meeting.subtext}
+                  </span>
                 </div>
                 <Link
                   href={`/inbox/${meeting.id}`}
-                  className="bg-secondary text-white text-body-sm px-3 py-1.5 rounded hover:bg-secondary/90 transition-colors w-full font-semibold flex items-center justify-center gap-2 cursor-pointer text-center"
+                  className="bg-secondary text-body-sm hover:bg-secondary/90 flex w-full cursor-pointer items-center justify-center gap-2 rounded px-3 py-1.5 text-center font-semibold text-white transition-colors"
                 >
                   <MailOpen size={14} />
                   View Thread
@@ -248,14 +284,14 @@ export default function UpcomingMeetings() {
         })}
 
         {meetings.length === 0 && !isLoading && (
-          <p className="text-xs text-on-surface-variant italic p-4 text-center select-none">
+          <p className="text-on-surface-variant p-4 text-center text-xs italic select-none">
             No upcoming meetings.
           </p>
         )}
 
         {isLoading && (
-          <div className="flex items-center justify-center p-4 gap-2 text-xs text-on-surface-variant select-none">
-            <Loader2 size={12} className="animate-spin text-primary" />
+          <div className="text-on-surface-variant flex items-center justify-center gap-2 p-4 text-xs select-none">
+            <Loader2 size={12} className="text-primary animate-spin" />
             <span>Loading calendar...</span>
           </div>
         )}

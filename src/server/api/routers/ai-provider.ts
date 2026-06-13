@@ -22,7 +22,10 @@ export interface SuggestedRepliesResult {
 
 export interface AiProvider {
   analyzeThread(threadText: string): Promise<ThreadAnalysisResult>;
-  generateReplyDraft(threadText: string, userBriefPrompt: string): Promise<DraftReplyResult>;
+  generateReplyDraft(
+    threadText: string,
+    userBriefPrompt: string,
+  ): Promise<DraftReplyResult>;
   generateSuggestions(threadText: string): Promise<SuggestedRepliesResult>;
 }
 
@@ -53,21 +56,24 @@ You must return a JSON object with the following structure:
   },
   "defaultDraft": "A default draft reply answering the last message in a professional tone. Extract actual names from the thread for the greeting and signature (no generic '[Sender]' or '[User]' placeholders under any circumstances). Use proper line breaks '\\n\\n' to format paragraphs."
 }
-Return ONLY a valid JSON object. Do not include markdown code block formatting (like \`\`\`json) or any other wrapping text. Make sure suggestedDateTimes has dates/times extracted from the email if any are mentioned.`
+Return ONLY a valid JSON object. Do not include markdown code block formatting (like \`\`\`json) or any other wrapping text. Make sure suggestedDateTimes has dates/times extracted from the email if any are mentioned.`,
         },
         {
           role: "user",
-          content: `Analyze this email thread:\n\n${threadText}`
-        }
+          content: `Analyze this email thread:\n\n${threadText}`,
+        },
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
     const resultText = response.choices[0]?.message?.content ?? "{}";
     return JSON.parse(resultText) as ThreadAnalysisResult;
   }
 
-  async generateReplyDraft(threadText: string, userBriefPrompt: string): Promise<DraftReplyResult> {
+  async generateReplyDraft(
+    threadText: string,
+    userBriefPrompt: string,
+  ): Promise<DraftReplyResult> {
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -86,21 +92,23 @@ Follow these rules STRICTLY:
 {
   "draft": "The complete drafted email message body"
 }
-Make the email professional, helpful, and natural. Return ONLY a valid JSON object.`
+Make the email professional, helpful, and natural. Return ONLY a valid JSON object.`,
         },
         {
           role: "user",
-          content: `Email thread:\n\n${threadText}`
-        }
+          content: `Email thread:\n\n${threadText}`,
+        },
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
     const resultText = response.choices[0]?.message?.content ?? "{}";
     return JSON.parse(resultText) as DraftReplyResult;
   }
 
-  async generateSuggestions(threadText: string): Promise<SuggestedRepliesResult> {
+  async generateSuggestions(
+    threadText: string,
+  ): Promise<SuggestedRepliesResult> {
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -116,14 +124,14 @@ Return a JSON object containing the list of suggestions:
     "Let me check my calendar and get back to you."
   ]
 }
-Return ONLY a valid JSON object. Make them realistic and tailored to the thread context.`
+Return ONLY a valid JSON object. Make them realistic and tailored to the thread context.`,
         },
         {
           role: "user",
-          content: `Email thread:\n\n${threadText}`
-        }
+          content: `Email thread:\n\n${threadText}`,
+        },
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
     const resultText = response.choices[0]?.message?.content ?? "{}";
@@ -158,10 +166,10 @@ Make sure the draft reply is formatted properly:
 - Use proper line breaks '\n\n' to format paragraphs.
 
 Email thread:
-${threadText}`
-            }
-          ]
-        }
+${threadText}`,
+            },
+          ],
+        },
       ],
       generationConfig: {
         responseMimeType: "application/json",
@@ -170,11 +178,12 @@ ${threadText}`
           properties: {
             summary: {
               type: "STRING",
-              description: "A concise bulleted HTML/markdown list summarizing key information from the thread. (Max 3-4 bullet points)"
+              description:
+                "A concise bulleted HTML/markdown list summarizing key information from the thread. (Max 3-4 bullet points)",
             },
             tasks: {
               type: "ARRAY",
-              items: { type: "STRING" }
+              items: { type: "STRING" },
             },
             isMeetingRelated: { type: "BOOLEAN" },
             meetingDetails: {
@@ -183,19 +192,26 @@ ${threadText}`
                 proposedTopic: { type: "STRING" },
                 suggestedDateTimes: {
                   type: "ARRAY",
-                  items: { type: "STRING" }
-                }
+                  items: { type: "STRING" },
+                },
               },
-              required: ["proposedTopic", "suggestedDateTimes"]
+              required: ["proposedTopic", "suggestedDateTimes"],
             },
             defaultDraft: {
               type: "STRING",
-              description: "A default draft reply answering the last message in a professional tone. Extract actual names from the thread for the greeting and signature (no generic '[Sender]' or '[User]' placeholders). Use proper line breaks '\\n\\n' to format paragraphs."
-            }
+              description:
+                "A default draft reply answering the last message in a professional tone. Extract actual names from the thread for the greeting and signature (no generic '[Sender]' or '[User]' placeholders). Use proper line breaks '\\n\\n' to format paragraphs.",
+            },
           },
-          required: ["summary", "tasks", "isMeetingRelated", "meetingDetails", "defaultDraft"]
-        }
-      }
+          required: [
+            "summary",
+            "tasks",
+            "isMeetingRelated",
+            "meetingDetails",
+            "defaultDraft",
+          ],
+        },
+      },
     };
 
     const response = await fetch(url, {
@@ -208,10 +224,12 @@ ${threadText}`
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Gemini API call failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `Gemini API call failed with status ${response.status}: ${errorText}`,
+      );
     }
 
-    const data = await response.json() as any;
+    const data = (await response.json()) as any;
     const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!textResult) {
       throw new Error("Gemini returned an empty response.");
@@ -220,7 +238,10 @@ ${threadText}`
     return JSON.parse(textResult) as ThreadAnalysisResult;
   }
 
-  async generateReplyDraft(threadText: string, userBriefPrompt: string): Promise<DraftReplyResult> {
+  async generateReplyDraft(
+    threadText: string,
+    userBriefPrompt: string,
+  ): Promise<DraftReplyResult> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
 
     const requestBody = {
@@ -239,21 +260,21 @@ Follow these rules STRICTLY:
 4. Format the output with proper line breaks ('\n' or '\n\n') to structure greetings, paragraphs, and signatures.
 
 Email thread:
-${threadText}`
-            }
-          ]
-        }
+${threadText}`,
+            },
+          ],
+        },
       ],
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
           properties: {
-            draft: { type: "STRING" }
+            draft: { type: "STRING" },
           },
-          required: ["draft"]
-        }
-      }
+          required: ["draft"],
+        },
+      },
     };
 
     const response = await fetch(url, {
@@ -266,10 +287,12 @@ ${threadText}`
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Gemini API call failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `Gemini API call failed with status ${response.status}: ${errorText}`,
+      );
     }
 
-    const data = await response.json() as any;
+    const data = (await response.json()) as any;
     const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!textResult) {
       throw new Error("Gemini returned an empty response.");
@@ -278,7 +301,9 @@ ${threadText}`
     return JSON.parse(textResult) as DraftReplyResult;
   }
 
-  async generateSuggestions(threadText: string): Promise<SuggestedRepliesResult> {
+  async generateSuggestions(
+    threadText: string,
+  ): Promise<SuggestedRepliesResult> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
 
     const requestBody = {
@@ -290,10 +315,10 @@ ${threadText}`
 Analyze the email thread and generate exactly 3 short, contextually relevant quick-reply suggestion choices (one sentence or short phrase each) that the user can choose to quickly respond to the last email.
 
 Email thread:
-${threadText}`
-            }
-          ]
-        }
+${threadText}`,
+            },
+          ],
+        },
       ],
       generationConfig: {
         responseMimeType: "application/json",
@@ -303,12 +328,13 @@ ${threadText}`
             suggestions: {
               type: "ARRAY",
               items: { type: "STRING" },
-              description: "List of exactly 3 short, contextually relevant quick-reply suggestions."
-            }
+              description:
+                "List of exactly 3 short, contextually relevant quick-reply suggestions.",
+            },
           },
-          required: ["suggestions"]
-        }
-      }
+          required: ["suggestions"],
+        },
+      },
     };
 
     const response = await fetch(url, {
@@ -321,10 +347,12 @@ ${threadText}`
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Gemini API call failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `Gemini API call failed with status ${response.status}: ${errorText}`,
+      );
     }
 
-    const data = await response.json() as any;
+    const data = (await response.json()) as any;
     const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!textResult) {
       throw new Error("Gemini returned an empty response.");

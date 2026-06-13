@@ -31,27 +31,34 @@ import {
   Image as ImageIcon,
   Lock,
   PenTool,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function ThreadPage(props: { params: Promise<{ threadId: string }> }) {
+export default function ThreadPage(props: {
+  params: Promise<{ threadId: string }>;
+}) {
   const params = use(props.params);
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
-  const [replyingMessageId, setReplyingMessageId] = useState<string | null>(null);
+  const [replyingMessageId, setReplyingMessageId] = useState<string | null>(
+    null,
+  );
   const [replyText, setReplyText] = useState("");
   const [showHelpMeWrite, setShowHelpMeWrite] = useState(false);
   const [helpMeWritePrompt, setHelpMeWritePrompt] = useState("");
 
-  const { data: thread, isPending } = api.email.getThread.useQuery({ threadId: params.threadId });
+  const { data: thread, isPending } = api.email.getThread.useQuery({
+    threadId: params.threadId,
+  });
   const utils = api.useUtils();
 
-  const { data: suggestedRepliesData, isLoading: suggestionsLoading } = api.ai.getSuggestedReplies.useQuery(
-    { threadId: params.threadId, messageId: replyingMessageId ?? "" },
-    { enabled: !!replyingMessageId, refetchOnWindowFocus: false }
-  );
+  const { data: suggestedRepliesData, isLoading: suggestionsLoading } =
+    api.ai.getSuggestedReplies.useQuery(
+      { threadId: params.threadId, messageId: replyingMessageId ?? "" },
+      { enabled: !!replyingMessageId, refetchOnWindowFocus: false },
+    );
 
   const draftMutation = api.ai.generateReplyDraft.useMutation({
     onSuccess: (data) => {
@@ -61,7 +68,7 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
     },
     onError: (err) => {
       alert("Failed to draft reply: " + err.message);
-    }
+    },
   });
 
   const markReadMutation = api.email.markThreadAsRead.useMutation({
@@ -81,17 +88,17 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
     },
     onError: (err) => {
       alert("Failed to send reply: " + err.message);
-    }
+    },
   });
 
   useEffect(() => {
-    if (thread && thread.messages.some(m => m.unread)) {
+    if (thread && thread.messages.some((m) => m.unread)) {
       markReadMutation.mutate({ threadId: params.threadId });
     }
   }, [thread, params.threadId]);
 
   return (
-    <div className="bg-white text-[#202124] flex flex-col h-screen overflow-hidden antialiased select-none">
+    <div className="flex h-screen flex-col overflow-hidden bg-white text-[#202124] antialiased select-none">
       <style>{`
         .email-content img {
           max-width: 100%;
@@ -112,48 +119,66 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
         <AppSidebar isOpen={isSidebarOpen} />
 
         {/* Main Workspace Area */}
-        <main className="flex-1 overflow-y-auto bg-white flex flex-col">
+        <main className="flex flex-1 flex-col overflow-y-auto bg-white">
           {/* Email Context Actions Row */}
-          <header className="h-14 flex items-center justify-between px-4 shrink-0 sticky top-0 z-20 bg-white/95 backdrop-blur">
+          <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between bg-white/95 px-4 backdrop-blur">
             <div className="flex items-center space-x-1">
               <button
                 onClick={() => router.back()}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10"
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
                 title="Back to Inbox"
               >
                 <ChevronLeft size={20} />
               </button>
-              <div className="w-[1px] h-6 bg-gray-200 mx-2"></div>
+              <div className="mx-2 h-6 w-[1px] bg-gray-200"></div>
 
-              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10" title="Archive">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                title="Archive"
+              >
                 <Archive size={20} />
               </button>
-              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10" title="Report spam">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                title="Report spam"
+              >
                 <AlertTriangle size={20} />
               </button>
-              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10" title="Delete">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                title="Delete"
+              >
                 <Trash2 size={20} />
               </button>
 
-              <div className="w-[1px] h-6 bg-gray-200 mx-2"></div>
+              <div className="mx-2 h-6 w-[1px] bg-gray-200"></div>
 
-              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10" title="Mark as unread">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                title="Mark as unread"
+              >
                 <Mail size={20} />
               </button>
-              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10" title="Move to">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                title="Move to"
+              >
                 <Folder size={20} />
               </button>
-              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10" title="More">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                title="More"
+              >
                 <MoreVertical size={20} />
               </button>
             </div>
 
             <div className="flex items-center text-sm text-gray-500">
               <span className="mr-4">1 of 1</span>
-              <button className="p-2 rounded-full text-gray-300 cursor-not-allowed w-8 h-8 flex items-center justify-center">
+              <button className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full p-2 text-gray-300">
                 <ChevronLeft size={16} />
               </button>
-              <button className="p-2 rounded-full text-gray-300 cursor-not-allowed w-8 h-8 flex items-center justify-center">
+              <button className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full p-2 text-gray-300">
                 <ChevronLeft size={16} className="rotate-180" />
               </button>
             </div>
@@ -163,31 +188,39 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-5xl px-8 py-6">
               {isPending ? (
-                <div className="h-full flex items-center justify-center">
+                <div className="flex h-full items-center justify-center">
                   <Loader2 className="animate-spin text-[#1a73e8]" size={32} />
                 </div>
               ) : !thread ? (
-                <div className="h-full flex items-center justify-center text-gray-500 text-sm">
+                <div className="flex h-full items-center justify-center text-sm text-gray-500">
                   Thread not found.
                 </div>
               ) : (
-                <div className="max-w-4xl w-full mx-auto">
+                <div className="mx-auto w-full max-w-4xl">
                   {/* Subject Line & Thread Properties */}
-                  <div className="flex items-center justify-between mb-8">
+                  <div className="mb-8 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-[32px] font-light tracking-tight text-[#202124]">{thread.subject}</h1>
-                      <span className="bg-[#f1f3f4] text-[#5f6368] px-2 py-0.5 text-xs rounded flex items-center gap-1 font-medium ml-2">
+                      <h1 className="text-[32px] font-light tracking-tight text-[#202124]">
+                        {thread.subject}
+                      </h1>
+                      <span className="ml-2 flex items-center gap-1 rounded bg-[#f1f3f4] px-2 py-0.5 text-xs font-medium text-[#5f6368]">
                         Inbox
-                        <button className="hover:text-black ml-0.5">
+                        <button className="ml-0.5 hover:text-black">
                           <X size={12} />
                         </button>
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10" title="Print all">
+                      <button
+                        className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                        title="Print all"
+                      >
                         <Printer size={20} />
                       </button>
-                      <button className="p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center text-gray-600 w-10 h-10" title="In new window">
+                      <button
+                        className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                        title="In new window"
+                      >
                         <ExternalLink size={20} />
                       </button>
                     </div>
@@ -196,32 +229,48 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                   {/* Messages Sequence Stack */}
                   <div className="flex flex-col gap-8">
                     {thread.messages.map((msg) => (
-                      <div key={msg.id} className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden p-6">
-
+                      <div
+                        key={msg.id}
+                        className="overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+                      >
                         {/* Message Sender Metadata Row */}
-                        <div className="flex items-start mb-4">
-                          <div className="w-12 h-12 rounded-full bg-[#e67e22] text-white flex items-center justify-center font-medium text-lg mr-4 mt-0.5 shrink-0 select-none">
+                        <div className="mb-4 flex items-start">
+                          <div className="mt-0.5 mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e67e22] text-lg font-medium text-white select-none">
                             {msg.sender.charAt(0).toUpperCase()}
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between">
                               <div>
-                                <span className="font-semibold text-[15px] text-[#202124]">{msg.sender}</span>
-                                <span className="text-xs text-gray-500 ml-1.5">&lt;{msg.senderEmail}&gt;</span>
+                                <span className="text-[15px] font-semibold text-[#202124]">
+                                  {msg.sender}
+                                </span>
+                                <span className="ml-1.5 text-xs text-gray-500">
+                                  &lt;{msg.senderEmail}&gt;
+                                </span>
                               </div>
-                              <div className="flex items-center text-xs text-gray-500 gap-1">
-                                <span>{formatDistanceToNow(msg.date, { addSuffix: true })}</span>
-                                <div className="flex items-center ml-1">
-                                  <button className="p-1 rounded-full hover:bg-gray-100 text-gray-500 w-8 h-8 flex items-center justify-center"><Star size={18} /></button>
-                                  <button className="p-1 rounded-full hover:bg-gray-100 text-gray-500 w-8 h-8 flex items-center justify-center"><Reply size={18} /></button>
-                                  <button className="p-1 rounded-full hover:bg-gray-100 text-gray-500 w-8 h-8 flex items-center justify-center"><MoreVertical size={18} /></button>
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <span>
+                                  {formatDistanceToNow(msg.date, {
+                                    addSuffix: true,
+                                  })}
+                                </span>
+                                <div className="ml-1 flex items-center">
+                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100">
+                                    <Star size={18} />
+                                  </button>
+                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100">
+                                    <Reply size={18} />
+                                  </button>
+                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100">
+                                    <MoreVertical size={18} />
+                                  </button>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-0.5 text-xs text-gray-500 mt-0.5">
+                            <div className="mt-0.5 flex items-center gap-0.5 text-xs text-gray-500">
                               <span>to {msg.to || "me"}</span>
-                              <button className="p-0.5 hover:bg-gray-100 rounded">
+                              <button className="rounded p-0.5 hover:bg-gray-100">
                                 <ChevronDown size={12} />
                               </button>
                             </div>
@@ -229,31 +278,53 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                         </div>
 
                         {/* Cleaned Message Content Box */}
-                        <article className="pl-[52px] mb-6">
-                          <div className="text-sm text-[#202124] leading-relaxed prose prose-sm max-w-none prose-a:text-[#1a73e8]">
+                        <article className="mb-6 pl-[52px]">
+                          <div className="prose prose-sm prose-a:text-[#1a73e8] max-w-none text-sm leading-relaxed text-[#202124]">
                             {msg.htmlBody ? (
-                              <div className="email-content" dangerouslySetInnerHTML={{ __html: msg.htmlBody }} />
+                              <div
+                                className="email-content"
+                                dangerouslySetInnerHTML={{
+                                  __html: msg.htmlBody,
+                                }}
+                              />
                             ) : (
-                              <div className="whitespace-pre-wrap">{msg.plainBody || msg.snippet}</div>
+                              <div className="whitespace-pre-wrap">
+                                {msg.plainBody || msg.snippet}
+                              </div>
                             )}
                           </div>
                         </article>
 
                         {/* Dynamic Attachments Grid Layout */}
                         {msg.attachments && msg.attachments.length > 0 && (
-                          <div className="pl-[52px] mb-6 flex flex-wrap gap-3">
+                          <div className="mb-6 flex flex-wrap gap-3 pl-[52px]">
                             {msg.attachments.map((att: any) => (
-                              <div key={att.id} className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-xs hover:bg-gray-100 transition-colors cursor-pointer max-w-xs">
-                                <Paperclip size={14} className="text-gray-500 shrink-0" />
-                                <span className="text-gray-700 font-medium truncate" title={att.filename}>{att.filename}</span>
-                                {att.size > 0 && <span className="text-gray-400 font-normal shrink-0">({Math.round(att.size / 1024)} KB)</span>}
+                              <div
+                                key={att.id}
+                                className="flex max-w-xs cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs transition-colors hover:bg-gray-100"
+                              >
+                                <Paperclip
+                                  size={14}
+                                  className="shrink-0 text-gray-500"
+                                />
+                                <span
+                                  className="truncate font-medium text-gray-700"
+                                  title={att.filename}
+                                >
+                                  {att.filename}
+                                </span>
+                                {att.size > 0 && (
+                                  <span className="shrink-0 font-normal text-gray-400">
+                                    ({Math.round(att.size / 1024)} KB)
+                                  </span>
+                                )}
                               </div>
                             ))}
                           </div>
                         )}
 
                         {/* Immediate Contextual Reply Actions Footer */}
-                        <div className="pl-[52px] flex items-center gap-2">
+                        <div className="flex items-center gap-2 pl-[52px]">
                           <button
                             onClick={() => {
                               setReplyingMessageId(msg.id);
@@ -261,60 +332,85 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                               setShowHelpMeWrite(false);
                               setHelpMeWritePrompt("");
                             }}
-                            className="inline-flex items-center px-5 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-2 cursor-pointer"
+                            className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-300 px-5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
                             suppressHydrationWarning
                           >
                             <Reply size={14} />
                             Reply
                           </button>
-                          <button className="inline-flex items-center px-5 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-2" suppressHydrationWarning>
+                          <button
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            suppressHydrationWarning
+                          >
                             <Forward size={14} />
                             Forward
                           </button>
-                          <button className="p-1.5 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 text-gray-500" title="Add reaction" suppressHydrationWarning>
+                          <button
+                            className="rounded-full border border-transparent p-1.5 text-gray-500 hover:border-gray-200 hover:bg-gray-50"
+                            title="Add reaction"
+                            suppressHydrationWarning
+                          >
                             <Smile size={18} />
                           </button>
                         </div>
 
                         {/* Inline Reply Composer box */}
                         {replyingMessageId === msg.id && (
-                          <div className="pl-[52px] mt-4 flex flex-col gap-4 animate-fadeIn select-text">
-                            <div className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[320px] transition-all hover:shadow-md">
+                          <div className="animate-fadeIn mt-4 flex flex-col gap-4 pl-[52px] select-text">
+                            <div className="bg-surface-container-lowest border-outline-variant flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-2xl border shadow-sm transition-all hover:shadow-md">
                               {/* Header Section of Reply */}
-                              <div className="px-6 py-3 flex items-center justify-between border-b border-transparent">
+                              <div className="flex items-center justify-between border-b border-transparent px-6 py-3">
                                 <div className="flex items-center gap-2">
-                                  <button className="p-1 hover:bg-surface-container-high rounded text-on-surface-variant" suppressHydrationWarning>
+                                  <button
+                                    className="hover:bg-surface-container-high text-on-surface-variant rounded p-1"
+                                    suppressHydrationWarning
+                                  >
                                     <Reply size={20} />
                                   </button>
-                                  <button className="p-1 hover:bg-surface-container-high rounded text-on-surface-variant" suppressHydrationWarning>
+                                  <button
+                                    className="hover:bg-surface-container-high text-on-surface-variant rounded p-1"
+                                    suppressHydrationWarning
+                                  >
                                     <ChevronDown size={20} />
                                   </button>
-                                  <div className="text-body-md text-on-surface font-medium flex items-center gap-1 cursor-default select-none">
-                                    {msg.sender} <span className="text-on-surface-variant font-normal">({msg.senderEmail})</span>
+                                  <div className="text-body-md text-on-surface flex cursor-default items-center gap-1 font-medium select-none">
+                                    {msg.sender}{" "}
+                                    <span className="text-on-surface-variant font-normal">
+                                      ({msg.senderEmail})
+                                    </span>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <button className="p-1 hover:bg-surface-container-high rounded text-on-surface-variant" suppressHydrationWarning>
+                                  <button
+                                    className="hover:bg-surface-container-high text-on-surface-variant rounded p-1"
+                                    suppressHydrationWarning
+                                  >
                                     <Maximize2 size={20} />
                                   </button>
                                 </div>
                               </div>
 
                               {/* Editor Body */}
-                              <div className="flex-1 px-6 py-4 relative flex flex-col gap-3">
+                              <div className="relative flex flex-1 flex-col gap-3 px-6 py-4">
                                 {showHelpMeWrite && (
-                                  <div className="p-3 bg-blue-50/50 border border-blue-200 rounded-xl flex items-center gap-3 animate-fadeIn shadow-sm">
-                                    <Sparkles size={16} className="text-blue-600 animate-pulse shrink-0" />
+                                  <div className="animate-fadeIn flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/50 p-3 shadow-sm">
+                                    <Sparkles
+                                      size={16}
+                                      className="shrink-0 animate-pulse text-blue-600"
+                                    />
                                     <input
                                       type="text"
                                       value={helpMeWritePrompt}
-                                      onChange={(e) => setHelpMeWritePrompt(e.target.value)}
+                                      onChange={(e) =>
+                                        setHelpMeWritePrompt(e.target.value)
+                                      }
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter") {
                                           if (helpMeWritePrompt.trim()) {
                                             draftMutation.mutate({
                                               threadId: params.threadId,
-                                              userBriefPrompt: helpMeWritePrompt,
+                                              userBriefPrompt:
+                                                helpMeWritePrompt,
                                             });
                                           }
                                         } else if (e.key === "Escape") {
@@ -326,7 +422,7 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                                         }
                                       }}
                                       placeholder="What should the reply say? (e.g. say yes, but ask to reschedule to Tuesday)"
-                                      className="flex-1 bg-transparent border-none outline-none text-sm text-[#202124] placeholder:text-gray-400 font-sans"
+                                      className="flex-1 border-none bg-transparent font-sans text-sm text-[#202124] outline-none placeholder:text-gray-400"
                                       autoFocus
                                       suppressHydrationWarning
                                     />
@@ -339,13 +435,19 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                                           });
                                         }
                                       }}
-                                      disabled={draftMutation.isPending || !helpMeWritePrompt.trim()}
-                                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-full active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                                      disabled={
+                                        draftMutation.isPending ||
+                                        !helpMeWritePrompt.trim()
+                                      }
+                                      className="flex cursor-pointer items-center gap-1 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-50"
                                       suppressHydrationWarning
                                     >
                                       {draftMutation.isPending ? (
                                         <>
-                                          <Loader2 size={12} className="animate-spin" />
+                                          <Loader2
+                                            size={12}
+                                            className="animate-spin"
+                                          />
                                           Drafting...
                                         </>
                                       ) : (
@@ -360,7 +462,7 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                                           setReplyText("");
                                         }
                                       }}
-                                      className="p-1 hover:bg-gray-200 rounded text-gray-500 transition-colors cursor-pointer"
+                                      className="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:bg-gray-200"
                                       suppressHydrationWarning
                                     >
                                       <X size={14} />
@@ -379,7 +481,7 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                                     }
                                   }}
                                   placeholder="Type your response here..."
-                                  className="w-full flex-1 min-h-[140px] bg-transparent resize-none outline-none text-body-md text-on-surface pt-1 placeholder:text-outline/70 font-sans"
+                                  className="text-body-md text-on-surface placeholder:text-outline/70 min-h-[140px] w-full flex-1 resize-none bg-transparent pt-1 font-sans outline-none"
                                   suppressHydrationWarning
                                 />
                                 {!replyText && !showHelpMeWrite && (
@@ -388,10 +490,14 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                                       setShowHelpMeWrite(true);
                                       setReplyText("/");
                                     }}
-                                    className="flex items-start gap-1 mt-2 select-none cursor-pointer group"
+                                    className="group mt-2 flex cursor-pointer items-start gap-1 select-none"
                                   >
-                                    <div className="text-body-md text-outline font-body-md flex items-center gap-1.5 text-gray-500 group-hover:text-blue-600 transition-colors">
-                                      Press <span className="bg-surface-container px-1.5 py-0.5 rounded text-[12px] font-mono-label text-on-surface border border-outline-variant">/</span> to draft reply
+                                    <div className="text-body-md text-outline font-body-md flex items-center gap-1.5 text-gray-500 transition-colors group-hover:text-blue-600">
+                                      Press{" "}
+                                      <span className="bg-surface-container font-mono-label text-on-surface border-outline-variant rounded border px-1.5 py-0.5 text-[12px]">
+                                        /
+                                      </span>{" "}
+                                      to draft reply
                                     </div>
                                   </div>
                                 )}
@@ -399,58 +505,103 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                               </div>
 
                               {/* Footer Actions */}
-                              <div className="px-6 py-4 flex items-center justify-between border-t border-outline-variant/10">
+                              <div className="border-outline-variant/10 flex items-center justify-between border-t px-6 py-4">
                                 <div className="flex items-center gap-2">
                                   {/* Send Button Group */}
-                                  <div className="flex items-center bg-primary rounded-full overflow-hidden hover:bg-primary-container transition-colors active:scale-95 duration-100">
+                                  <div className="bg-primary hover:bg-primary-container flex items-center overflow-hidden rounded-full transition-colors duration-100 active:scale-95">
                                     <button
                                       onClick={() => {
                                         if (!replyText.trim()) return;
                                         sendEmailMutation.mutate({
                                           to: msg.senderEmail ?? "",
-                                          subject: msg.subject.startsWith("Re:") ? msg.subject : "Re: " + msg.subject,
+                                          subject: msg.subject.startsWith("Re:")
+                                            ? msg.subject
+                                            : "Re: " + msg.subject,
                                           body: replyText,
                                         });
                                       }}
-                                      disabled={sendEmailMutation.isPending || !replyText.trim()}
-                                      className="pl-6 pr-3 py-2 text-white font-bold text-body-md cursor-pointer disabled:opacity-50"
+                                      disabled={
+                                        sendEmailMutation.isPending ||
+                                        !replyText.trim()
+                                      }
+                                      className="text-body-md cursor-pointer py-2 pr-3 pl-6 font-bold text-white disabled:opacity-50"
                                       suppressHydrationWarning
                                     >
-                                      {sendEmailMutation.isPending ? "Sending..." : "Send"}
+                                      {sendEmailMutation.isPending
+                                        ? "Sending..."
+                                        : "Send"}
                                     </button>
-                                    <div className="w-[1px] h-6 bg-white/20"></div>
-                                    <button className="pl-2 pr-3 py-2 text-white cursor-pointer" suppressHydrationWarning>
+                                    <div className="h-6 w-[1px] bg-white/20"></div>
+                                    <button
+                                      className="cursor-pointer py-2 pr-3 pl-2 text-white"
+                                      suppressHydrationWarning
+                                    >
                                       <ChevronDown size={20} />
                                     </button>
                                   </div>
 
                                   {/* Formatting Bar */}
-                                  <div className="flex items-center gap-1 ml-2 text-on-surface-variant select-none">
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" title="Formatting" suppressHydrationWarning>
+                                  <div className="text-on-surface-variant ml-2 flex items-center gap-1 select-none">
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      title="Formatting"
+                                      suppressHydrationWarning
+                                    >
                                       <Type size={20} />
                                     </button>
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" title="Attach files" suppressHydrationWarning>
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      title="Attach files"
+                                      suppressHydrationWarning
+                                    >
                                       <Paperclip size={20} />
                                     </button>
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" title="Insert link" suppressHydrationWarning>
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      title="Insert link"
+                                      suppressHydrationWarning
+                                    >
                                       <Link size={20} />
                                     </button>
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" title="Insert emoji" suppressHydrationWarning>
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      title="Insert emoji"
+                                      suppressHydrationWarning
+                                    >
                                       <Smile size={20} />
                                     </button>
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" title="Insert from Drive" suppressHydrationWarning>
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      title="Insert from Drive"
+                                      suppressHydrationWarning
+                                    >
                                       <Cloud size={20} />
                                     </button>
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" title="Insert image" suppressHydrationWarning>
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      title="Insert image"
+                                      suppressHydrationWarning
+                                    >
                                       <ImageIcon size={20} />
                                     </button>
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" title="Confidential mode" suppressHydrationWarning>
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      title="Confidential mode"
+                                      suppressHydrationWarning
+                                    >
                                       <Lock size={20} />
                                     </button>
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" title="Insert signature" suppressHydrationWarning>
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      title="Insert signature"
+                                      suppressHydrationWarning
+                                    >
                                       <PenTool size={20} />
                                     </button>
-                                    <button className="p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer" suppressHydrationWarning>
+                                    <button
+                                      className="hover:bg-surface-container-high cursor-pointer rounded-full p-2 transition-colors"
+                                      suppressHydrationWarning
+                                    >
                                       <MoreVertical size={20} />
                                     </button>
                                   </div>
@@ -463,7 +614,7 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                                     setShowHelpMeWrite(false);
                                     setHelpMeWritePrompt("");
                                   }}
-                                  className="p-2 hover:bg-error-container/20 text-on-surface-variant hover:text-error rounded-full transition-all active:scale-90 cursor-pointer"
+                                  className="hover:bg-error-container/20 text-on-surface-variant hover:text-error cursor-pointer rounded-full p-2 transition-all active:scale-90"
                                   title="Discard draft"
                                   suppressHydrationWarning
                                 >
@@ -473,34 +624,47 @@ export default function ThreadPage(props: { params: Promise<{ threadId: string }
                             </div>
 
                             {/* AI Suggested Replies */}
-                            <div className="max-w-5xl w-full mx-auto mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 select-none">
+                            <div className="mx-auto mt-4 grid w-full max-w-5xl grid-cols-1 gap-4 select-none md:grid-cols-3">
                               {suggestionsLoading ? (
-                                <div className="col-span-3 flex items-center justify-center p-6 bg-surface-container-lowest border border-outline-variant rounded-xl gap-2 text-sm text-gray-500 shadow-sm animate-pulse">
-                                  <Loader2 className="animate-spin text-primary" size={16} />
-                                  <span>Analyzing message to generate replies...</span>
+                                <div className="bg-surface-container-lowest border-outline-variant col-span-3 flex animate-pulse items-center justify-center gap-2 rounded-xl border p-6 text-sm text-gray-500 shadow-sm">
+                                  <Loader2
+                                    className="text-primary animate-spin"
+                                    size={16}
+                                  />
+                                  <span>
+                                    Analyzing message to generate replies...
+                                  </span>
                                 </div>
                               ) : (
-                                (suggestedRepliesData || []).map((suggestion, idx) => (
-                                  <button
-                                    key={idx}
-                                    onClick={() => setReplyText(suggestion)}
-                                    className="p-4 bg-surface-container-lowest border border-outline-variant rounded-xl text-left hover:border-primary/50 transition-all hover:-translate-y-0.5 duration-200 group cursor-pointer shadow-sm active:scale-95"
-                                    suppressHydrationWarning
-                                  >
-                                    {idx === 0 && (
-                                      <div className="flex items-center gap-2 text-primary mb-2">
-                                        <Sparkles size={18} className="fill-current animate-pulse" />
-                                        <span className="text-label-caps font-label-caps">AI SUGGESTION</span>
-                                      </div>
-                                    )}
-                                    <p className="text-body-md text-on-surface font-sans">"{suggestion}"</p>
-                                  </button>
-                                ))
+                                (suggestedRepliesData || []).map(
+                                  (suggestion, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => setReplyText(suggestion)}
+                                      className="bg-surface-container-lowest border-outline-variant hover:border-primary/50 group cursor-pointer rounded-xl border p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-95"
+                                      suppressHydrationWarning
+                                    >
+                                      {idx === 0 && (
+                                        <div className="text-primary mb-2 flex items-center gap-2">
+                                          <Sparkles
+                                            size={18}
+                                            className="animate-pulse fill-current"
+                                          />
+                                          <span className="text-label-caps font-label-caps">
+                                            AI SUGGESTION
+                                          </span>
+                                        </div>
+                                      )}
+                                      <p className="text-body-md text-on-surface font-sans">
+                                        "{suggestion}"
+                                      </p>
+                                    </button>
+                                  ),
+                                )
                               )}
                             </div>
                           </div>
                         )}
-
                       </div>
                     ))}
                   </div>

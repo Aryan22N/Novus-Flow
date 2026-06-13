@@ -7,28 +7,28 @@ import crypto from "crypto";
 
 function parseMeetingTime(timeStr: string): { start: Date; end: Date } {
   let start = new Date(timeStr);
-  
+
   if (isNaN(start.getTime())) {
     const today = new Date();
     const timeLower = timeStr.toLowerCase();
-    
+
     let targetDate = new Date();
     if (timeLower.includes("tomorrow")) {
       targetDate.setDate(today.getDate() + 1);
     } else if (timeLower.includes("next week")) {
       targetDate.setDate(today.getDate() + 7);
     }
-    
+
     const timeRegex = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i;
     const match = timeStr.match(timeRegex);
     if (match) {
       let hours = parseInt(match[1]!, 10);
       const minutes = match[2] ? parseInt(match[2]!, 10) : 0;
       const ampm = match[3]?.toLowerCase();
-      
+
       if (ampm === "pm" && hours < 12) hours += 12;
       if (ampm === "am" && hours === 12) hours = 0;
-      
+
       targetDate.setHours(hours, minutes, 0, 0);
       start = targetDate;
     } else {
@@ -36,11 +36,10 @@ function parseMeetingTime(timeStr: string): { start: Date; end: Date } {
       start.setHours(start.getHours() + 1, 0, 0, 0);
     }
   }
-  
+
   const end = new Date(start.getTime() + 30 * 60 * 1000); // default 30 mins
   return { start, end };
 }
-
 
 export const calendarRouter = createTRPCRouter({
   /**
@@ -53,7 +52,7 @@ export const calendarRouter = createTRPCRouter({
       z.object({
         year: z.number().int().optional(),
         month: z.number().int().min(1).max(12).optional(), // 1-based
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
@@ -91,8 +90,8 @@ export const calendarRouter = createTRPCRouter({
             corsairAccounts,
             and(
               eq(corsairEntities.accountId, corsairAccounts.id),
-              eq(corsairAccounts.tenantId, tenantId)
-            )
+              eq(corsairAccounts.tenantId, tenantId),
+            ),
           )
           .where(
             sql`${corsairEntities.entityType} = 'events'
@@ -106,7 +105,7 @@ export const calendarRouter = createTRPCRouter({
                 ((${corsairEntities.data}->'start'->>'date') >= ${timeMin.substring(0, 10)}
                   AND (${corsairEntities.data}->'start'->>'date') <= ${timeMax.substring(0, 10)}
                 )
-              )`
+              )`,
           );
 
         if (dbRows.length > 0) {
@@ -129,24 +128,22 @@ export const calendarRouter = createTRPCRouter({
       // ── 2. Fallback: live fetch from Google Calendar API ──────────────────
       try {
         const client = corsair.withTenant(tenantId);
-        const result = await client.googlecalendar.api.events.getMany({
+        const result = (await client.googlecalendar.api.events.getMany({
           timeMin,
           timeMax,
           maxResults: 100,
           singleEvents: true,
           orderBy: "startTime",
-        }) as { items?: any[] } | null;
+        })) as { items?: any[] } | null;
 
         const items = result?.items ?? [];
         // Deduplicate by id just in case
         const seenLive = new Set<string>();
-        const events = items
-          .map(parseEvent)
-          .filter((ev) => {
-            if (!ev.id || seenLive.has(ev.id)) return false;
-            seenLive.add(ev.id);
-            return true;
-          });
+        const events = items.map(parseEvent).filter((ev) => {
+          if (!ev.id || seenLive.has(ev.id)) return false;
+          seenLive.add(ev.id);
+          return true;
+        });
         return { events, source: "live" as const };
       } catch (err) {
         console.error("[calendar.getEvents] live fetch failed:", err);
@@ -161,27 +158,31 @@ export const calendarRouter = createTRPCRouter({
     .input(
       z.object({
         daysAhead: z.number().int().min(1).max(365).default(60),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
       const client = corsair.withTenant(tenantId);
 
       const now = new Date();
-      const timeMin = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const timeMin = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1,
+      ).toISOString();
       const timeMax = new Date(
-        Date.now() + input.daysAhead * 24 * 60 * 60 * 1000
+        Date.now() + input.daysAhead * 24 * 60 * 60 * 1000,
       ).toISOString();
 
       // showDeleted: true → Google returns cancelled events so we can delete them
-      const result = await client.googlecalendar.api.events.getMany({
+      const result = (await client.googlecalendar.api.events.getMany({
         timeMin,
         timeMax,
         maxResults: 250,
         singleEvents: true,
         orderBy: "startTime",
         showDeleted: true,
-      }) as { items?: any[] } | null;
+      })) as { items?: any[] } | null;
 
       const items = result?.items ?? [];
 
@@ -192,8 +193,8 @@ export const calendarRouter = createTRPCRouter({
         .where(eq(corsairAccounts.tenantId, tenantId));
 
       if (accountRows.length === 0) return { synced: 0, deleted: 0, total: 0 };
-      
-      const accountIds = accountRows.map(r => r.id);
+
+      const accountIds = accountRows.map((r) => r.id);
       const primaryAccountId = accountIds[0]!;
 
       // Separate cancelled (deleted) events from active ones
@@ -202,7 +203,7 @@ export const calendarRouter = createTRPCRouter({
         .map((e: any) => e.id as string);
 
       const activeItems = items.filter(
-        (e: any) => e?.id && e?.status !== "cancelled"
+        (e: any) => e?.id && e?.status !== "cancelled",
       );
 
       // ── 1. Delete cancelled events from the DB ────────────────────────────
@@ -215,8 +216,8 @@ export const calendarRouter = createTRPCRouter({
               and(
                 inArray(corsairEntities.accountId, accountIds),
                 eq(corsairEntities.entityId, eventId),
-                eq(corsairEntities.entityType, "events")
-              )
+                eq(corsairEntities.entityType, "events"),
+              ),
             );
           // drizzle returns the deleted row count in .rowCount (postgres)
           if ((result as any).rowCount > 0) deleted++;
@@ -231,7 +232,10 @@ export const calendarRouter = createTRPCRouter({
       // ── 3. Find DB events in this time window that Google didn't return ───
       //    These are fully purged events (not even returned as cancelled).
       const dbRows = await ctx.db
-        .select({ entityId: corsairEntities.entityId, accountId: corsairEntities.accountId })
+        .select({
+          entityId: corsairEntities.entityId,
+          accountId: corsairEntities.accountId,
+        })
         .from(corsairEntities)
         .where(
           and(
@@ -247,15 +251,22 @@ export const calendarRouter = createTRPCRouter({
               ((${corsairEntities.data}->'start'->>'date') >= ${timeMin.substring(0, 10)}
                 AND (${corsairEntities.data}->'start'->>'date') <= ${timeMax.substring(0, 10)}
               )
-            )`
-          )
+            )`,
+          ),
         );
 
-      console.log(`[syncEvents] Found ${dbRows.length} events in DB for this window`);
-      console.log(`[syncEvents] activeIds count: ${activeIds.size}, cancelledIds count: ${cancelledIds.length}`);
+      console.log(
+        `[syncEvents] Found ${dbRows.length} events in DB for this window`,
+      );
+      console.log(
+        `[syncEvents] activeIds count: ${activeIds.size}, cancelledIds count: ${cancelledIds.length}`,
+      );
 
       for (const row of dbRows) {
-        if (!activeIds.has(row.entityId) && !cancelledIds.includes(row.entityId)) {
+        if (
+          !activeIds.has(row.entityId) &&
+          !cancelledIds.includes(row.entityId)
+        ) {
           console.log(`[syncEvents] Purging stale event ${row.entityId}`);
           // This event is no longer returned by Google for this window → purge it
           try {
@@ -265,12 +276,15 @@ export const calendarRouter = createTRPCRouter({
                 and(
                   eq(corsairEntities.accountId, row.accountId),
                   eq(corsairEntities.entityId, row.entityId),
-                  eq(corsairEntities.entityType, "events")
-                )
+                  eq(corsairEntities.entityType, "events"),
+                ),
               );
             deleted++;
           } catch (err) {
-            console.error(`[syncEvents] failed to purge stale event ${row.entityId}:`, err);
+            console.error(
+              `[syncEvents] failed to purge stale event ${row.entityId}:`,
+              err,
+            );
           }
         }
       }
@@ -286,21 +300,25 @@ export const calendarRouter = createTRPCRouter({
               and(
                 inArray(corsairEntities.accountId, accountIds),
                 eq(corsairEntities.entityId, event.id),
-                eq(corsairEntities.entityType, "events")
-              )
+                eq(corsairEntities.entityType, "events"),
+              ),
             )
             .limit(1);
 
           if (existing.length > 0) {
             await ctx.db
               .update(corsairEntities)
-              .set({ data: event, updatedAt: new Date(), version: event.etag ?? "1" })
+              .set({
+                data: event,
+                updatedAt: new Date(),
+                version: event.etag ?? "1",
+              })
               .where(
                 and(
                   inArray(corsairEntities.accountId, accountIds),
                   eq(corsairEntities.entityId, event.id),
-                  eq(corsairEntities.entityType, "events")
-                )
+                  eq(corsairEntities.entityType, "events"),
+                ),
               );
           } else {
             await ctx.db.insert(corsairEntities).values({
@@ -330,7 +348,7 @@ export const calendarRouter = createTRPCRouter({
         summary: z.string(),
         description: z.string().optional(),
         meetingTime: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
@@ -375,10 +393,13 @@ export const calendarRouter = createTRPCRouter({
         return { success: true, event: result };
       } catch (err) {
         console.error("[calendar.createEvent] failed:", err);
-        throw new Error(err instanceof Error ? err.message : "Failed to create event in Google Calendar");
+        throw new Error(
+          err instanceof Error
+            ? err.message
+            : "Failed to create event in Google Calendar",
+        );
       }
     }),
-
 
   /**
    * Registers a Google Calendar push-notification watch channel so that
@@ -390,21 +411,23 @@ export const calendarRouter = createTRPCRouter({
     const tenantId = ctx.session.user.id;
     const client = corsair.withTenant(tenantId);
 
-    const webhookUrl =
-      process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks`
-        : null;
+    const webhookUrl = process.env.NEXT_PUBLIC_APP_URL
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks`
+      : null;
 
     // In local dev without a public URL, skip registration entirely
     if (!webhookUrl || webhookUrl.includes("localhost")) {
-      console.info("[registerWebhook] Skipping — no public URL configured (set NEXT_PUBLIC_APP_URL)");
+      console.info(
+        "[registerWebhook] Skipping — no public URL configured (set NEXT_PUBLIC_APP_URL)",
+      );
       return { success: false as const, reason: "no_public_url" };
     }
 
     try {
       // Get a fresh access token via the corsair client
-      const accessToken: string = await (client.googlecalendar as any)._getAccessToken?.()
-        ?? (client.googlecalendar as any).key;
+      const accessToken: string =
+        (await (client.googlecalendar as any)._getAccessToken?.()) ??
+        (client.googlecalendar as any).key;
 
       const channelId = `cal-${tenantId}-${Date.now()}`;
       const expiration = Date.now() + 7 * 24 * 60 * 60 * 1000;
@@ -423,23 +446,26 @@ export const calendarRouter = createTRPCRouter({
             address: webhookUrl,
             params: { ttl: String(Math.floor(expiration / 1000)) },
           }),
-        }
+        },
       );
 
       if (!res.ok) {
         const errText = await res.text();
-        console.warn("[registerWebhook] Google rejected the watch request:", errText);
+        console.warn(
+          "[registerWebhook] Google rejected the watch request:",
+          errText,
+        );
         return { success: false as const, reason: errText };
       }
 
-      const channel = await res.json() as {
+      const channel = (await res.json()) as {
         id: string;
         resourceId: string;
         expiration: string;
       };
 
       console.info(
-        `[registerWebhook] Channel registered: id=${channel.id} expires=${channel.expiration}`
+        `[registerWebhook] Channel registered: id=${channel.id} expires=${channel.expiration}`,
       );
 
       return {
@@ -457,4 +483,3 @@ export const calendarRouter = createTRPCRouter({
     }
   }),
 });
-

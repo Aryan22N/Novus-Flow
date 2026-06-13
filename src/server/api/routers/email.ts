@@ -2,16 +2,13 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
-import { sentMail } from "~/server/db/schema";
+import { sentMail, draftMail } from "~/server/db/schema";
 import { corsair } from "~/server/corsair";
 import { randomUUID } from "crypto";
 
-function getHeader(
-  headers: { name: string; value: string }[],
-  name: string
-) {
+function getHeader(headers: { name: string; value: string }[], name: string) {
   return headers.find(
-    (header) => header.name.toLowerCase() === name.toLowerCase()
+    (header) => header.name.toLowerCase() === name.toLowerCase(),
   )?.value;
 }
 
@@ -95,7 +92,7 @@ export const emailRouter = createTRPCRouter({
         page: z.number().int().min(1).default(1),
         category: z.string().optional(),
         isStarred: z.boolean().optional(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
@@ -108,8 +105,8 @@ export const emailRouter = createTRPCRouter({
           corsairAccounts,
           and(
             eq(corsairEntities.accountId, corsairAccounts.id),
-            eq(corsairAccounts.tenantId, tenantId)
-          )
+            eq(corsairAccounts.tenantId, tenantId),
+          ),
         )
         .where(eq(corsairEntities.entityType, "messages"));
 
@@ -129,7 +126,9 @@ export const emailRouter = createTRPCRouter({
           const from = getHeader(headers, "From");
 
           const dateHeader = getHeader(headers, "Date");
-          const headerTimestamp = dateHeader ? new Date(dateHeader).getTime() : NaN;
+          const headerTimestamp = dateHeader
+            ? new Date(dateHeader).getTime()
+            : NaN;
 
           const getEmailCategory = (labelIds?: string[]) => {
             if (!labelIds) return "primary";
@@ -145,17 +144,16 @@ export const emailRouter = createTRPCRouter({
 
             sender: extractSender(from),
 
-            senderEmail:
-              from?.match(/<(.+?)>/)?.[1] ?? from,
+            senderEmail: from?.match(/<(.+?)>/)?.[1] ?? from,
 
             subject: getHeader(headers, "Subject") ?? "(no subject)",
 
             snippet: data.snippet ?? "",
 
             unread: data.labelIds?.includes("UNREAD"),
-            
+
             isStarred: data.labelIds?.includes("STARRED"),
-            
+
             category: getEmailCategory(data.labelIds),
 
             date: new Date(
@@ -163,7 +161,7 @@ export const emailRouter = createTRPCRouter({
                 ? Number(data.internalDate)
                 : !Number.isNaN(headerTimestamp)
                   ? headerTimestamp
-                  : data.createdAt || Date.now()
+                  : data.createdAt || Date.now(),
             ),
           };
         })
@@ -198,8 +196,8 @@ export const emailRouter = createTRPCRouter({
         corsairAccounts,
         and(
           eq(corsairEntities.accountId, corsairAccounts.id),
-          eq(corsairAccounts.tenantId, tenantId)
-        )
+          eq(corsairAccounts.tenantId, tenantId),
+        ),
       )
       .where(eq(corsairEntities.entityType, "messages"));
 
@@ -254,14 +252,14 @@ export const emailRouter = createTRPCRouter({
             corsairAccounts,
             and(
               eq(corsairEntities.accountId, corsairAccounts.id),
-              eq(corsairAccounts.tenantId, tenantId)
-            )
+              eq(corsairAccounts.tenantId, tenantId),
+            ),
           )
           .where(
             and(
               eq(corsairEntities.entityType, "messages"),
-              eq(corsairEntities.entityId, input.messageId)
-            )
+              eq(corsairEntities.entityId, input.messageId),
+            ),
           )
           .limit(1);
 
@@ -301,19 +299,18 @@ export const emailRouter = createTRPCRouter({
         corsairAccounts,
         and(
           eq(corsairEntities.accountId, corsairAccounts.id),
-          eq(corsairAccounts.tenantId, tenantId)
-        )
+          eq(corsairAccounts.tenantId, tenantId),
+        ),
       )
       .where(eq(corsairEntities.entityType, "messages"));
 
     const seen = new Set<string>();
-    const unreadCount = messages
-      .filter(({ entity: message }) => {
-        if (seen.has(message.entityId)) return false;
-        seen.add(message.entityId);
-        const data = message.data as any;
-        return data?.labelIds?.includes("UNREAD");
-      }).length;
+    const unreadCount = messages.filter(({ entity: message }) => {
+      if (seen.has(message.entityId)) return false;
+      seen.add(message.entityId);
+      const data = message.data as any;
+      return data?.labelIds?.includes("UNREAD");
+    }).length;
 
     return { count: unreadCount };
   }),
@@ -332,11 +329,11 @@ export const emailRouter = createTRPCRouter({
           corsairAccounts,
           and(
             eq(corsairEntities.accountId, corsairAccounts.id),
-            eq(corsairAccounts.tenantId, tenantId)
-          )
+            eq(corsairAccounts.tenantId, tenantId),
+          ),
         )
         .where(
-          sql`${corsairEntities.entityType} = 'messages' AND ${corsairEntities.data}->>'threadId' = ${input.threadId}`
+          sql`${corsairEntities.entityType} = 'messages' AND ${corsairEntities.data}->>'threadId' = ${input.threadId}`,
         );
 
       // Modify the thread labels in Gmail (batch remove UNREAD label)
@@ -351,7 +348,10 @@ export const emailRouter = createTRPCRouter({
             removeLabelIds: ["UNREAD"],
           });
         } catch (err) {
-          console.error(`Failed to remove UNREAD label from messages in Gmail:`, err);
+          console.error(
+            `Failed to remove UNREAD label from messages in Gmail:`,
+            err,
+          );
         }
       }
 
@@ -359,7 +359,9 @@ export const emailRouter = createTRPCRouter({
       for (const { entity: msg } of messages) {
         const data = msg.data as any;
         if (data?.labelIds?.includes("UNREAD")) {
-          const updatedLabelIds = (data.labelIds as string[]).filter((label) => label !== "UNREAD");
+          const updatedLabelIds = (data.labelIds as string[]).filter(
+            (label) => label !== "UNREAD",
+          );
           await ctx.db
             .update(corsairEntities)
             .set({
@@ -388,11 +390,11 @@ export const emailRouter = createTRPCRouter({
           corsairAccounts,
           and(
             eq(corsairEntities.accountId, corsairAccounts.id),
-            eq(corsairAccounts.tenantId, tenantId)
-          )
+            eq(corsairAccounts.tenantId, tenantId),
+          ),
         )
         .where(
-          sql`${corsairEntities.entityType} = 'messages' AND ${corsairEntities.data}->>'threadId' = ${input.threadId}`
+          sql`${corsairEntities.entityType} = 'messages' AND ${corsairEntities.data}->>'threadId' = ${input.threadId}`,
         )
         .orderBy(desc(corsairEntities.createdAt));
 
@@ -411,12 +413,15 @@ export const emailRouter = createTRPCRouter({
         const from = getHeader(headers, "From");
         const to = getHeader(headers, "To");
         const cc = getHeader(headers, "Cc");
-        const subject = data.subject ?? getHeader(headers, "Subject") ?? "(no subject)";
+        const subject =
+          data.subject ?? getHeader(headers, "Subject") ?? "(no subject)";
 
         const { htmlBody, plainBody, attachments } = parsePayload(data.payload);
 
         const dateHeader = getHeader(headers, "Date");
-        const headerTimestamp = dateHeader ? new Date(dateHeader).getTime() : NaN;
+        const headerTimestamp = dateHeader
+          ? new Date(dateHeader).getTime()
+          : NaN;
 
         return {
           id: message.entityId,
@@ -436,7 +441,7 @@ export const emailRouter = createTRPCRouter({
               ? Number(data.internalDate)
               : !Number.isNaN(headerTimestamp)
                 ? headerTimestamp
-                : data.createdAt || Date.now()
+                : data.createdAt || Date.now(),
           ),
         };
       });
@@ -460,10 +465,10 @@ export const emailRouter = createTRPCRouter({
     const client = corsair.withTenant(tenantId);
 
     // Fetch the latest 50 INBOX messages
-    const listResult = await client.gmail.api.messages.list({
+    const listResult = (await client.gmail.api.messages.list({
       maxResults: 50,
       labelIds: ["INBOX"],
-    }) as { messages?: { id: string }[] } | null;
+    })) as { messages?: { id: string }[] } | null;
 
     const messageIds = listResult?.messages ?? [];
 
@@ -488,10 +493,10 @@ export const emailRouter = createTRPCRouter({
       try {
         // Fetch full message (typed as any — Corsair's Gmail return type is not publicly exported)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fullMsg = await client.gmail.api.messages.get({
+        const fullMsg = (await client.gmail.api.messages.get({
           id: msg.id,
           format: "full",
-        }) as any;
+        })) as any;
 
         if (!fullMsg) continue;
 
@@ -505,8 +510,8 @@ export const emailRouter = createTRPCRouter({
             and(
               eq(corsairEntities.accountId, accountId),
               eq(corsairEntities.entityId, msg.id),
-              eq(corsairEntities.entityType, "messages")
-            )
+              eq(corsairEntities.entityType, "messages"),
+            ),
           )
           .limit(1);
 
@@ -523,8 +528,8 @@ export const emailRouter = createTRPCRouter({
               and(
                 eq(corsairEntities.accountId, accountId),
                 eq(corsairEntities.entityId, msg.id),
-                eq(corsairEntities.entityType, "messages")
-              )
+                eq(corsairEntities.entityType, "messages"),
+              ),
             );
         } else {
           await ctx.db.insert(corsairEntities).values({
@@ -556,7 +561,7 @@ export const emailRouter = createTRPCRouter({
         subject: z.string().min(1, "Subject is required"),
         body: z.string(),
         isHtml: z.boolean().default(false),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
@@ -584,9 +589,9 @@ export const emailRouter = createTRPCRouter({
         .replace(/=+$/, "");
 
       // Send via Corsair Gmail client
-      const result = await client.gmail.api.messages.send({
+      const result = (await client.gmail.api.messages.send({
         raw: encoded,
-      }) as { id?: string } | null;
+      })) as { id?: string } | null;
 
       if (result?.id) {
         await ctx.db.insert(sentMail).values({
@@ -615,5 +620,81 @@ export const emailRouter = createTRPCRouter({
         .orderBy(desc(sentMail.createdAt));
         
       return emails;
+    }),
+
+  saveDraft: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().optional(),
+        to: z.string().optional(),
+        cc: z.string().optional(),
+        bcc: z.string().optional(),
+        subject: z.string().optional(),
+        body: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const draftId = input.id ?? randomUUID();
+
+      const existing = await ctx.db
+        .select({ id: draftMail.id })
+        .from(draftMail)
+        .where(eq(draftMail.id, draftId))
+        .limit(1);
+
+      if (existing.length > 0) {
+        await ctx.db
+          .update(draftMail)
+          .set({
+            to: input.to ?? "",
+            cc: input.cc ?? "",
+            bcc: input.bcc ?? "",
+            subject: input.subject ?? "",
+            body: input.body ?? "",
+            updatedAt: new Date(),
+          })
+          .where(eq(draftMail.id, draftId));
+      } else {
+        await ctx.db.insert(draftMail).values({
+          id: draftId,
+          tenantId,
+          to: input.to ?? "",
+          cc: input.cc ?? "",
+          bcc: input.bcc ?? "",
+          subject: input.subject ?? "",
+          body: input.body ?? "",
+        });
+      }
+
+      return { draftId };
+    }),
+
+  getDraftsCount: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.session.user.id;
+    const drafts = await ctx.db
+      .select({ id: draftMail.id })
+      .from(draftMail)
+      .where(eq(draftMail.tenantId, tenantId));
+    
+    return { count: drafts.length };
+  }),
+
+  getDrafts: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.session.user.id;
+    return ctx.db
+      .select()
+      .from(draftMail)
+      .where(eq(draftMail.tenantId, tenantId))
+      .orderBy(desc(draftMail.updatedAt));
+  }),
+
+  deleteDraft: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .delete(draftMail)
+        .where(eq(draftMail.id, input.id));
+      return { success: true };
     }),
 });

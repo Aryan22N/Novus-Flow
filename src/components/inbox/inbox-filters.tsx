@@ -1,10 +1,4 @@
-import {
-  Inbox,
-  Tag,
-  Calendar,
-  Users,
-  Bell,
-} from "lucide-react";
+import { Inbox, Tag, Calendar, Users, Bell } from "lucide-react";
 
 import { api } from "~/trpc/react";
 
@@ -13,11 +7,17 @@ interface InboxFiltersProps {
   onCategoryChange: (category: string) => void;
 }
 
-export default function InboxFilters({ category, onCategoryChange }: InboxFiltersProps) {
+export default function InboxFilters({
+  category,
+  onCategoryChange,
+}: InboxFiltersProps) {
   const { data: unreadCounts } = api.email.getUnreadCounts.useQuery();
 
   const getButtonClass = (isActive: boolean) =>
-    `flex items-center gap-2 px-4 py-1.5 text-[16px] font-medium transition-colors hover:bg-surface-container-high rounded-md border-b-3 ${isActive ? "text-[#2656C9] border-[#2656C9]" : "text-on-surface-variant border-transparent"
+    `flex items-center gap-2 px-4 py-1.5 text-[16px] font-medium transition-colors hover:bg-surface-container-high rounded-md border-b-3 ${
+      isActive
+        ? "text-[#2656C9] border-[#2656C9]"
+        : "text-on-surface-variant border-transparent"
     }`;
 
   const renderBadge = (count: number | undefined, bgColor: string) => {

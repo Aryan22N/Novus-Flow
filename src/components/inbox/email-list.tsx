@@ -14,11 +14,16 @@ interface EmailListProps {
   onTotalChange?: (total: number) => void;
 }
 
-export default function EmailList({ page, category, isStarredOnly, onTotalChange }: EmailListProps) {
-  const { data, isPending } = api.email.getInboxThreads.useQuery({ 
-    page, 
-    category, 
-    isStarred: isStarredOnly 
+export default function EmailList({
+  page,
+  category,
+  isStarredOnly,
+  onTotalChange,
+}: EmailListProps) {
+  const { data, isPending } = api.email.getInboxThreads.useQuery({
+    page,
+    category,
+    isStarred: isStarredOnly,
   });
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
@@ -60,28 +65,46 @@ export default function EmailList({ page, category, isStarredOnly, onTotalChange
 
   const toggleStarMutation = api.email.toggleStar.useMutation({
     onMutate: async ({ messageId, isStarred }) => {
-      await utils.email.getInboxThreads.cancel({ page, category, isStarred: isStarredOnly });
-      const previousData = utils.email.getInboxThreads.getData({ page, category, isStarred: isStarredOnly });
-      utils.email.getInboxThreads.setData({ page, category, isStarred: isStarredOnly }, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          emails: old.emails.map((e) =>
-            e.id === messageId ? { ...e, isStarred } : e
-          ),
-        };
+      await utils.email.getInboxThreads.cancel({
+        page,
+        category,
+        isStarred: isStarredOnly,
       });
+      const previousData = utils.email.getInboxThreads.getData({
+        page,
+        category,
+        isStarred: isStarredOnly,
+      });
+      utils.email.getInboxThreads.setData(
+        { page, category, isStarred: isStarredOnly },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            emails: old.emails.map((e) =>
+              e.id === messageId ? { ...e, isStarred } : e,
+            ),
+          };
+        },
+      );
       return { previousData };
     },
     onError: (err, newTodo, context) => {
-      utils.email.getInboxThreads.setData({ page, category, isStarred: isStarredOnly }, context?.previousData);
+      utils.email.getInboxThreads.setData(
+        { page, category, isStarred: isStarredOnly },
+        context?.previousData,
+      );
     },
     onSettled: () => {
       void utils.email.getInboxThreads.invalidate();
     },
   });
 
-  const handleToggleStar = (e: React.MouseEvent, messageId: string, currentIsStarred: boolean) => {
+  const handleToggleStar = (
+    e: React.MouseEvent,
+    messageId: string,
+    currentIsStarred: boolean,
+  ) => {
     e.preventDefault();
     e.stopPropagation();
     toggleStarMutation.mutate({ messageId, isStarred: !currentIsStarred });
@@ -104,13 +127,13 @@ export default function EmailList({ page, category, isStarredOnly, onTotalChange
   const emails = data?.emails;
 
   return (
-    <div className="h-full overflow-y-auto bg-[#F3F6FB] flex-1 rounded-xl">
+    <div className="h-full flex-1 overflow-y-auto rounded-xl bg-[#F3F6FB]">
       {isPending ? (
-        <div className="flex items-center justify-center h-full">
+        <div className="flex h-full items-center justify-center">
           <IsometricLoader />
         </div>
       ) : emails?.length === 0 ? (
-        <div className="flex items-center justify-center h-32 text-gray-500">
+        <div className="flex h-32 items-center justify-center text-gray-500">
           No threads found
         </div>
       ) : (
@@ -127,10 +150,16 @@ export default function EmailList({ page, category, isStarredOnly, onTotalChange
                 sender={email.sender}
                 subject={email.subject}
                 snippet={email.snippet}
-                date={isToday(email.date) ? format(email.date, "h:mm a").toLowerCase() : format(email.date, "MMM d")}
+                date={
+                  isToday(email.date)
+                    ? format(email.date, "h:mm a").toLowerCase()
+                    : format(email.date, "MMM d")
+                }
                 unread={!!isUnread}
                 isStarred={email.isStarred}
-                onToggleStar={(e) => handleToggleStar(e, email.id, !!email.isStarred)}
+                onToggleStar={(e) =>
+                  handleToggleStar(e, email.id, !!email.isStarred)
+                }
               />
             </Link>
           );
