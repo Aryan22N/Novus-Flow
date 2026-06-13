@@ -371,7 +371,7 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
           </div>
 
           {/* Footer Toolbar */}
-          <footer className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-white px-6 py-4">
+          <footer className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-white px-3 py-2">
             <div className="flex items-center gap-4">
               {/* Send Button Group */}
               <div className="flex items-center overflow-hidden rounded-xl shadow-sm">

@@ -127,7 +127,7 @@ export default function EmailList({
   const emails = data?.emails;
 
   return (
-    <div className="h-full flex-1 overflow-y-auto rounded-xl bg-[#F3F6FB]">
+    <div className="flex-1 rounded-xl bg-[#F3F6FB]">
       {isPending ? (
         <div className="flex h-full items-center justify-center">
           <IsometricLoader />

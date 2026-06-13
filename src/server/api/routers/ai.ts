@@ -196,7 +196,10 @@ export const aiRouter = createTRPCRouter({
 
       try {
         const provider = getAiProvider();
-        const result = await provider.analyzeThread(threadText);
+        const result = await provider.analyzeThread(threadText, {
+          name: ctx.session.user.name,
+          email: ctx.session.user.email,
+        });
         return result;
       } catch (error: any) {
         console.error("AI analysis failed:", error);
@@ -238,6 +241,10 @@ export const aiRouter = createTRPCRouter({
         const result = await provider.generateReplyDraft(
           threadText,
           input.userBriefPrompt,
+          {
+            name: ctx.session.user.name,
+            email: ctx.session.user.email,
+          }
         );
         return result;
       } catch (error: any) {
@@ -254,6 +261,111 @@ export const aiRouter = createTRPCRouter({
         });
       }
     }),
+
+  generateGlobalDraft: protectedProcedure
+    .input(z.object({ prompt: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const provider = getAiProvider();
+        const result = await provider.generateGlobalDraft(input.prompt, {
+          name: ctx.session.user.name,
+          email: ctx.session.user.email,
+        });
+        return result;
+      } catch (error: any) {
+        console.error("AI global draft generation failed:", error);
+        const isRateLimit =
+          error.message?.includes("429") ||
+          error.message?.toLowerCase().includes("quota") ||
+          error.message?.toLowerCase().includes("rate limit");
+        throw new TRPCError({
+          code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
+          message: isRateLimit
+            ? "AI rate limit or quota exceeded. Please wait a moment before trying again."
+            : `Failed to generate global draft with AI: ${error.message || "Unknown error"}.`,
+        });
+      }
+    }),
+
+  summarizeRecentEmails: protectedProcedure.mutation(async ({ ctx }) => {
+    const tenantId = ctx.session.user.id;
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const messages = await ctx.db
+      .select({ entity: corsairEntities })
+      .from(corsairEntities)
+      .innerJoin(
+        corsairAccounts,
+        and(
+          eq(corsairEntities.accountId, corsairAccounts.id),
+          eq(corsairAccounts.tenantId, tenantId),
+        ),
+      )
+      .where(eq(corsairEntities.entityType, "messages"));
+
+    const recentUnreadEmails = messages
+      .filter(({ entity: message }) => {
+        const data = message.data as any;
+        if (!data?.payload) return false;
+        if (!data.labelIds?.includes("UNREAD")) return false;
+
+        const headers = data.payload.headers ?? [];
+        const dateHeader = getHeader(headers, "Date");
+        const headerTimestamp = dateHeader
+          ? new Date(dateHeader).getTime()
+          : NaN;
+
+        const date = new Date(
+          data.internalDate
+            ? Number(data.internalDate)
+            : !Number.isNaN(headerTimestamp)
+              ? headerTimestamp
+              : data.createdAt || Date.now(),
+        );
+
+        return date.getTime() >= yesterday.getTime();
+      })
+      .sort((a, b) => {
+        const dataA = a.entity.data as any;
+        const dataB = b.entity.data as any;
+        return (dataB.internalDate || 0) - (dataA.internalDate || 0);
+      });
+
+    if (recentUnreadEmails.length === 0) {
+      return {
+        updates: ["No recent unread emails from the last 24 hours."],
+        tasks: [],
+        meetings: [],
+        deadlines: [],
+      };
+    }
+
+    const emailsText = recentUnreadEmails
+      .map(({ entity: message }) => {
+        const data = message.data as any;
+        const headers = data.payload.headers ?? [];
+        const from = getHeader(headers, "From");
+        const subject = getHeader(headers, "Subject") ?? "(no subject)";
+        const snippet = data.snippet ?? "";
+        return `From: ${from}\nSubject: ${subject}\nSnippet: ${snippet}`;
+      })
+      .join("\n\n---\n\n");
+
+    try {
+      const provider = getAiProvider();
+      const result = await provider.summarizeRecentEmails(emailsText, {
+        name: ctx.session.user.name,
+        email: ctx.session.user.email,
+      });
+      return result;
+    } catch (error: any) {
+      console.error("AI summary generation failed:", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to summarize emails with AI: ${error.message || "Unknown error"}.`,
+      });
+    }
+  }),
 
   getSuggestedReplies: publicProcedure
     .input(z.object({ threadId: z.string(), messageId: z.string() }))

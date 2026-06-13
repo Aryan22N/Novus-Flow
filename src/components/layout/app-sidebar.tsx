@@ -46,7 +46,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
         <nav
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`absolute top-0 left-0 flex h-screen flex-col overflow-hidden bg-[#f7f9fc] py-4 text-[14px] transition-all duration-300 ${isExpanded ? "w-[250px]" : "w-[72px]"} ${isHovered && !isOpen ? "z-50 rounded-r-xl shadow-2xl" : "z-10"}`}
+          className={`sticky top-0 left-0 flex h-screen flex-col overflow-hidden bg-[#f7f9fc] py-4 text-[14px] transition-all duration-300 ${isExpanded ? "w-[250px]" : "w-[72px]"} ${isHovered && !isOpen ? "z-50 rounded-r-xl shadow-2xl" : "z-10"}`}
         >
           {/* Compose Button */}
           <div

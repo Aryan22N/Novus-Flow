@@ -16,11 +16,11 @@ export default function InboxPage() {
   const [category, setCategory] = useState("primary");
 
   return (
-    <div className="bg-background text-on-background flex h-screen flex-col overflow-hidden">
+    <div className="bg-background text-on-background flex min-h-screen flex-col">
       <TopSearchBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         <AppSidebar isOpen={isSidebarOpen} />
-        <main className="bg-surface flex flex-1 flex-col overflow-hidden p-6 transition-all">
+        <main className="bg-surface flex flex-1 flex-col p-6 transition-all">
           <InboxHeader
             page={page}
             onPageChange={setPage}
@@ -28,7 +28,7 @@ export default function InboxPage() {
             category={category}
             onCategoryChange={setCategory}
           />
-          <div className="flex min-h-0 flex-1 gap-6">
+          <div className="flex min-h-0 flex-1 gap-4">
             <EmailList
               page={page}
               category={category}
