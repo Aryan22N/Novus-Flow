@@ -46,6 +46,7 @@ export default function ThreadPage(props: {
     null,
   );
   const [replyText, setReplyText] = useState("");
+  const [aiDraftText, setAiDraftText] = useState<string | undefined>(undefined);
   const [showHelpMeWrite, setShowHelpMeWrite] = useState(false);
   const [helpMeWritePrompt, setHelpMeWritePrompt] = useState("");
 
@@ -63,6 +64,7 @@ export default function ThreadPage(props: {
   const draftMutation = api.ai.generateReplyDraft.useMutation({
     onSuccess: (data) => {
       setReplyText(data.draft);
+      setAiDraftText(data.draft);
       setShowHelpMeWrite(false);
       setHelpMeWritePrompt("");
     },
@@ -518,6 +520,8 @@ export default function ThreadPage(props: {
                                             ? msg.subject
                                             : "Re: " + msg.subject,
                                           body: replyText,
+                                          aiDraftText: aiDraftText,
+                                          threadId: params.threadId,
                                         });
                                       }}
                                       disabled={
@@ -640,7 +644,10 @@ export default function ThreadPage(props: {
                                   (suggestion, idx) => (
                                     <button
                                       key={idx}
-                                      onClick={() => setReplyText(suggestion)}
+                                      onClick={() => {
+                                        setReplyText(suggestion);
+                                        setAiDraftText(suggestion);
+                                      }}
                                       className="bg-surface-container-lowest border-outline-variant hover:border-primary/50 group cursor-pointer rounded-xl border p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-95"
                                       suppressHydrationWarning
                                     >

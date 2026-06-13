@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
-import { sentMail, draftMail } from "~/server/db/schema";
+import { sentMail, draftMail, aiCorrections } from "~/server/db/schema";
 import { corsair } from "~/server/corsair";
 import { randomUUID } from "crypto";
 import {
@@ -10,6 +10,8 @@ import {
   extractSender,
   parsePayload,
 } from "~/server/utils/email-parsing";
+import { db } from "~/server/db";
+import { invalidateUserContext } from "./ai-context";
 
 export const emailRouter = createTRPCRouter({
   getInboxThreads: protectedProcedure
@@ -487,6 +489,8 @@ export const emailRouter = createTRPCRouter({
         subject: z.string().min(1, "Subject is required"),
         body: z.string(),
         isHtml: z.boolean().default(false),
+        aiDraftText: z.string().optional(),
+        threadId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -519,6 +523,8 @@ export const emailRouter = createTRPCRouter({
         raw: encoded,
       })) as { id?: string } | null;
 
+      const messageId = result?.id ?? null;
+
       if (result?.id) {
         await ctx.db.insert(sentMail).values({
           id: randomUUID(),
@@ -532,7 +538,24 @@ export const emailRouter = createTRPCRouter({
         });
       }
 
-      return { messageId: result?.id ?? null };
+      // NEW: async correction capture — never blocks the email send
+      if (
+        input.aiDraftText &&
+        input.aiDraftText.trim() !== input.body.trim()
+      ) {
+        void captureCorrection({
+          userId: tenantId,
+          aiDraftText: input.aiDraftText,
+          userEditedText: input.body,
+          recipientEmail: input.to,
+          emailSubject: input.subject,
+          threadId: input.threadId,
+        }).catch((err) =>
+          console.error("[sendEmail] captureCorrection failed:", err),
+        );
+      }
+
+      return { messageId };
     }),
 
   getSentEmails: protectedProcedure
@@ -624,3 +647,44 @@ export const emailRouter = createTRPCRouter({
       return { success: true };
     }),
 });
+
+async function captureCorrection(data: {
+  userId:         string;
+  aiDraftText:    string;
+  userEditedText: string;
+  recipientEmail?: string;
+  emailSubject?:   string;
+  threadId?:       string;
+}): Promise<void> {
+  await db.insert(aiCorrections).values({
+    userId:          data.userId,
+    aiDraftText:     data.aiDraftText,
+    userEditedText:  data.userEditedText,
+    recipientEmail:  data.recipientEmail,
+    emailSubject:    data.emailSubject,
+    threadId:        data.threadId,
+    correctionType:  classifyCorrection(data.aiDraftText, data.userEditedText),
+  });
+
+  // Bust Redis cache so next AI call picks up this correction immediately
+  await invalidateUserContext(data.userId);
+}
+
+function classifyCorrection(original: string, edited: string): string {
+  const origWords = original.trim().split(/\s+/).length;
+  const editWords = edited.trim().split(/\s+/).length;
+  const lenDiff   = Math.abs(editWords - origWords);
+
+  // Length changed significantly
+  if (lenDiff > 30 || lenDiff / origWords > 0.4) return "length";
+
+  // Tone markers added or removed
+  const formalMarkers   = ["regards", "sincerely", "dear", "pleased", "kindly"];
+  const casualMarkers   = ["hey", "thanks!", "cheers", "hi!", "sounds good"];
+  const addedFormal   = formalMarkers.some(m => !original.toLowerCase().includes(m) && edited.toLowerCase().includes(m));
+  const addedCasual   = casualMarkers.some(m => !original.toLowerCase().includes(m) && edited.toLowerCase().includes(m));
+  if (addedFormal || addedCasual) return "tone";
+
+  // Default — wording changed but length and tone similar
+  return "phrasing";
+}

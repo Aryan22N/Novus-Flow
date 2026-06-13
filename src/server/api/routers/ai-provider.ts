@@ -39,15 +39,16 @@ export interface EmailSummaryResult {
 }
 
 export interface AiProvider {
-  analyzeThread(threadText: string, userContext?: { name?: string | null; email?: string | null }): Promise<ThreadAnalysisResult>;
+  analyzeThread(threadText: string, userContext?: string): Promise<ThreadAnalysisResult>;
   generateReplyDraft(
     threadText: string,
     userBriefPrompt: string,
-    userContext?: { name?: string | null; email?: string | null }
+    userContext?: string
   ): Promise<DraftReplyResult>;
-  generateGlobalDraft(prompt: string, userContext?: { name?: string | null; email?: string | null }): Promise<GlobalDraftResult>;
+  generateGlobalDraft(prompt: string, userContext?: string): Promise<GlobalDraftResult>;
   generateSuggestions(threadText: string): Promise<SuggestedRepliesResult>;
-  summarizeRecentEmails(emailsText: string, userContext?: { name?: string | null; email?: string | null }): Promise<EmailSummaryResult>;
+  summarizeRecentEmails(emailsText: string, userContext?: string): Promise<EmailSummaryResult>;
+  summarizeWritingStyle(correctionText: string): Promise<string>;
 }
 
 class OpenAiProvider implements AiProvider {
@@ -59,14 +60,14 @@ class OpenAiProvider implements AiProvider {
     });
   }
 
-  async analyzeThread(threadText: string, userContext?: { name?: string | null; email?: string | null }): Promise<ThreadAnalysisResult> {
-    const userNameContext = userContext?.name ? ` The user's name is ${userContext.name}.` : "";
+  async analyzeThread(threadText: string, userContext?: string): Promise<ThreadAnalysisResult> {
+    const contextStr = userContext ? `\n\n${userContext}` : "";
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are an expert email assistant named Nexus Assistant.${userNameContext} Analyze the provided email thread.
+          content: `You are an expert email assistant named Nexus Assistant. Analyze the provided email thread.${contextStr}
 You must return a JSON object with the following structure:
 {
   "summary": "A concise bulleted HTML/markdown list summarizing key information from the thread. (Max 3-4 bullet points)",
@@ -95,15 +96,15 @@ Return ONLY a valid JSON object. Do not include markdown code block formatting (
   async generateReplyDraft(
     threadText: string,
     userBriefPrompt: string,
-    userContext?: { name?: string | null; email?: string | null }
+    userContext?: string
   ): Promise<DraftReplyResult> {
-    const userNameContext = userContext?.name ? ` The user's name is ${userContext.name} and their email is ${userContext.email}. Use this for signatures and context.` : "";
+    const contextStr = userContext ? `\n\n${userContext}` : "";
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are Nexus Assistant, a professional email drafter.${userNameContext}
+          content: `You are Nexus Assistant, a professional email drafter.${contextStr}
 Draft a complete, contextual email response for the last sender in the thread, based on the email thread history and the user's brief response intent/description.
 The user wants to say: "${userBriefPrompt}"
 
@@ -130,14 +131,14 @@ Make the email professional, helpful, and natural. Return ONLY a valid JSON obje
     return JSON.parse(resultText) as DraftReplyResult;
   }
 
-  async generateGlobalDraft(prompt: string, userContext?: { name?: string | null; email?: string | null }): Promise<GlobalDraftResult> {
-    const userNameContext = userContext?.name ? ` The user's name is ${userContext.name}. Use this name in the sign-off (e.g. Best regards, ${userContext.name}).` : "";
+  async generateGlobalDraft(prompt: string, userContext?: string): Promise<GlobalDraftResult> {
+    const contextStr = userContext ? `\n\n${userContext}` : "";
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are Nexus Assistant, a professional email drafter.${userNameContext}
+          content: `You are Nexus Assistant, a professional email drafter.${contextStr}
 The user wants to draft a new email. 
 Extract the recipient email address, a suitable subject, and draft the email body.
 If the prompt indicates scheduling a meeting or an event, set isMeetingRelated to true and provide meeting details (summary/title of meeting and meetingTime like "Tomorrow at 5 PM").
@@ -203,14 +204,14 @@ Return ONLY a valid JSON object. Make them realistic and tailored to the thread 
     return JSON.parse(resultText) as SuggestedRepliesResult;
   }
 
-  async summarizeRecentEmails(emailsText: string, userContext?: { name?: string | null; email?: string | null }): Promise<EmailSummaryResult> {
-    const userNameContext = userContext?.name ? ` The user's name is ${userContext.name}.` : "";
+  async summarizeRecentEmails(emailsText: string, userContext?: string): Promise<EmailSummaryResult> {
+    const contextStr = userContext ? `\n\n${userContext}` : "";
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are Nexus Assistant, an expert email summarizer.${userNameContext}
+          content: `You are Nexus Assistant, an expert email summarizer.${contextStr}
 Summarize the following recent unread emails. Extract important updates, actionable tasks, meetings, and deadlines.
 Return a JSON object containing the summary:
 {
@@ -232,6 +233,24 @@ Return ONLY a valid JSON object. Do not include markdown formatting like \`\`\`j
     const resultText = response.choices[0]?.message?.content ?? "{}";
     return JSON.parse(resultText) as EmailSummaryResult;
   }
+
+  async summarizeWritingStyle(correctionText: string): Promise<string> {
+    const response = await this.openai.chat.completions.create({
+      model:      "gpt-4o-mini",
+      max_tokens: 300,
+      messages: [
+        {
+          role:    "system",
+          content: "Analyze email corrections and output 3–5 concise writing style rules, each under 20 words. Plain text bullet points starting with a dash. Be specific and actionable — name what to avoid and what to prefer instead.",
+        },
+        {
+          role:    "user",
+          content: `Here are corrections this user made to AI email drafts:\n\n${correctionText}\n\nWrite a brief style guide.`,
+        },
+      ],
+    });
+    return response.choices[0]?.message?.content?.trim() ?? "";
+  }
 }
 
 class GeminiProvider implements AiProvider {
@@ -245,16 +264,16 @@ class GeminiProvider implements AiProvider {
     this.apiKey = key;
   }
 
-  async analyzeThread(threadText: string, userContext?: { name?: string | null; email?: string | null }): Promise<ThreadAnalysisResult> {
+  async analyzeThread(threadText: string, userContext?: string): Promise<ThreadAnalysisResult> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${this.apiKey}`;
-    const userNameContext = userContext?.name ? ` The user's name is ${userContext.name}.` : "";
+    const contextStr = userContext ? `\n\n${userContext}` : "";
 
     const requestBody = {
       contents: [
         {
           parts: [
             {
-              text: `You are an expert email assistant named Nexus Assistant.${userNameContext} Analyze the provided email thread.
+              text: `You are an expert email assistant named Nexus Assistant. Analyze the provided email thread.${contextStr}
 Generate a concise summary, checklist of actionable tasks, check if it is meeting related, extract suggestions, and draft a default reply.
 
 Make sure the draft reply is formatted properly:
@@ -337,17 +356,17 @@ ${threadText}`,
   async generateReplyDraft(
     threadText: string,
     userBriefPrompt: string,
-    userContext?: { name?: string | null; email?: string | null }
+    userContext?: string
   ): Promise<DraftReplyResult> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
-    const userNameContext = userContext?.name ? ` The user's name is ${userContext.name} and their email is ${userContext.email}. Use this for signatures.` : "";
+    const contextStr = userContext ? `\n\n${userContext}` : "";
 
     const requestBody = {
       contents: [
         {
           parts: [
             {
-              text: `You are Nexus Assistant, a professional email drafter.${userNameContext}
+              text: `You are Nexus Assistant, a professional email drafter.${contextStr}
 Draft a complete, contextual email response for the last sender in the thread, based on the email thread history and the user's brief response intent/description.
 The user wants to say: "${userBriefPrompt}"
 
@@ -399,16 +418,16 @@ ${threadText}`,
     return JSON.parse(textResult) as DraftReplyResult;
   }
 
-  async generateGlobalDraft(prompt: string, userContext?: { name?: string | null; email?: string | null }): Promise<GlobalDraftResult> {
+  async generateGlobalDraft(prompt: string, userContext?: string): Promise<GlobalDraftResult> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
-    const userNameContext = userContext?.name ? ` The user's name is ${userContext.name}. Use this name in the sign-off.` : "";
+    const contextStr = userContext ? `\n\n${userContext}` : "";
 
     const requestBody = {
       contents: [
         {
           parts: [
             {
-              text: `You are Nexus Assistant, a professional email drafter.${userNameContext}
+              text: `You are Nexus Assistant, a professional email drafter.${contextStr}
 The user wants to draft a new email based on this prompt: "${prompt}"
 
 Extract the recipient email address, a suitable subject, and draft the email body.
@@ -529,16 +548,16 @@ ${threadText}`,
     return JSON.parse(textResult) as SuggestedRepliesResult;
   }
 
-  async summarizeRecentEmails(emailsText: string, userContext?: { name?: string | null; email?: string | null }): Promise<EmailSummaryResult> {
+  async summarizeRecentEmails(emailsText: string, userContext?: string): Promise<EmailSummaryResult> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
-    const userNameContext = userContext?.name ? ` The user's name is ${userContext.name}.` : "";
+    const contextStr = userContext ? `\n\n${userContext}` : "";
 
     const requestBody = {
       contents: [
         {
           parts: [
             {
-              text: `You are Nexus Assistant, an expert email summarizer.${userNameContext}
+              text: `You are Nexus Assistant, an expert email summarizer.${contextStr}
 Summarize the following recent unread emails. Extract important updates, actionable tasks, meetings, and deadlines.
 
 Recent Emails:
@@ -585,6 +604,33 @@ ${emailsText}
     }
 
     return JSON.parse(textResult) as EmailSummaryResult;
+  }
+
+  async summarizeWritingStyle(correctionText: string): Promise<string> {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+    const res = await fetch(url, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text:
+              "Analyze these email corrections and output 3–5 concise writing style rules, each under 20 words. " +
+              "Plain text bullet points starting with a dash.\n\n" +
+              `Corrections:\n${correctionText}\n\nWrite a brief style guide.`,
+          }],
+        }],
+        generationConfig: { maxOutputTokens: 300 },
+      }),
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Gemini API call failed with status ${res.status}: ${errorText}`);
+    }
+    const data = await res.json() as {
+      candidates: [{ content: { parts: [{ text: string }] } }]
+    };
+    return data.candidates[0]?.content.parts[0]?.text?.trim() ?? "";
   }
 }
 

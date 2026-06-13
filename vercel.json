@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/jobs/summarize-context",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

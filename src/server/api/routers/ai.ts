@@ -8,6 +8,7 @@ import { eq, desc, sql, and } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
 import { TRPCError } from "@trpc/server";
 import { getAiProvider } from "./ai-provider";
+import { loadUserContext, buildContextPrompt } from "./ai-context";
 import {
   getHeader,
   extractSender,
@@ -127,11 +128,12 @@ export const aiRouter = createTRPCRouter({
         .join("\n\n---\n\n");
 
       try {
+        const userCtx       = await loadUserContext(tenantId);
+        const contextPrompt = buildContextPrompt(userCtx);
+        const contextStr    = `User Name: ${ctx.session.user.name ?? "User"}\nUser Email: ${ctx.session.user.email ?? ""}\n${contextPrompt}`;
+
         const provider = getAiProvider();
-        const result = await provider.analyzeThread(threadText, {
-          name: ctx.session.user.name,
-          email: ctx.session.user.email,
-        });
+        const result = await provider.analyzeThread(threadText, contextStr);
         return result;
       } catch (error: any) {
         console.error("AI analysis failed:", error);
@@ -149,7 +151,11 @@ export const aiRouter = createTRPCRouter({
     }),
 
   generateReplyDraft: protectedProcedure
-    .input(z.object({ threadId: z.string(), userBriefPrompt: z.string() }))
+    .input(z.object({
+      threadId: z.string(),
+      userBriefPrompt: z.string(),
+      recipientEmail: z.string().email().optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
       const messages = await fetchThreadMessages(ctx, input.threadId, tenantId);
@@ -169,14 +175,15 @@ export const aiRouter = createTRPCRouter({
         .join("\n\n---\n\n");
 
       try {
+        const userCtx       = await loadUserContext(tenantId);
+        const contextPrompt = buildContextPrompt(userCtx, input.recipientEmail);
+        const contextStr    = `User Name: ${ctx.session.user.name ?? "User"}\nUser Email: ${ctx.session.user.email ?? ""}\n${contextPrompt}`;
+
         const provider = getAiProvider();
         const result = await provider.generateReplyDraft(
           threadText,
           input.userBriefPrompt,
-          {
-            name: ctx.session.user.name,
-            email: ctx.session.user.email,
-          }
+          contextStr
         );
         return result;
       } catch (error: any) {
@@ -195,14 +202,19 @@ export const aiRouter = createTRPCRouter({
     }),
 
   generateGlobalDraft: protectedProcedure
-    .input(z.object({ prompt: z.string() }))
+    .input(z.object({
+      prompt: z.string(),
+      recipientEmail: z.string().email().optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
       try {
+        const userCtx       = await loadUserContext(tenantId);
+        const contextPrompt = buildContextPrompt(userCtx, input.recipientEmail);
+        const contextStr    = `User Name: ${ctx.session.user.name ?? "User"}\nUser Email: ${ctx.session.user.email ?? ""}\n${contextPrompt}`;
+
         const provider = getAiProvider();
-        const result = await provider.generateGlobalDraft(input.prompt, {
-          name: ctx.session.user.name,
-          email: ctx.session.user.email,
-        });
+        const result = await provider.generateGlobalDraft(input.prompt, contextStr);
         return result;
       } catch (error: any) {
         console.error("AI global draft generation failed:", error);
@@ -284,11 +296,12 @@ export const aiRouter = createTRPCRouter({
       .join("\n\n---\n\n");
 
     try {
+      const userCtx       = await loadUserContext(tenantId);
+      const contextPrompt = buildContextPrompt(userCtx);
+      const contextStr    = `User Name: ${ctx.session.user.name ?? "User"}\nUser Email: ${ctx.session.user.email ?? ""}\n${contextPrompt}`;
+
       const provider = getAiProvider();
-      const result = await provider.summarizeRecentEmails(emailsText, {
-        name: ctx.session.user.name,
-        email: ctx.session.user.email,
-      });
+      const result = await provider.summarizeRecentEmails(emailsText, contextStr);
       return result;
     } catch (error: any) {
       console.error("AI summary generation failed:", error);

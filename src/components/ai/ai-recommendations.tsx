@@ -20,6 +20,8 @@ export default function NexusAssistant() {
     bcc: string | null;
     subject: string | null;
     body: string | null;
+    aiDraftText?: string | null;
+    threadId?: string | null;
   } | null>(null);
 
   const [summaryResult, setSummaryResult] = useState<{
@@ -55,6 +57,7 @@ export default function NexusAssistant() {
         bcc: null,
         subject: data.subject,
         body: data.draft,
+        aiDraftText: data.draft,
       });
       setPrompt(""); // Clear input
     },

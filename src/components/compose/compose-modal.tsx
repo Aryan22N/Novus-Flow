@@ -26,6 +26,8 @@ interface ComposeModalProps {
     bcc: string | null;
     subject: string | null;
     body: string | null;
+    aiDraftText?: string | null;
+    threadId?: string | null;
   };
 }
 
@@ -41,6 +43,7 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
   const [showBcc, setShowBcc] = useState(!!initialDraft?.bcc);
   const [subject, setSubject] = useState(initialDraft?.subject || "");
   const [body, setBody] = useState(initialDraft?.body || "");
+  const [aiDraftText, setAiDraftText] = useState<string | undefined>(initialDraft?.aiDraftText || undefined);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isMinimized, setIsMinimized] = useState(false);
   const [draftSaved, setDraftSaved] = useState(true);
@@ -105,6 +108,25 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
 
   const deleteDraftMutation = api.email.deleteDraft.useMutation();
 
+  const generateDraftMutation = api.ai.generateGlobalDraft.useMutation({
+    onSuccess: (data) => {
+      setBody(data.draft);
+      setAiDraftText(data.draft);
+      if (bodyRef.current) {
+        bodyRef.current.innerText = data.draft;
+      }
+      if (data.to && !to) {
+        setTo(data.to);
+      }
+      if (data.subject && !subject) {
+        setSubject(data.subject);
+      }
+    },
+    onError: (err) => {
+      alert("Failed to generate draft: " + err.message);
+    },
+  });
+
   // Auto-save draft indicator
   useEffect(() => {
     if (draftTimer.current) clearTimeout(draftTimer.current);
@@ -138,6 +160,8 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
       subject: subject.trim(),
       body: bodyText,
       isHtml: false,
+      aiDraftText: aiDraftText,
+      threadId: initialDraft?.threadId || undefined,
     });
     // Optional: Delete draft if it was sent
     if (draftId) {
@@ -244,9 +268,27 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
                 placeholder="Describe the email you want to write..."
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && aiPrompt.trim() && !generateDraftMutation.isPending) {
+                    generateDraftMutation.mutate({
+                      prompt: aiPrompt,
+                      recipientEmail: to.trim() || undefined,
+                    });
+                  }
+                }}
               />
-              <button className="absolute top-1.5 right-2 rounded-lg bg-gradient-to-r from-blue-800 to-cyan-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90">
-                Generate Draft
+              <button
+                onClick={() => {
+                  if (!aiPrompt.trim() || generateDraftMutation.isPending) return;
+                  generateDraftMutation.mutate({
+                    prompt: aiPrompt,
+                    recipientEmail: to.trim() || undefined,
+                  });
+                }}
+                disabled={generateDraftMutation.isPending || !aiPrompt.trim()}
+                className="absolute top-1.5 right-2 rounded-lg bg-gradient-to-r from-blue-800 to-cyan-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {generateDraftMutation.isPending ? "Generating..." : "Generate Draft"}
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-2">

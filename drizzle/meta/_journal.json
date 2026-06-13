@@ -36,6 +36,13 @@
       "when": 1781336718451,
       "tag": "0004_motionless_jubilee",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781364460285,
+      "tag": "0005_lonely_nightshade",
+      "breakpoints": true
     }
   ]
 }

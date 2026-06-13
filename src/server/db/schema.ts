@@ -6,6 +6,10 @@ import {
   pgTableCreator,
   text,
   timestamp,
+  varchar,
+  integer,
+  jsonb,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const createTable = pgTableCreator((name) => `pg-drizzle_${name}`);
@@ -137,5 +141,45 @@ export const draftMail = pgTable("draft_mail", {
     .$defaultFn(() => new Date())
     .notNull(),
 });
+
+// User writing style — updated nightly by summarization worker
+export const userWritingProfiles = pgTable("user_writing_profiles", {
+  userId:               varchar("user_id", { length: 255 }).primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  tone:                 varchar("tone", { length: 50 }).default("professional"),
+  avgEmailLength:       integer("avg_email_length").default(150),
+  commonGreetings:      jsonb("common_greetings").$type<string[]>().default([]),
+  commonClosings:       jsonb("common_closings").$type<string[]>().default([]),
+  writingStyleSummary:  text("writing_style_summary"),
+  updatedAt:            timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+// Every AI draft correction a user made
+export const aiCorrections = pgTable("ai_corrections", {
+  id:              uuid("id").defaultRandom().primaryKey(),
+  userId:          varchar("user_id", { length: 255 }).notNull().references(() => user.id, { onDelete: "cascade" }),
+  aiDraftText:     text("ai_draft_text").notNull(),
+  userEditedText:  text("user_edited_text").notNull(),
+  correctionType:  varchar("correction_type", { length: 50 }), // tone | length | phrasing | fact
+  recipientEmail:  varchar("recipient_email", { length: 255 }),
+  emailSubject:    varchar("email_subject", { length: 500 }),
+  threadId:        varchar("thread_id", { length: 255 }),
+  collapsedAt:     timestamp("collapsed_at", { withTimezone: true }), // null = not yet summarized
+  createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow(),
+}, (t) => [
+  index("ai_corrections_user_idx").on(t.userId, t.createdAt),
+]);
+
+// Per-recipient preferences learned over time
+export const recipientPatterns = pgTable("recipient_patterns", {
+  id:             uuid("id").defaultRandom().primaryKey(),
+  userId:         varchar("user_id", { length: 255 }).notNull().references(() => user.id, { onDelete: "cascade" }),
+  recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
+  preferredTone:  varchar("preferred_tone", { length: 50 }),
+  maxWordCount:   integer("max_word_count"),
+  customNotes:    text("custom_notes"),
+  updatedAt:      timestamp("updated_at", { withTimezone: true }).defaultNow(),
+}, (t) => [
+  index("recipient_patterns_user_idx").on(t.userId, t.recipientEmail),
+]);
 
 export * from "./corsair-schema";
