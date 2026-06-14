@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TopSearchBar from "~/components/layout/top-search-bar";
 import AppSidebar from "~/components/layout/app-sidebar";
 import InboxHeader from "~/components/inbox/inbox-header";
@@ -14,6 +14,13 @@ export default function StarredPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [category, setCategory] = useState("primary");
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [currentEmails, setCurrentEmails] = useState<{ id: string }[]>([]);
+
+  // Clear selection when page or category changes
+  useEffect(() => {
+    setSelectedEmails([]);
+  }, [page, category]);
 
   return (
     <div className="bg-background text-on-background flex h-screen flex-col overflow-hidden">
@@ -27,6 +34,9 @@ export default function StarredPage() {
             total={total}
             category={category}
             onCategoryChange={setCategory}
+            selectedEmails={selectedEmails}
+            setSelectedEmails={setSelectedEmails}
+            emails={currentEmails}
           />
           <div className="flex min-h-0 flex-1 gap-6">
             <EmailList
@@ -34,6 +44,9 @@ export default function StarredPage() {
               category={category}
               isStarredOnly={true}
               onTotalChange={setTotal}
+              selectedEmails={selectedEmails}
+              setSelectedEmails={setSelectedEmails}
+              onEmailsChange={setCurrentEmails}
             />
             <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
               <UpcomingMeetings />

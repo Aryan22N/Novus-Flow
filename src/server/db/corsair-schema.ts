@@ -1,4 +1,4 @@
-import { pgTable, text, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, jsonb, timestamp, boolean } from "drizzle-orm/pg-core";
 
 export const corsairIntegrations = pgTable("corsair_integrations", {
   id: text("id").primaryKey(),
@@ -44,6 +44,9 @@ export const corsairEntities = pgTable("corsair_entities", {
   entityType: text("entity_type").notNull(),
   version: text("version").notNull(),
   data: jsonb("data").notNull().default({}),
+  isRead: boolean("is_read").default(false).notNull(),
+  isArchived: boolean("is_archived").default(false).notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
 });
 
 export const corsairEvents = pgTable("corsair_events", {

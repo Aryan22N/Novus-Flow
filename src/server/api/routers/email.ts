@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { eq, desc, sql, and, ilike, or } from "drizzle-orm";
+import { eq, desc, sql, and, ilike, or, inArray } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
 import { sentMail, draftMail, aiCorrections, contacts } from "~/server/db/schema";
 import { corsair } from "~/server/corsair";
@@ -43,7 +43,13 @@ export const emailRouter = createTRPCRouter({
             eq(corsairAccounts.tenantId, tenantId),
           ),
         )
-        .where(eq(corsairEntities.entityType, "messages"));
+        .where(
+          and(
+            eq(corsairEntities.entityType, "messages"),
+            eq(corsairEntities.isArchived, false),
+            eq(corsairEntities.isDeleted, false),
+          ),
+        );
 
       // Deduplicate by Gmail message ID in case of multiple accounts for the same tenant
       const seen = new Set<string>();
@@ -85,7 +91,7 @@ export const emailRouter = createTRPCRouter({
 
             snippet: data.snippet ?? "",
 
-            unread: data.labelIds?.includes("UNREAD"),
+            unread: !message.isRead,
 
             isStarred: data.labelIds?.includes("STARRED"),
 
@@ -134,7 +140,13 @@ export const emailRouter = createTRPCRouter({
           eq(corsairAccounts.tenantId, tenantId),
         ),
       )
-      .where(eq(corsairEntities.entityType, "messages"));
+      .where(
+        and(
+          eq(corsairEntities.entityType, "messages"),
+          eq(corsairEntities.isArchived, false),
+          eq(corsairEntities.isDeleted, false),
+        ),
+      );
 
     const counts = {
       primary: 0,
@@ -149,7 +161,7 @@ export const emailRouter = createTRPCRouter({
     for (const { entity } of messages) {
       const data = entity.data as any;
       if (!data?.payload) continue;
-      if (!data.labelIds?.includes("UNREAD")) continue;
+      if (entity.isRead) continue;
       if (seen.has(entity.entityId)) continue;
       seen.add(entity.entityId);
 
@@ -237,14 +249,19 @@ export const emailRouter = createTRPCRouter({
           eq(corsairAccounts.tenantId, tenantId),
         ),
       )
-      .where(eq(corsairEntities.entityType, "messages"));
+      .where(
+        and(
+          eq(corsairEntities.entityType, "messages"),
+          eq(corsairEntities.isArchived, false),
+          eq(corsairEntities.isDeleted, false),
+        ),
+      );
 
     const seen = new Set<string>();
     const unreadCount = messages.filter(({ entity: message }) => {
       if (seen.has(message.entityId)) return false;
       seen.add(message.entityId);
-      const data = message.data as any;
-      return data?.labelIds?.includes("UNREAD");
+      return !message.isRead;
     }).length;
 
     return { count: unreadCount };
@@ -448,7 +465,6 @@ export const emailRouter = createTRPCRouter({
             ),
           )
           .limit(1);
-
         if (existing.length > 0) {
           await ctx.db
             .update(corsairEntities)
@@ -456,6 +472,7 @@ export const emailRouter = createTRPCRouter({
               data: fullMsg,
               updatedAt: new Date(),
               version,
+              isRead: !(fullMsg.labelIds?.includes("UNREAD")),
             })
             .where(
               and(
@@ -472,6 +489,7 @@ export const emailRouter = createTRPCRouter({
             entityType: "messages",
             version,
             data: fullMsg,
+            isRead: !(fullMsg.labelIds?.includes("UNREAD")),
           });
           synced++;
 
@@ -708,6 +726,111 @@ export const emailRouter = createTRPCRouter({
         .limit(5);
 
       return results;
+    }),
+
+  archiveEmails: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const client = corsair.withTenant(tenantId);
+
+      // 1. Update in Gmail (remove INBOX label)
+      try {
+        await client.gmail.api.messages.batchModify({
+          ids: input.ids,
+          removeLabelIds: ["INBOX"],
+        });
+      } catch (err) {
+        console.error("Gmail batchModify remove INBOX failed:", err);
+      }
+
+      // 2. Update local DB cache
+      await ctx.db
+        .update(corsairEntities)
+        .set({
+          isArchived: true,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(corsairEntities.entityType, "messages"),
+            inArray(corsairEntities.entityId, input.ids),
+          ),
+        );
+
+      return { success: true };
+    }),
+
+  deleteEmails: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const client = corsair.withTenant(tenantId);
+
+      // 1. Update in Gmail (trash them)
+      try {
+        await client.gmail.api.messages.batchModify({
+          ids: input.ids,
+          addLabelIds: ["TRASH"],
+        });
+      } catch (err) {
+        console.error("Gmail batchModify add TRASH failed:", err);
+      }
+
+      // 2. Update local DB cache (soft delete)
+      await ctx.db
+        .update(corsairEntities)
+        .set({
+          isDeleted: true,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(corsairEntities.entityType, "messages"),
+            inArray(corsairEntities.entityId, input.ids),
+          ),
+        );
+
+      return { success: true };
+    }),
+
+  markEmailsReadStatus: protectedProcedure
+    .input(
+      z.object({
+        ids: z.array(z.string()),
+        isRead: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const client = corsair.withTenant(tenantId);
+
+      // 1. Update in Gmail (add/remove UNREAD label)
+      try {
+        await client.gmail.api.messages.batchModify({
+          ids: input.ids,
+          addLabelIds: input.isRead ? [] : ["UNREAD"],
+          removeLabelIds: input.isRead ? ["UNREAD"] : [],
+        });
+      } catch (err) {
+        console.error("Gmail batchModify read status failed:", err);
+      }
+
+      // 2. Update local DB cache
+      await ctx.db
+        .update(corsairEntities)
+        .set({
+          isRead: input.isRead,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(corsairEntities.entityType, "messages"),
+            inArray(corsairEntities.entityId, input.ids),
+          ),
+        );
+
+      return { success: true };
     }),
 });
 

@@ -124,6 +124,7 @@ async function syncGmailEvent(event: {
         data: fullMsg,
         updatedAt: new Date(),
         version,
+        isRead: !((fullMsg as any)?.labelIds?.includes("UNREAD")),
       })
       .where(
         and(
@@ -141,6 +142,7 @@ async function syncGmailEvent(event: {
       entityType: "messages",
       version,
       data: fullMsg,
+      isRead: !((fullMsg as any)?.labelIds?.includes("UNREAD")),
     });
     console.info(
       `[gmail/pubsub] Inserted new message ${msgId} (${event.type})`,

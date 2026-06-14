@@ -7,7 +7,7 @@ import {
   ArrowRight,
   Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { api } from "~/trpc/react";
 import ComposeModal from "../compose/compose-modal";
 
@@ -32,6 +32,27 @@ export default function NexusAssistant() {
   } | null>(null);
 
   const createEventMutation = api.calendar.createEvent.useMutation();
+  const utils = api.useUtils();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [matchingContacts, setMatchingContacts] = useState<any[]>([]);
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  const handleConfirmContact = (contact: any) => {
+    generateDraftMutation.mutate({
+      prompt: prompt,
+      recipientEmail: contact.email,
+    });
+    setIsConfirming(false);
+    setMatchingContacts([]);
+  };
+
+  const handleEditPrompt = () => {
+    setIsConfirming(false);
+    setMatchingContacts([]);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+  };
   
   const summarizeEmailsMutation = api.ai.summarizeRecentEmails.useMutation({
     onSuccess: (data) => {
@@ -63,8 +84,25 @@ export default function NexusAssistant() {
     },
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!prompt.trim() || generateDraftMutation.isPending) return;
+
+    // Check if user is asking to draft an email to a specific person
+    const draftMatch = prompt.trim().match(/^(?:draft\s+)?(?:mail\s+|email\s+)?to\s+([a-zA-Z0-9._%+-]+|[a-zA-Z\s]+)$/i);
+    if (draftMatch?.[1]) {
+      const contactQuery = draftMatch[1].trim();
+      try {
+        const list = await utils.email.searchContacts.fetch({ query: contactQuery });
+        if (list.length > 0) {
+          setMatchingContacts(list);
+          setIsConfirming(true);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to search contacts in Nexus Assistant:", err);
+      }
+    }
+
     generateDraftMutation.mutate({ prompt });
   };
 
@@ -104,6 +142,43 @@ export default function NexusAssistant() {
             <div className="text-body-sm rounded-lg border border-white bg-white/80 p-3 shadow-sm">
               How can I help you optimize your workflow today?
             </div>
+
+            {isConfirming && matchingContacts.length > 0 && (
+              <div className="text-body-sm flex flex-col gap-3 rounded-lg border border-blue-200 bg-blue-50/95 p-3.5 shadow-md animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="font-semibold text-blue-800">Did you mean:</div>
+                <div className="flex flex-col gap-2">
+                  {matchingContacts.map((contact) => (
+                    <div
+                      key={contact.id}
+                      className="flex items-center justify-between gap-4 rounded-lg bg-white p-2.5 shadow-sm border border-slate-100"
+                    >
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-slate-800 truncate">
+                          {contact.name || contact.email.split("@")[0]}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono truncate">
+                          {contact.email}
+                        </span>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleConfirmContact(contact)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors shadow-sm cursor-pointer"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={handleEditPrompt}
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors border border-slate-200 cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {summarizeEmailsMutation.isPending && (
               <div className="text-body-sm flex items-center gap-2 rounded-lg border border-white bg-white/80 p-3 shadow-sm text-on-surface-variant">
@@ -209,6 +284,7 @@ export default function NexusAssistant() {
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={generateDraftMutation.isPending}
+              ref={inputRef}
               className="text-body-sm placeholder:text-on-surface-variant w-full border-none bg-transparent py-1.5 pr-10 pl-3 focus:ring-0 focus:outline-none disabled:opacity-50"
               placeholder="Ask Nexus..."
               type="text"

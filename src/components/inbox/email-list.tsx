@@ -12,6 +12,9 @@ interface EmailListProps {
   category?: string;
   isStarredOnly?: boolean;
   onTotalChange?: (total: number) => void;
+  selectedEmails: string[];
+  setSelectedEmails: React.Dispatch<React.SetStateAction<string[]>>;
+  onEmailsChange?: (emails: any[]) => void;
 }
 
 export default function EmailList({
@@ -19,6 +22,9 @@ export default function EmailList({
   category,
   isStarredOnly,
   onTotalChange,
+  selectedEmails,
+  setSelectedEmails,
+  onEmailsChange,
 }: EmailListProps) {
   const { data, isPending } = api.email.getInboxThreads.useQuery({
     page,
@@ -33,6 +39,14 @@ export default function EmailList({
       onTotalChange?.(data.total);
     }
   }, [data?.total, onTotalChange]);
+
+  const emails = data?.emails || [];
+
+  // Bubble up active emails list to parent for InboxHeader selection
+  const emailIdsStr = JSON.stringify(emails.map((e) => e.id));
+  useEffect(() => {
+    onEmailsChange?.(emails);
+  }, [emailIdsStr, onEmailsChange]);
 
   useEffect(() => {
     const saved = localStorage.getItem("readEmails");
@@ -124,7 +138,15 @@ export default function EmailList({
     }
   };
 
-  const emails = data?.emails;
+  const handleToggleSelect = (e: React.MouseEvent, emailId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedEmails((prev) =>
+      prev.includes(emailId)
+        ? prev.filter((id) => id !== emailId)
+        : [...prev, emailId]
+    );
+  };
 
   return (
     <div className="flex-1 rounded-xl bg-[#F3F6FB]">
@@ -160,6 +182,8 @@ export default function EmailList({
                 onToggleStar={(e) =>
                   handleToggleStar(e, email.id, !!email.isStarred)
                 }
+                selected={selectedEmails.includes(email.id)}
+                onToggleSelect={(e) => handleToggleSelect(e, email.id)}
               />
             </Link>
           );
