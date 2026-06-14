@@ -12,6 +12,8 @@ import {
   corsairAccounts,
 } from "../../../server/db/corsair-schema";
 import { user as userTable } from "../../../server/db/schema";
+import { getHeader } from "../../../server/utils/email-parsing";
+import { upsertContactsForEmail } from "../../../server/utils/contacts";
 
 /**
  * Syncs a single Gmail message (received via Pub/Sub push) into the DB.
@@ -142,6 +144,26 @@ async function syncGmailEvent(event: {
     });
     console.info(
       `[gmail/pubsub] Inserted new message ${msgId} (${event.type})`,
+    );
+
+    // Upsert contacts for newly synced received email via Pub/Sub push
+    const headers = ((fullMsg as any)?.payload?.headers ?? []) as { name: string; value: string }[];
+    const fromHeader = getHeader(headers, "From");
+    const toHeader = getHeader(headers, "To");
+    const ccHeader = getHeader(headers, "Cc");
+    const dateHeader = getHeader(headers, "Date");
+    const emailDate = dateHeader ? new Date(dateHeader) : new Date();
+
+    void upsertContactsForEmail({
+      db,
+      userId: tenantId,
+      userEmail: event.emailAddress,
+      from: fromHeader,
+      to: toHeader,
+      cc: ccHeader,
+      date: emailDate,
+    }).catch((err) =>
+      console.error(`[gmail/pubsub] upsertContactsForEmail failed:`, err),
     );
   }
 }

@@ -53,6 +53,73 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
   const [showToast, setShowToast] = useState(false);
   const [sentMessageId, setSentMessageId] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
+  
+  // Autocomplete suggestions states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Helper to get the active token being typed (last recipient)
+  const getLastRecipientToken = (val: string) => {
+    const parts = val.split(",");
+    return parts[parts.length - 1]?.trim() ?? "";
+  };
+
+  // Debounce logic
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Update search query when 'to' field changes
+  useEffect(() => {
+    const lastToken = getLastRecipientToken(to);
+    setSearchQuery(lastToken);
+    if (lastToken.length > 0) {
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [to]);
+
+  // Close suggestions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch suggestions
+  const { data: contactsSuggestions = [] } = api.email.searchContacts.useQuery(
+    { query: debouncedQuery },
+    {
+      enabled: debouncedQuery.length > 0,
+    }
+  );
+
+  const handleSelectSuggestion = (email: string) => {
+    const parts = to.split(",");
+    if (parts.length > 1) {
+      // Replace last token
+      parts[parts.length - 1] = ` ${email}`;
+      setTo(parts.join(",").trim() + ", ");
+    } else {
+      // Single email
+      setTo(email + ", ");
+    }
+    setShowSuggestions(false);
+  };
+
   const bodyRef = useRef<HTMLDivElement>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -321,15 +388,51 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
           </div>
 
           {/* To Field */}
-          <div className="flex h-11 shrink-0 items-center border-b border-slate-100 px-6">
+          <div className="flex h-11 shrink-0 items-center border-b border-slate-100 px-6 relative" ref={suggestionsRef}>
             <span className="w-8 text-sm font-medium text-slate-400">To</span>
             <input
               className="flex-grow border-none bg-transparent text-sm text-slate-800 outline-none focus:ring-0"
               placeholder=""
               value={to}
               onChange={(e) => setTo(e.target.value)}
+              onFocus={() => {
+                if (getLastRecipientToken(to).length > 0) {
+                  setShowSuggestions(true);
+                }
+              }}
               spellCheck={false}
             />
+            
+            {showSuggestions && contactsSuggestions.length > 0 && (
+              <div className="absolute left-14 top-full z-50 mt-1 max-h-60 w-[320px] overflow-y-auto rounded-xl border border-slate-100 bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 tracking-wider uppercase border-b border-slate-50">
+                  Suggestions
+                </div>
+                {contactsSuggestions.map((contact) => (
+                  <button
+                    key={contact.id}
+                    type="button"
+                    onClick={() => handleSelectSuggestion(contact.email)}
+                    className="flex w-full items-center justify-between px-3.5 py-2 text-left hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-slate-800">
+                        {contact.name || contact.email.split("@")[0]}
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        {contact.email}
+                      </span>
+                    </div>
+                    {contact.interactionCount > 0 && (
+                      <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+                        {contact.interactionCount} {contact.interactionCount === 1 ? 'email' : 'emails'}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="flex gap-3 text-xs font-semibold text-slate-400">
               {!showCc && (
                 <button

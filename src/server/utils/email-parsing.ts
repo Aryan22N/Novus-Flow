@@ -1,3 +1,4 @@
+/* eslint-disable */
 export interface Attachment {
   id: string;
   filename: string;

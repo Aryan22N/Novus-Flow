@@ -43,6 +43,13 @@
       "when": 1781364460285,
       "tag": "0005_lonely_nightshade",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781425983658,
+      "tag": "0006_dapper_glorian",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc, sql, and, ilike, or } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
-import { sentMail, draftMail, aiCorrections } from "~/server/db/schema";
+import { sentMail, draftMail, aiCorrections, contacts } from "~/server/db/schema";
 import { corsair } from "~/server/corsair";
 import { randomUUID } from "crypto";
 import {
@@ -12,6 +18,7 @@ import {
 } from "~/server/utils/email-parsing";
 import { db } from "~/server/db";
 import { invalidateUserContext } from "./ai-context";
+import { upsertContactsForEmail } from "~/server/utils/contacts";
 
 export const emailRouter = createTRPCRouter({
   getInboxThreads: protectedProcedure
@@ -420,7 +427,6 @@ export const emailRouter = createTRPCRouter({
     for (const msg of messageIds) {
       try {
         // Fetch full message (typed as any — Corsair's Gmail return type is not publicly exported)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const fullMsg = (await client.gmail.api.messages.get({
           id: msg.id,
           format: "full",
@@ -447,7 +453,6 @@ export const emailRouter = createTRPCRouter({
           await ctx.db
             .update(corsairEntities)
             .set({
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               data: fullMsg,
               updatedAt: new Date(),
               version,
@@ -466,10 +471,29 @@ export const emailRouter = createTRPCRouter({
             entityId: msg.id,
             entityType: "messages",
             version,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             data: fullMsg,
           });
           synced++;
+
+          // Upsert contacts for newly synced received email
+          const headers = (fullMsg.payload?.headers ?? []) as { name: string; value: string }[];
+          const fromHeader = getHeader(headers, "From");
+          const toHeader = getHeader(headers, "To");
+          const ccHeader = getHeader(headers, "Cc");
+          const dateHeader = getHeader(headers, "Date");
+          const emailDate = dateHeader ? new Date(dateHeader) : new Date();
+
+          void upsertContactsForEmail({
+            db: ctx.db,
+            userId: tenantId,
+            userEmail: ctx.session.user.email,
+            from: fromHeader,
+            to: toHeader,
+            cc: ccHeader,
+            date: emailDate,
+          }).catch((err) =>
+            console.error(`[refreshInbox] upsertContactsForEmail failed:`, err),
+          );
         }
       } catch (err) {
         // Log but don't fail the whole refresh for one bad message
@@ -536,6 +560,19 @@ export const emailRouter = createTRPCRouter({
           body: input.body,
           messageId: result.id,
         });
+
+        // Upsert contacts for successfully sent email
+        void upsertContactsForEmail({
+          db: ctx.db,
+          userId: tenantId,
+          userEmail: ctx.session.user.email,
+          from: ctx.session.user.email,
+          to: input.to,
+          cc: input.cc ?? undefined,
+          date: new Date(),
+        }).catch((err) =>
+          console.error(`[sendEmail] upsertContactsForEmail failed:`, err),
+        );
       }
 
       // NEW: async correction capture — never blocks the email send
@@ -645,6 +682,32 @@ export const emailRouter = createTRPCRouter({
         .delete(draftMail)
         .where(eq(draftMail.id, input.id));
       return { success: true };
+    }),
+
+  searchContacts: protectedProcedure
+    .input(z.object({ query: z.string().default("") }))
+    .query(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const cleanQuery = input.query.trim();
+
+      const results = await ctx.db
+        .select()
+        .from(contacts)
+        .where(
+          and(
+            eq(contacts.userId, tenantId),
+            cleanQuery
+              ? or(
+                  ilike(contacts.name, `%${cleanQuery}%`),
+                  ilike(contacts.email, `%${cleanQuery}%`),
+                )
+              : undefined,
+          ),
+        )
+        .orderBy(desc(contacts.interactionCount), desc(contacts.lastContactedAt))
+        .limit(5);
+
+      return results;
     }),
 });
 

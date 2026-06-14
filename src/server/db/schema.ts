@@ -10,6 +10,7 @@ import {
   integer,
   jsonb,
   uuid,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const createTable = pgTableCreator((name) => `pg-drizzle_${name}`);
@@ -180,6 +181,28 @@ export const recipientPatterns = pgTable("recipient_patterns", {
   updatedAt:      timestamp("updated_at", { withTimezone: true }).defaultNow(),
 }, (t) => [
   index("recipient_patterns_user_idx").on(t.userId, t.recipientEmail),
+]);
+
+// Contacts tracked for search suggestions and statistics
+export const contacts = pgTable("contacts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  name: text("name"),
+  lastContactedAt: timestamp("last_contacted_at", { withTimezone: true }),
+  interactionCount: integer("interaction_count").default(0).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .$defaultFn(() => new Date())
+    .notNull(),
+}, (t) => [
+  index("contacts_user_id_idx").on(t.userId),
+  index("contacts_email_idx").on(t.email),
+  uniqueIndex("contacts_user_email_unique_idx").on(t.userId, t.email),
 ]);
 
 export * from "./corsair-schema";
