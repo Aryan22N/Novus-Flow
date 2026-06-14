@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
+import image from "next/image";
 
 interface MeetingItem {
   id: string; // Google event ID / thread ID
@@ -199,7 +200,7 @@ export default function UpcomingMeetings() {
   }, [calendarData]);
 
   return (
-    <div className="bg-surface-container-lowest border-outline-variant flex h-[300px] flex-col rounded-xl border p-4 shrink-0">
+    <div className=" border-outline-variant flex h-[300px] flex-col rounded-xl border p-4 shrink-0" style={{ backgroundImage: 'linear-gradient(to top, #dfe9f3 0%, white 100%)' }}>
       <h3 className="text-title-sm font-title-sm text-on-surface mb-4 flex shrink-0 items-center gap-2 select-none">
         <CalendarDays size={18} className="text-secondary" />
         Upcoming Meetings
@@ -238,12 +239,14 @@ export default function UpcomingMeetings() {
                     href={meeting.htmlLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-primary text-body-sm hover:bg-primary-container flex w-full cursor-pointer items-center justify-center gap-2 rounded px-3 py-1.5 text-center font-semibold text-white transition-colors"
+                    className=" text-body-sm hover:bg-primary-container flex w-full cursor-pointer items-center justify-center gap-2 rounded px-3 py-1.5 text-center font-semibold text-white transition-colors"
+                    style={{ backgroundImage: 'linear-gradient(to top, #1e3c72 0%, #1e3c72 1%, #2a5298 100%)' }}
                   >
                     Join Meeting (Google Calendar)
                     <ExternalLink size={14} />
                   </a>
-                )}
+                )
+                }
               </div>
             );
           } else {
@@ -296,6 +299,6 @@ export default function UpcomingMeetings() {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }

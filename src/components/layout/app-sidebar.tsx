@@ -14,12 +14,15 @@ import {
   Pencil,
 } from "lucide-react";
 import ComposeModal from "~/components/compose/compose-modal";
+import Spline from '@splinetool/react-spline';
+import { motion } from "framer-motion";
+
 
 export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
   const pathname = usePathname();
   const { data } = api.email.getUnreadCount.useQuery();
   const unreadCount = data?.count ?? 0;
-  
+
   const { data: draftsData } = api.email.getDraftsCount.useQuery();
   const draftsCount = draftsData?.count ?? 0;
   const [showCompose, setShowCompose] = useState(false);
@@ -41,7 +44,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
   return (
     <>
       <div
-        className={`relative h-screen shrink-0 transition-all duration-300 ${isOpen ? "w-[250px]" : "w-[72px]"}`}
+        className={`relative mt-2 h-screen shrink-0 transition-all duration-300 ${isOpen ? "w-[250px]" : "w-[72px]"}`}
       >
         <nav
           onMouseEnter={() => setIsHovered(true)}
@@ -111,7 +114,69 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
               {isExpanded && <span>Starred</span>}
             </Link>
           </div>
+
+          {/* Fixed Bottom Left Voice Orb */}
+          {pathname !== "/voice" && (
+            <>
+              <div className="absolute right-44 bottom-45 hidden md:block opacity-70 pointer-events-none">
+                <svg
+                  className="absolute -top-14 -right-5"
+                  width="115"
+                  height="110"
+                  viewBox="0 0 260 180"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  {/* Curved Arrow */}
+                  <motion.path
+                    d="M40 140 C40 80, 120 70, 150 110 C170 140, 130 155, 110 125 C90 95, 160 60, 210 45 C230 38, 245 25, 250 15"
+                    stroke="black"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 1.5, ease: "easeInOut" }}
+                  />
+
+                  {/* Arrow Head */}
+                  <motion.path
+                    d="M225 12 L250 15 L240 50"
+                    stroke="black"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2, duration: 0.3 }}
+                  />
+                </svg>
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.5, duration: 0.5 }}
+                  className="text-xs text-black transform rotate-[-10deg] font-mono-custom mt-1 absolute top-7 right-1"
+                >
+                  Nova Voice
+                </motion.div>
+              </div>
+              <div className="mt-auto flex w-full shrink-0 items-center justify-center pb-50">
+                <Link
+                  href="/voice"
+                  className=" flex h-17 w-17 items-center justify-center overflow-hidden rounded-full shadow-sm ring-1 ring-black/5 hover:ring-blue-300 transition-all"
+                  title="Voice Assistant"
+                >
+                  <div className="pointer-events-none flex h-[1200%] w-[100%] items-center justify-center">
+                    <Spline scene="https://prod.spline.design/XNFgJtQ7yLCZyeKi/scene.splinecode" />
+                  </div>
+                </Link>
+              </div>
+            </>
+          )}
         </nav>
+
       </div>
 
       {/* Compose Modal — rendered outside the nav so it overlays everything */}

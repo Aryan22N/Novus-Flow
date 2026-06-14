@@ -53,7 +53,7 @@ export default function NexusAssistant() {
       inputRef.current?.focus();
     }, 50);
   };
-  
+
   const summarizeEmailsMutation = api.ai.summarizeRecentEmails.useMutation({
     onSuccess: (data) => {
       setSummaryResult(data);
@@ -123,9 +123,11 @@ export default function NexusAssistant() {
   };
 
   return (
-    <div className="bg-surface-container-lowest border-outline-variant ai-gradient relative flex flex-col overflow-hidden rounded-xl border p-3">
+    <div className=" border-outline-variant relative flex flex-col overflow-hidden rounded-xl border p-3" style={{
+      backgroundImage: 'linear-gradient(to top, #dfe9f3 0%, white 100%)'
+    }}>
       {/* Background Blur */}
-      <div className="absolute inset-0 bg-white/60 backdrop-blur-[4px]"></div>
+      {/* <div className="absolute inset-0 bg-white/60 backdrop-blur-[4px]"></div> */}
 
       <div className="relative z-10 flex flex-col">
         {/* Header */}
@@ -190,7 +192,7 @@ export default function NexusAssistant() {
             {summaryResult && (
               <div className="text-body-sm rounded-lg border border-white bg-white/80 p-3 shadow-sm flex flex-col gap-3">
                 <div className="font-bold text-primary">Today's Summary</div>
-                
+
                 {summaryResult.updates.length > 0 && (
                   <div className="flex flex-col gap-1">
                     {summaryResult.updates.map((update, i) => (
