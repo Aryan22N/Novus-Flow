@@ -5,7 +5,7 @@ import TopSearchBar from "~/components/layout/top-search-bar";
 import AppSidebar from "~/components/layout/app-sidebar";
 import SentMailList from "~/components/sent/sent-mail-list";
 import UpcomingMeetings from "~/components/calendar_inbox/upcoming-meetings";
-import AiRecommendations from "~/components/ai/ai-recommendations";
+
 import AiPanel from "~/components/ai/ai-panel";
 
 export default function SentPage() {
@@ -26,7 +26,7 @@ export default function SentPage() {
             <SentMailList />
             <div className="flex min-w-0 flex-[0.28] flex-col gap-6">
               <UpcomingMeetings />
-              <AiRecommendations />
+              
             </div>
           </div>
         </main>

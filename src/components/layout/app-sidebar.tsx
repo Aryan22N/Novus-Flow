@@ -104,9 +104,9 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
               {isExpanded && <span>Sent</span>}
             </Link>
 
-            <Link href="/schedule" className={getLinkClass("/schedule")}>
+            <Link href="/Novus_assistent" className={getLinkClass("/Novus_assistent")}>
               <Clock3 size={18} className="shrink-0" />
-              {isExpanded && <span>Scheduled</span>}
+              {isExpanded && <span>Novus Assistent</span>}
             </Link>
 
             <Link href="/starred" className={getLinkClass("/starred")}>

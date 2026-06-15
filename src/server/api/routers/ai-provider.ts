@@ -31,6 +31,10 @@ export interface SuggestedRepliesResult {
   suggestions: string[];
 }
 
+export interface ChatResult {
+  reply: string;
+}
+
 export interface EmailSummaryResult {
   updates: string[];
   tasks: string[];
@@ -48,6 +52,7 @@ export interface AiProvider {
   generateGlobalDraft(prompt: string, userContext?: string): Promise<GlobalDraftResult>;
   generateSuggestions(threadText: string): Promise<SuggestedRepliesResult>;
   summarizeRecentEmails(emailsText: string, userContext?: string): Promise<EmailSummaryResult>;
+  askQuestion(prompt: string, context?: string): Promise<ChatResult>;
   summarizeWritingStyle(correctionText: string): Promise<string>;
 }
 
@@ -251,6 +256,19 @@ Return ONLY a valid JSON object. Do not include markdown formatting like \`\`\`j
     });
     return response.choices[0]?.message?.content?.trim() ?? "";
   }
+
+  async askQuestion(prompt: string, context?: string): Promise<ChatResult> {
+    const contextStr = context ? `\n\nContext:\n${context}` : "";
+    const response = await this.openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: `You are an expert, helpful AI assistant named Novus Assistant. You are deeply integrated into the user's workflow. Answer concisely and accurately.${contextStr}` },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+    });
+    return { reply: response.choices[0]?.message?.content ?? "I'm sorry, I couldn't process that request." };
+  }
 }
 
 class GeminiProvider implements AiProvider {
@@ -264,8 +282,22 @@ class GeminiProvider implements AiProvider {
     this.apiKey = key;
   }
 
+  private async callGemini(text: string): Promise<string | null> {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text }] }],
+      }),
+    });
+    if (!res.ok) throw new Error(`Gemini API failed: ${res.status}`);
+    const data = await res.json() as any;
+    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+  }
+
   async analyzeThread(threadText: string, userContext?: string): Promise<ThreadAnalysisResult> {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${this.apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
     const contextStr = userContext ? `\n\n${userContext}` : "";
 
     const requestBody = {
@@ -631,6 +663,13 @@ ${emailsText}
       candidates: [{ content: { parts: [{ text: string }] } }]
     };
     return data.candidates[0]?.content.parts[0]?.text?.trim() ?? "";
+  }
+
+  async askQuestion(prompt: string, context?: string): Promise<ChatResult> {
+    const contextStr = context ? `\n\nContext:\n${context}` : "";
+    const fullPrompt = `You are an expert, helpful AI assistant named Novus Assistant. You are deeply integrated into the user's workflow. Answer concisely and accurately.\n${contextStr}\n\nUser Question:\n${prompt}`;
+    const reply = await this.callGemini(fullPrompt);
+    return { reply: reply ?? "I'm sorry, I couldn't process that request." };
   }
 }
 

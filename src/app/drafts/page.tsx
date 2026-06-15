@@ -5,7 +5,7 @@ import TopSearchBar from "~/components/layout/top-search-bar";
 import AppSidebar from "~/components/layout/app-sidebar";
 import DraftMailList from "~/components/drafts/draft-mail-list";
 import UpcomingMeetings from "~/components/calendar_inbox/upcoming-meetings";
-import AiRecommendations from "~/components/ai/ai-recommendations";
+
 import AiPanel from "~/components/ai/ai-panel";
 
 export default function DraftsPage() {
@@ -26,7 +26,7 @@ export default function DraftsPage() {
             <DraftMailList />
             <div className="flex-[0.28] flex flex-col gap-6 min-w-0">
               <UpcomingMeetings />
-              <AiRecommendations />
+              
             </div>
           </div>
         </main>

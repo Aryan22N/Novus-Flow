@@ -6,7 +6,7 @@ import AppSidebar from "~/components/layout/app-sidebar";
 import InboxHeader from "~/components/inbox/inbox-header";
 import EmailList from "~/components/inbox/email-list";
 import UpcomingMeetings from "~/components/calendar_inbox/upcoming-meetings";
-import AiRecommendations from "~/components/ai/ai-recommendations";
+
 import AiPanel from "~/components/ai/ai-panel";
 
 export default function InboxPage() {
@@ -23,11 +23,11 @@ export default function InboxPage() {
   }, [page, category]);
 
   return (
-    <div className="bg-background text-on-background flex min-h-screen flex-col">
+    <div className="bg-background text-on-background flex h-screen overflow-hidden flex-col">
       <TopSearchBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden min-h-0">
         <AppSidebar isOpen={isSidebarOpen} />
-        <main className="bg-surface flex flex-1 flex-col p-1 transition-all">
+        <main className="bg-surface flex flex-1 flex-col p-1 transition-all overflow-hidden min-w-0">
           <InboxHeader
             page={page}
             onPageChange={setPage}
@@ -49,7 +49,7 @@ export default function InboxPage() {
             />
             <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
               <UpcomingMeetings />
-              <AiRecommendations />
+              
             </div>
           </div>
         </main>

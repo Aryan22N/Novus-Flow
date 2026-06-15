@@ -17,15 +17,26 @@ export interface NovaSession {
   };
 }
 
-const SESSION_TTL = 60 * 30; // 30 minutes
+export interface NovaChatMeta {
+  chatId: string;
+  initialText: string;
+  createdAt: number;
+}
 
-function key(userId: string) {
+const SESSION_TTL = 60 * 60 * 24 * 7; // 7 days
+
+function sessionKey(userId: string, chatId?: string) {
+  if (chatId) return `nova:session:${userId}:${chatId}`;
   return `nova:session:${userId}`;
 }
 
-export async function getNovaSession(userId: string): Promise<NovaSession> {
+function chatListKey(userId: string) {
+  return `nova:chatlist:${userId}`;
+}
+
+export async function getNovaSession(userId: string, chatId?: string): Promise<NovaSession> {
   try {
-    const raw = await redis.get<NovaSession>(key(userId));
+    const raw = await redis.get<NovaSession>(sessionKey(userId, chatId));
     return raw ?? { history: [], lastContext: {} };
   } catch {
     return { history: [], lastContext: {} };
@@ -35,11 +46,12 @@ export async function getNovaSession(userId: string): Promise<NovaSession> {
 export async function saveNovaSession(
   userId: string,
   session: NovaSession,
+  chatId?: string,
 ): Promise<void> {
   try {
     await redis.set(
-      key(userId),
-      { ...session, history: session.history.slice(-12) },
+      sessionKey(userId, chatId),
+      { ...session, history: session.history.slice(-100) },
       { ex: SESSION_TTL },
     );
   } catch {
@@ -47,8 +59,36 @@ export async function saveNovaSession(
   }
 }
 
-export async function clearNovaSession(userId: string): Promise<void> {
+export async function clearNovaSession(userId: string, chatId?: string): Promise<void> {
   try {
-    await redis.del(key(userId));
+    await redis.del(sessionKey(userId, chatId));
+    if (chatId) {
+       const list = await getUserChatList(userId);
+       const filtered = list.filter(c => c.chatId !== chatId);
+       await redis.set(chatListKey(userId), filtered, { ex: SESSION_TTL });
+    }
+  } catch {}
+}
+
+export async function getUserChatList(userId: string): Promise<NovaChatMeta[]> {
+  try {
+    const raw = await redis.get<NovaChatMeta[]>(chatListKey(userId));
+    return raw ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function createNewChat(userId: string, chatId: string, initialText: string): Promise<void> {
+  try {
+    const list = await getUserChatList(userId);
+    // Remove if already exists
+    const filtered = list.filter(c => c.chatId !== chatId);
+    filtered.unshift({
+      chatId,
+      initialText: initialText.substring(0, 100),
+      createdAt: Date.now(),
+    });
+    await redis.set(chatListKey(userId), filtered.slice(0, 50), { ex: SESSION_TTL });
   } catch {}
 }

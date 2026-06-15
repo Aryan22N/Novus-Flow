@@ -6,7 +6,7 @@ import AppSidebar from "~/components/layout/app-sidebar";
 import InboxHeader from "~/components/inbox/inbox-header";
 import EmailList from "~/components/inbox/email-list";
 import UpcomingMeetings from "~/components/calendar_inbox/upcoming-meetings";
-import AiRecommendations from "~/components/ai/ai-recommendations";
+
 import AiPanel from "~/components/ai/ai-panel";
 
 export default function StarredPage() {
@@ -50,7 +50,7 @@ export default function StarredPage() {
             />
             <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
               <UpcomingMeetings />
-              <AiRecommendations />
+              
             </div>
           </div>
         </main>

@@ -149,7 +149,7 @@ export default function EmailList({
   };
 
   return (
-    <div className="flex-1 rounded-xl bg-[#F3F6FB]">
+    <div className="flex-1 overflow-y-auto min-h-0 rounded-xl bg-[#F3F6FB] custom-scrollbar">
       {isPending ? (
         <div className="flex h-full items-center justify-center">
           <IsometricLoader />

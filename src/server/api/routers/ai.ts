@@ -305,9 +305,15 @@ export const aiRouter = createTRPCRouter({
       return result;
     } catch (error: any) {
       console.error("AI summary generation failed:", error);
+      const isRateLimit =
+        error.message?.includes("429") ||
+        error.message?.toLowerCase().includes("quota") ||
+        error.message?.toLowerCase().includes("rate limit");
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: `Failed to summarize emails with AI: ${error.message || "Unknown error"}.`,
+        code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
+        message: isRateLimit
+          ? "AI rate limit or quota exceeded. Please wait a moment before trying again, or switch model providers in your config."
+          : `Failed to summarize emails with AI: ${error.message || "Unknown error"}.`,
       });
     }
   }),
@@ -356,5 +362,28 @@ export const aiRouter = createTRPCRouter({
           "I don't recognize this device. What are the next steps?",
         ];
       }
+    }),
+
+  askQuestion: protectedProcedure
+    .input(z.object({ prompt: z.string(), context: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const provider = getAiProvider();
+      const result = await provider.askQuestion(input.prompt, input.context);
+      return result;
+    }),
+
+  getNovaChats: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { getUserChatList } = await import("~/server/voice/session");
+      const list = await getUserChatList(ctx.session.user.id);
+      return list;
+    }),
+
+  getNovaChatHistory: protectedProcedure
+    .input(z.object({ chatId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { getNovaSession } = await import("~/server/voice/session");
+      const session = await getNovaSession(ctx.session.user.id, input.chatId);
+      return session.history;
     }),
 });
