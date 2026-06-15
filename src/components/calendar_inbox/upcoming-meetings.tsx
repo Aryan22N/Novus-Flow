@@ -102,8 +102,31 @@ export default function UpcomingMeetings() {
 
   useEffect(() => {
     // 1. Process Google Calendar events (live/cached in DB)
-    const liveMeetings: MeetingItem[] = (calendarData?.events ?? []).map(
-      (ev) => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const tomorrowEnd = new Date(todayStart);
+    tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+    tomorrowEnd.setHours(23, 59, 59, 999);
+
+    const liveMeetings: MeetingItem[] = (calendarData?.events ?? [])
+      .filter((ev) => {
+        if (!ev.start) return false;
+        const d = new Date(ev.start);
+        if (ev.allDay && ev.start.includes("-")) {
+          const parts = ev.start.split("T")[0]!.split("-");
+          if (parts.length === 3) {
+            d.setFullYear(
+              parseInt(parts[0]!, 10),
+              parseInt(parts[1]!, 10) - 1,
+              parseInt(parts[2]!, 10)
+            );
+            d.setHours(0, 0, 0, 0);
+          }
+        }
+        return d >= todayStart && d <= tomorrowEnd;
+      })
+      .map((ev) => {
         // Clean description: remove HTML tags, keep only first line or first 60 chars
         let cleanDesc = ev.description
           ? ev.description.replace(/<[^>]*>/g, "").trim()
@@ -128,8 +151,7 @@ export default function UpcomingMeetings() {
           subtext: subtext.length > 60 ? subtext.slice(0, 60) + "..." : subtext,
           htmlLink: ev.htmlLink,
         };
-      },
-    );
+      });
 
     // 2. Read local cache to find any meeting scheduled via AI panel in the current session
     const aiMeetings: MeetingItem[] = [];

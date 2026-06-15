@@ -15,6 +15,7 @@ import {
   parsePayload,
   type Attachment,
 } from "~/server/utils/email-parsing";
+import { ensureThreadSynced } from "~/server/utils/thread-sync";
 
 interface ThreadMessage {
   id: string;
@@ -37,6 +38,8 @@ async function fetchThreadMessages(
   threadId: string,
   tenantId: string,
 ): Promise<ThreadMessage[]> {
+  await ensureThreadSynced(ctx, threadId, tenantId);
+
   const messagesResult = await ctx.db
     .select({ entity: corsairEntities })
     .from(corsairEntities)

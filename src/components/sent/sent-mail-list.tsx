@@ -5,8 +5,38 @@ import { api } from "~/trpc/react";
 import IsometricLoader from "../ui/isometric-loader";
 import { format, isToday } from "date-fns";
 
-export default function SentMailList() {
+import Link from "next/link";
+import { useEffect } from "react";
+
+interface SentMailListProps {
+  selectedEmails: string[];
+  setSelectedEmails: React.Dispatch<React.SetStateAction<string[]>>;
+  onEmailsChange: (emails: any[]) => void;
+}
+
+export default function SentMailList({
+  selectedEmails,
+  setSelectedEmails,
+  onEmailsChange,
+}: SentMailListProps) {
   const { data: emails, isPending } = api.email.getSentEmails.useQuery();
+
+  // Bubble up active emails list to parent
+  const emailsIdsStr = JSON.stringify(emails?.map((e) => e.id) || []);
+  
+  useEffect(() => {
+    onEmailsChange(emails || []);
+  }, [emailsIdsStr, onEmailsChange]);
+
+  const handleToggleSelect = (e: React.MouseEvent, emailId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedEmails((prev) =>
+      prev.includes(emailId)
+        ? prev.filter((id) => id !== emailId)
+        : [...prev, emailId]
+    );
+  };
 
   return (
     <div className="h-full flex-1 overflow-y-auto rounded-xl bg-[#F3F6FB]">
@@ -19,9 +49,10 @@ export default function SentMailList() {
           No sent emails found
         </div>
       ) : (
-        emails.map((email) => {
+        emails.map((email: any) => {
+          const threadId = email.threadId || email.id;
           return (
-            <div key={email.id}>
+            <Link key={email.id} href={`/inbox/${threadId}`} className="block">
               <InboxRow
                 sender={`To: ${email.to}`} // For sent mail, we show who we sent it to
                 subject={email.subject}
@@ -32,8 +63,10 @@ export default function SentMailList() {
                     : format(email.createdAt, "MMM d")
                 }
                 unread={false} // Sent emails are implicitly read
+                selected={selectedEmails.includes(email.id)}
+                onToggleSelect={(e) => handleToggleSelect(e, email.id)}
               />
-            </div>
+            </Link>
           );
         })
       )}

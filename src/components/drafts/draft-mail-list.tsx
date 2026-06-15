@@ -7,9 +7,38 @@ import IsometricLoader from "../ui/isometric-loader";
 import { format, isToday } from "date-fns";
 import ComposeModal from "../compose/compose-modal";
 
-export default function DraftMailList() {
+interface DraftMailListProps {
+  selectedDrafts: string[];
+  setSelectedDrafts: React.Dispatch<React.SetStateAction<string[]>>;
+  onDraftsChange: (drafts: any[]) => void;
+}
+
+import { useEffect } from "react";
+
+export default function DraftMailList({
+  selectedDrafts,
+  setSelectedDrafts,
+  onDraftsChange,
+}: DraftMailListProps) {
   const { data: drafts, isPending } = api.email.getDrafts.useQuery();
   const [selectedDraft, setSelectedDraft] = useState<typeof drafts extends undefined ? undefined : NonNullable<typeof drafts>[0] | null>(null);
+
+  // Bubble up active drafts list to parent
+  const draftsIdsStr = JSON.stringify(drafts?.map((d) => d.id) || []);
+  
+  useEffect(() => {
+    onDraftsChange(drafts || []);
+  }, [draftsIdsStr, onDraftsChange]);
+
+  const handleToggleSelect = (e: React.MouseEvent, draftId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedDrafts((prev) =>
+      prev.includes(draftId)
+        ? prev.filter((id) => id !== draftId)
+        : [...prev, draftId]
+    );
+  };
 
   return (
     <>
@@ -36,6 +65,8 @@ export default function DraftMailList() {
                       : format(draft.updatedAt, "MMM d")
                   }
                   unread={false} // Drafts don't have unread status
+                  selected={selectedDrafts.includes(draft.id)}
+                  onToggleSelect={(e) => handleToggleSelect(e, draft.id)}
                 />
               </div>
             );
