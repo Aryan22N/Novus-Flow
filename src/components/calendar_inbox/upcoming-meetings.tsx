@@ -8,10 +8,12 @@ import {
   MailOpen,
   ExternalLink,
   Loader2,
+  CheckSquare,
+  Calendar,
+  Briefcase,
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
-import image from "next/image";
 
 interface MeetingItem {
   id: string; // Google event ID / thread ID
@@ -20,6 +22,7 @@ interface MeetingItem {
   type: "live" | "ai";
   subtext?: string;
   htmlLink?: string | null;
+  allDay?: boolean;
 }
 
 interface CacheEntry {
@@ -66,8 +69,9 @@ function formatEventDateTime(startIso: string | null, allDay: boolean): string {
   return `${dateLabel}, ${timeLabel}`;
 }
 
-export default function UpcomingMeetings() {
+export default function CalendarEvents() {
   const [meetings, setMeetings] = useState<MeetingItem[]>([]);
+  const [activeTab, setActiveTab] = useState<"events" | "appointments" | "tasks">("events");
 
   const now = new Date();
   const year = now.getFullYear();
@@ -105,10 +109,6 @@ export default function UpcomingMeetings() {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const tomorrowEnd = new Date(todayStart);
-    tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
-    tomorrowEnd.setHours(23, 59, 59, 999);
-
     const liveMeetings: MeetingItem[] = (calendarData?.events ?? [])
       .filter((ev) => {
         if (!ev.start) return false;
@@ -137,7 +137,7 @@ export default function UpcomingMeetings() {
           return false;
         }
 
-        return d <= tomorrowEnd;
+        return true;
       })
       .map((ev) => {
         // Clean description: remove HTML tags, keep only first line or first 60 chars
@@ -163,6 +163,7 @@ export default function UpcomingMeetings() {
           type: "live" as const,
           subtext: subtext.length > 60 ? subtext.slice(0, 60) + "..." : subtext,
           htmlLink: ev.htmlLink,
+          allDay: ev.allDay,
         };
       });
 
@@ -219,6 +220,7 @@ export default function UpcomingMeetings() {
                 time: entry.meetingTime,
                 type: "ai",
                 subtext: "Scheduled via Nexus Assistant",
+                allDay: false,
               });
             }
           }
@@ -239,20 +241,57 @@ export default function UpcomingMeetings() {
     setMeetings([...liveMeetings, ...aiMeetings]);
   }, [calendarData]);
 
+  // Categorize events
+  const appointments = meetings.filter(m => /(meeting|sync|call|appointment|1:1|interview)/i.test(m.title) || m.type === "ai");
+  const tasks = meetings.filter(m => !appointments.includes(m) && (/(task|todo|to-do|reminder)/i.test(m.title) || m.allDay));
+  const events = meetings.filter(m => !appointments.includes(m) && !tasks.includes(m));
+
+  const getActiveList = () => {
+    if (activeTab === "appointments") return appointments;
+    if (activeTab === "tasks") return tasks;
+    return events;
+  };
+
+  const activeList = getActiveList();
+
   return (
-    <div className=" border-outline-variant flex h-[450px] flex-col rounded-xl border pt-4 shrink-0" style={{ backgroundImage: 'linear-gradient(to top, #dfe9f3 0%, white 100%)' }}>
-      <h3 className="text-title-sm font-title-sm text-on-surface mb-4 pl-4 flex shrink-0 items-center gap-2 select-none">
+    <div className="border-outline-variant flex h-[450px] flex-col rounded-xl border pt-4 shrink-0 bg-white shadow-sm" style={{ backgroundImage: 'linear-gradient(to top, #dfe9f3 0%, white 100%)' }}>
+      <h3 className="text-title-sm font-title-sm text-on-surface mb-3 pl-4 flex shrink-0 items-center gap-2 select-none">
         <CalendarDays size={18} className="text-secondary" />
-        Upcoming Meetings
+        Calendar Events
       </h3>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
-        {meetings.map((meeting) => {
+      <div className="flex gap-2 px-4 mb-3 shrink-0">
+        <button
+          onClick={() => setActiveTab("events")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "events" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant"}`}
+        >
+          <Calendar size={14} />
+          Events ({events.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("appointments")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "appointments" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant"}`}
+        >
+          <Briefcase size={14} />
+          Appointments ({appointments.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("tasks")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "tasks" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant"}`}
+        >
+          <CheckSquare size={14} />
+          Tasks ({tasks.length})
+        </button>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4">
+        {activeList.map((meeting) => {
           if (meeting.type === "live") {
             return (
               <div
                 key={meeting.id}
-                className="border-primary bg-surface-container-low rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-sm"
+                className="border-primary bg-white/80 backdrop-blur-sm rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-md"
               >
                 <div className="mb-1 flex items-start justify-between gap-2">
                   <span
@@ -282,7 +321,7 @@ export default function UpcomingMeetings() {
                     className=" text-body-sm hover:bg-primary-container flex w-full cursor-pointer items-center justify-center gap-2 rounded px-3 py-1.5 text-center font-semibold text-white transition-colors"
                     style={{ backgroundImage: 'linear-gradient(to top, #1e3c72 0%, #1e3c72 1%, #2a5298 100%)' }}
                   >
-                    Join Meeting (Google Calendar)
+                    View Details
                     <ExternalLink size={14} />
                   </a>
                 )
@@ -294,9 +333,9 @@ export default function UpcomingMeetings() {
             return (
               <div
                 key={meeting.id}
-                className="border-secondary bg-surface-container-low animate-fadeIn rounded-r-lg  transition-shadow hover:shadow-sm"
+                className="border-secondary bg-white/80 backdrop-blur-sm animate-fadeIn rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-md"
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="mb-1 flex items-start justify-between gap-2">
                   <span
                     className="text-body-md text-on-surface flex-1 truncate font-bold"
                     title={meeting.title}
@@ -326,15 +365,15 @@ export default function UpcomingMeetings() {
           }
         })}
 
-        {meetings.length === 0 && !isLoading && (
+        {activeList.length === 0 && !isLoading && (
           <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-lg min-h-[180px] w-full h-full">
             <div
               className="absolute inset-0 bg-[length:100%_100%] bg-no-repeat bg-center opacity-80"
               style={{ backgroundImage: "url('/meetings_illus.jpg')" }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-gray-100/90 to-gray-50/70" />
-            <p className="text-on-surface-variant relative z-10 p-4 text-center text-xs italic font-medium select-none shadow-sm">
-              No upcoming meetings.
+            <p className="text-on-surface-variant relative z-10 p-4 text-center text-sm italic font-medium select-none shadow-sm drop-shadow-sm">
+              No {activeTab} scheduled.
             </p>
           </div>
         )}
@@ -346,6 +385,6 @@ export default function UpcomingMeetings() {
           </div>
         )}
       </div>
-    </div >
+    </div>
   );
 }

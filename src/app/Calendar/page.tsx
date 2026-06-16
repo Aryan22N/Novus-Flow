@@ -181,47 +181,111 @@ interface CalEvent {
 }
 
 function EventPill({ event }: { event: CalEvent }) {
-  const [tooltip, setTooltip] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const color = colorFor(event.id);
   const timeLabel = event.allDay ? "All day" : formatTime(event.start);
+  
+  const utils = api.useUtils();
+  const deleteMutation = api.calendar.deleteEvent.useMutation({
+    onSuccess: () => {
+      utils.calendar.getEvents.invalidate();
+      setIsOpen(false);
+    }
+  });
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm("Are you sure you want to delete this?")) {
+      deleteMutation.mutate({ eventId: event.id });
+    }
+  };
 
   return (
-    <div className="relative">
+    <>
       <div
-        onMouseEnter={() => setTooltip(true)}
-        onMouseLeave={() => setTooltip(false)}
-        className={`${color} cursor-pointer truncate rounded px-1.5 py-0.5 text-[11px] leading-tight font-medium`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(true);
+        }}
+        className={`${color} cursor-pointer truncate rounded px-1.5 py-0.5 text-[11px] leading-tight font-medium hover:opacity-90 transition-opacity`}
       >
         {!event.allDay && <span className="mr-1 opacity-80">{timeLabel}</span>}
         {event.title}
       </div>
-      {tooltip && (
-        <div className="absolute top-full left-0 z-50 mt-1 w-56 rounded-lg border border-[#dadce0] bg-white p-3 text-xs text-[#3c4043] shadow-xl">
-          <p className="mb-1 text-sm leading-tight font-semibold">
-            {event.title}
-          </p>
-          {event.start && (
-            <p className="mb-1 text-[#70757a]">
-              {new Date(event.start).toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}
-              {!event.allDay &&
-                ` · ${formatTime(event.start)}${event.end ? ` – ${formatTime(event.end)}` : ""}`}
-            </p>
-          )}
-          {event.location && (
-            <p className="truncate text-[#70757a]">📍 {event.location}</p>
-          )}
-          {event.description && (
-            <p className="mt-1 line-clamp-2 text-[#5f6368]">
-              {event.description}
-            </p>
-          )}
+      
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/10 backdrop-blur-[1px] transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(false);
+          }}
+        >
+          <div 
+            className="w-full max-w-sm rounded-lg bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header / Actions */}
+            <div className="flex justify-end p-2 gap-1 bg-[#f1f3f4] border-b border-outline-variant/50">
+              <button 
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+                className="rounded-full p-1.5 text-[#5f6368] hover:bg-[#e8eaed] transition-colors cursor-pointer disabled:opacity-50"
+                title="Delete"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(false);
+                }}
+                className="rounded-full p-1.5 text-[#5f6368] hover:bg-[#e8eaed] transition-colors cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            
+            {/* Details */}
+            <div className="p-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className={`mt-1 h-4 w-4 rounded shrink-0 ${color.replace('bg-', 'bg-')}`}></div>
+                <div>
+                  <h3 className="text-xl leading-tight font-normal text-[#3c4043] mb-1">
+                    {event.title}
+                  </h3>
+                  {event.start && (
+                    <p className="text-sm text-[#3c4043]">
+                      {new Date(event.start).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                      {!event.allDay &&
+                        ` ⋅ ${formatTime(event.start)}${event.end ? ` – ${formatTime(event.end)}` : ""}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {event.location && (
+                <div className="flex items-start gap-4 text-sm text-[#3c4043]">
+                  <svg className="w-5 h-5 text-[#5f6368] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <p>{event.location}</p>
+                </div>
+              )}
+              
+              {event.description && (
+                <div className="flex items-start gap-4 text-sm text-[#3c4043]">
+                  <svg className="w-5 h-5 text-[#5f6368] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                  <p className="whitespace-pre-wrap">{event.description}</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -233,6 +297,18 @@ export default function CalendarPage() {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1); // 1-based
 
+  // Modal & Form State
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createModalTab, setCreateModalTab] = useState<"Event" | "Task" | "Appointment">("Event");
+
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    date: today.toISOString().substring(0, 10), // YYYY-MM-DD
+    time: "10:00",
+  });
+
   const { data, isLoading, refetch, isRefetching } =
     api.calendar.getEvents.useQuery(
       { year, month },
@@ -242,6 +318,39 @@ export default function CalendarPage() {
   const syncMutation = api.calendar.syncEvents.useMutation({
     onSuccess: () => refetch(),
   });
+
+  const createEventMutation = api.calendar.createEvent.useMutation({
+    onSuccess: () => {
+      refetch();
+      setCreateModalOpen(false);
+      setFormData({
+        title: "",
+        description: "",
+        date: today.toISOString().substring(0, 10),
+        time: "10:00",
+      });
+    },
+  });
+
+  const handleSave = () => {
+    if (!formData.title.trim()) return;
+
+    let finalTitle = formData.title;
+    if (createModalTab === "Task") {
+      finalTitle = `[Task] ${finalTitle}`;
+    } else if (createModalTab === "Appointment") {
+      finalTitle = `[Appointment] ${finalTitle}`;
+    }
+
+    // Format meetingTime as "2026-06-16T10:00"
+    const meetingTime = `${formData.date}T${formData.time}`;
+
+    createEventMutation.mutate({
+      summary: finalTitle,
+      description: formData.description,
+      meetingTime,
+    });
+  };
 
   // On every page load / reload: sync fresh events from Google Calendar into the DB,
   // then refetch so the UI shows up-to-date data.
@@ -427,310 +536,195 @@ export default function CalendarPage() {
           className="flex w-64 flex-shrink-0 flex-col gap-6 border-l border-[#dadce0] p-4"
           data-purpose="sidebar-navigation"
         >
-          <button className="flex items-center gap-3 rounded-full border border-[#dadce0] px-4 py-2 shadow-md transition-shadow hover:shadow-lg">
-            <svg height="36" viewBox="0 0 36 36" width="36">
-              <path d="M16 16v14h4V20z" fill="#34A853"></path>
-              <path d="M30 16H20l-4 4h14z" fill="#4285F4"></path>
-              <path d="M6 16v4h10l4-4z" fill="#FBBC05"></path>
-              <path d="M20 16V6h-4v14z" fill="#EA4335"></path>
-              <path d="M0 0h36v36H0z" fill="none"></path>
-            </svg>
-            <span className="text-sm font-medium">Create</span>
-            <svg
-              className="ml-2 h-4 w-4"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              ></path>
-            </svg>
-          </button>
-
-          {/* Mini Calendar */}
-          <div className="mt-4" data-purpose="mini-calendar">
-            <div className="mb-4 flex items-center justify-between px-2">
-              <span className="text-sm font-medium">June 2026</span>
-              <div className="flex gap-2">
-                <button className="rounded-full p-1 hover:bg-[#f1f3f4]">
-                  <svg
-                    className="h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"></path>
-                  </svg>
-                </button>
-                <button className="rounded-full p-1 hover:bg-[#f1f3f4]">
-                  <svg
-                    className="h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="mb-2 grid grid-cols-7 text-center text-[10px] font-medium text-[#70757a]">
-              <span>S</span>
-              <span>M</span>
-              <span>T</span>
-              <span>W</span>
-              <span>T</span>
-              <span>F</span>
-              <span>S</span>
-            </div>
-            <div className="grid grid-cols-7 gap-y-1">
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                31
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                1
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                2
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                3
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                4
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                5
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                6
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                7
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                8
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                9
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                10
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-[#1a73e8] text-[10px] text-white hover:bg-[#f1f3f4]">
-                11
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-blue-100 text-[10px] hover:bg-[#f1f3f4]">
-                12
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                13
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                14
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                15
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                16
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                17
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                18
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                19
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                20
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                21
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                22
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                23
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                24
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                25
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                26
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                27
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                28
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                29
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] hover:bg-[#f1f3f4]">
-                30
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                1
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                2
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                3
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                4
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                5
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                6
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                7
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                8
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                9
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                10
-              </div>
-              <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[10px] text-gray-400 hover:bg-[#f1f3f4]">
-                11
-              </div>
-            </div>
-          </div>
-
-          {/* Search People */}
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg
-                className="h-4 w-4 text-[#70757a]"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+            <button
+              onClick={() => setIsCreateOpen(!isCreateOpen)}
+              className="flex items-center gap-3 rounded-full border border-[#dadce0] px-4 py-2 shadow-md transition-shadow hover:shadow-lg bg-white relative z-10"
+            >
+              <svg height="36" viewBox="0 0 36 36" width="36">
+                <path d="M16 16v14h4V20z rounded-full" fill="#74B9DE"></path>
+                <path d="M30 16H20l-4 4h14z rounded-full" fill="#74B9DE"></path>
+                <path d="M6 16v4h10l4-4z rounded-full" fill="#74B9DE"></path>
+                <path d="M20 16V6h-4v14z rounded-full" fill="#74B9DE"></path>
+                <path d="M0 0h36v36H0 rounded-full" fill="none"></path>
               </svg>
-            </div>
-            <input
-              className="block w-full rounded-md border-none bg-[#f1f3f4] py-2 pr-3 pl-10 text-sm focus:bg-white focus:ring-[#1a73e8]"
-              placeholder="Search for people"
-              type="text"
-            />
-          </div>
-
-          {/* Categories Section */}
-          <div className="space-y-4" data-purpose="calendar-categories">
-            <div className="flex items-center justify-between text-sm font-medium text-[#3c4043]">
-              <span>Booking pages</span>
+              <span className="text-sm font-medium">Create</span>
               <svg
-                className="h-4 w-4 cursor-pointer"
+                className="ml-2 h-4 w-4"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
                 <path
                   fillRule="evenodd"
                   clipRule="evenodd"
-                  d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                 ></path>
               </svg>
-            </div>
-            <div>
-              <div className="mb-2 flex items-center justify-between text-sm font-medium text-[#3c4043]">
-                <span>My calendars</span>
-                <svg
-                  className="h-4 w-4 rotate-180 transform cursor-pointer"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  ></path>
-                </svg>
-              </div>
-              <div className="ml-1 space-y-1">
-                <label className="flex cursor-pointer items-center gap-3 rounded px-1 py-1 hover:bg-[#f1f3f4]">
-                  <input
-                    defaultChecked
-                    className="h-4 w-4 rounded border-gray-400 text-[#1a73e8] focus:ring-[#1a73e8]"
-                    type="checkbox"
-                  />
-                  <span className="text-xs text-[#3c4043]">Demo Account</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-3 rounded px-1 py-1 hover:bg-[#f1f3f4]">
-                  <input
-                    defaultChecked
-                    className="h-4 w-4 rounded border-gray-400 text-green-600 focus:ring-green-600"
-                    type="checkbox"
-                  />
-                  <span className="text-xs text-[#3c4043]">Birthdays</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-3 rounded px-1 py-1 hover:bg-[#f1f3f4]">
-                  <input
-                    defaultChecked
-                    className="h-4 w-4 rounded border-gray-400 text-blue-800 focus:ring-blue-800"
-                    type="checkbox"
-                  />
-                  <span className="text-xs text-[#3c4043]">Tasks</span>
-                </label>
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 flex items-center justify-between text-sm font-medium text-[#3c4043]">
-                <span>Other calendars</span>
-                <div className="flex gap-2">
-                  <svg
-                    className="h-4 w-4 cursor-pointer"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                    ></path>
-                  </svg>
-                  <svg
-                    className="h-4 w-4 rotate-180 transform cursor-pointer"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    ></path>
-                  </svg>
-                </div>
-              </div>
-              <label className="flex cursor-pointer items-center gap-3 rounded px-1 py-1 hover:bg-[#f1f3f4]">
-                <input
-                  defaultChecked
-                  className="h-4 w-4 rounded border-gray-400 text-green-700 focus:ring-green-700"
-                  type="checkbox"
+            </button>
+            {isCreateOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsCreateOpen(false)}
                 />
-                <span className="text-xs text-[#3c4043]">
-                  Holidays in India
-                </span>
-              </label>
+                <div className="absolute top-14 left-0 z-50 w-56 rounded-md bg-white py-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)] ring-1 ring-black ring-opacity-5">
+                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] hover:bg-[#f1f3f4]" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Event"); setCreateModalOpen(true); }}>Event</button>
+                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] hover:bg-[#f1f3f4]" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Task"); setCreateModalOpen(true); }}>Task</button>
+                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] hover:bg-[#f1f3f4]" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Appointment"); setCreateModalOpen(true); }}>Appointment schedule</button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Mini Calendar */}
+          <div className="mt-4" data-purpose="mini-calendar">
+            <MiniCalendar
+              year={year}
+              month={month}
+              selectedYear={year}
+              selectedMonth={month}
+              onSelect={(y, m) => {
+                setYear(y);
+                setMonth(m);
+              }}
+            />
+          </div>
+
+          {/* Assigned Tasks */}
+          <div className="space-y-3" data-purpose="calendar-tasks">
+            <div className="flex items-center justify-between text-sm font-medium text-[#3c4043] border-b border-outline-variant/30 pb-2">
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#1a73e8]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"></path></svg>
+                Assigned Tasks
+              </span>
+            </div>
+            <div className="flex flex-col gap-2 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+              {(() => {
+                const tasks = (data?.events ?? [])
+                  .filter(ev => ev.title?.startsWith("[Task]"))
+                  .sort((a, b) => {
+                    const dateA = a.start ? new Date(a.start).getTime() : 0;
+                    const dateB = b.start ? new Date(b.start).getTime() : 0;
+                    return dateB - dateA; // Most recent on top
+                  });
+
+                if (tasks.length === 0) {
+                  return <p className="text-xs text-[#70757a] text-center py-4">No tasks assigned.</p>;
+                }
+
+                return tasks.map(task => {
+                  const deadline = task.start 
+                    ? new Date(task.start).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) 
+                    : "No deadline";
+                  const title = task.title.replace("[Task]", "").trim();
+
+                  return (
+                    <div key={task.id} className="group relative flex flex-col gap-1 rounded-lg border border-[#dadce0] p-3 hover:shadow-md transition-shadow bg-white">
+                      <div className="flex items-start justify-between">
+                        <span className="text-sm font-semibold text-[#3c4043] leading-tight break-words pr-2">{title}</span>
+                        <div className="h-3 w-3 rounded-full bg-[#1a73e8] shrink-0 mt-0.5"></div>
+                      </div>
+                      <span className="text-xs text-[#d93025] font-medium mt-1">Due: {deadline}</span>
+                      {task.description && (
+                        <p className="text-xs text-[#5f6368] line-clamp-2 mt-1">{task.description}</p>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </aside>
       </div>
+
+      {/* Create Modal overlay */}
+      {createModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm transition-opacity">
+          <div className="w-full max-w-[480px] rounded-xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30">
+            {/* Header */}
+            <div className="flex items-center justify-between bg-[#f1f3f4] px-4 py-2 border-b border-outline-variant/50">
+              <span className="text-xs font-semibold text-[#5f6368] uppercase tracking-wider">
+                Create new {createModalTab}
+              </span>
+              <button onClick={() => setCreateModalOpen(false)} className="rounded-full p-1.5 text-[#5f6368] hover:bg-[#e8eaed] transition-colors cursor-pointer">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            {/* Body */}
+            <div className="p-5 px-6 space-y-6">
+              <input
+                type="text"
+                placeholder="Add title"
+                value={formData.title}
+                onChange={(e) => setFormData(f => ({ ...f, title: e.target.value }))}
+                className="w-full text-2xl font-normal bg-transparent border-b-2 border-transparent focus:border-[#1a73e8] outline-none pb-2 text-[#3c4043] placeholder-[#70757a] transition-colors"
+              />
+
+              {/* Tabs */}
+              <div className="flex gap-1 border-b border-outline-variant/50 pb-2">
+                <button onClick={() => setCreateModalTab("Event")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Event" ? "bg-[#e8f0fe] text-[#1a73e8]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>Event</button>
+                <button onClick={() => setCreateModalTab("Task")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Task" ? "bg-[#e8f0fe] text-[#1a73e8]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>Task</button>
+                <button onClick={() => setCreateModalTab("Appointment")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Appointment" ? "bg-[#e8f0fe] text-[#1a73e8]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>Appointment schedule</button>
+              </div>
+
+              {/* Dynamic Content */}
+              <div className="min-h-[140px] flex flex-col gap-5 text-[#3c4043] text-sm">
+                
+                {/* Event or Appointment Date/Time */}
+                {createModalTab !== "Task" && (
+                  <div className="flex items-start gap-4">
+                    <svg className="w-5 h-5 text-[#5f6368] mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"></path></svg>
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="flex gap-2">
+                        <input type="date" value={formData.date} onChange={(e) => setFormData(f => ({ ...f, date: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] font-medium cursor-pointer hover:bg-[#f1f3f4] rounded px-1" />
+                        <input type="time" value={formData.time} onChange={(e) => setFormData(f => ({ ...f, time: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] font-medium cursor-pointer hover:bg-[#f1f3f4] rounded px-1" />
+                      </div>
+                      <span className="text-xs text-[#70757a]">Time zone · Does not repeat</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Task Specific Deadline */}
+                {createModalTab === "Task" && (
+                  <div className="flex items-start gap-4 border-b border-outline-variant/30 pb-4">
+                    <svg className="w-5 h-5 text-[#1a73e8] mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"></path></svg>
+                    <div className="flex flex-col gap-1 w-full">
+                      <span className="text-xs font-semibold text-[#1a73e8] uppercase tracking-wider">Add Deadline</span>
+                      <div className="flex gap-2 mt-1">
+                        <input type="date" value={formData.date} onChange={(e) => setFormData(f => ({ ...f, date: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] font-medium cursor-pointer hover:bg-[#f1f3f4] rounded px-1" />
+                        <input type="time" value={formData.time} onChange={(e) => setFormData(f => ({ ...f, time: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] font-medium cursor-pointer hover:bg-[#f1f3f4] rounded px-1" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Description (Shared) */}
+                <div className="flex items-center gap-4">
+                  <svg className="w-5 h-5 text-[#5f6368] shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"></path></svg>
+                  <input
+                    type="text"
+                    placeholder="Add description"
+                    value={formData.description}
+                    onChange={(e) => setFormData(f => ({ ...f, description: e.target.value }))}
+                    className="w-full text-sm bg-transparent border-b border-transparent focus:border-[#1a73e8] outline-none pb-1 text-[#3c4043] placeholder-[#70757a] transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end p-4 pt-2 bg-[#f8f9fa] border-t border-outline-variant/30">
+              <button
+                onClick={handleSave}
+                disabled={createEventMutation.isPending || !formData.title.trim()}
+                className="bg-[#1a73e8] hover:bg-[#1557b0] text-white px-6 py-2 rounded-lg font-medium text-sm transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+              >
+                {createEventMutation.isPending ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

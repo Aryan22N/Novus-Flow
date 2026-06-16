@@ -23,15 +23,21 @@ export async function POST(req: NextRequest) {
       confirmed?: boolean;
       chatId?: string;
       modifiedActions?: any[];
+      attachments?: { name: string; url: string }[];
     };
+
+    let transcriptToProcess = body.transcript;
+    if (body.attachments && body.attachments.length > 0) {
+      transcriptToProcess += `\n\n[System Note: The user has attached the following files: ${JSON.stringify(body.attachments)}. If the user asks you to send an email with attachments, you must pass this exact attachments array into the sendEmail tool.]`;
+    }
 
     const novaSession: NovaSession = await getNovaSession(session.user.id, body.chatId);
     
     let isNewChat = false;
     if (body.chatId && novaSession.history.length === 0 && !body.confirmed) {
       isNewChat = true;
-      await createNewChat(session.user.id, body.chatId, body.transcript);
-      novaSession.history.push({ role: "user", parts: [{ text: body.transcript }] });
+      await createNewChat(session.user.id, body.chatId, transcriptToProcess);
+      novaSession.history.push({ role: "user", parts: [{ text: transcriptToProcess }] });
       await saveNovaSession(session.user.id, novaSession, body.chatId);
     }
 
@@ -79,7 +85,9 @@ export async function POST(req: NextRequest) {
     }));
 
     const chat   = model.startChat({ history: historyForGemini });
-    let   result = await withRetry(() => chat.sendMessage(body.transcript));
+    let   result = await withRetry(() => chat.sendMessage(transcriptToProcess));
+
+    const allPendingActions: Array<{ tool: string; args: Record<string, unknown>; draft: string }> = [];
 
     for (let i = 0; i < 8; i++) {
       const candidate    = result.response.candidates?.[0];
@@ -89,7 +97,6 @@ export async function POST(req: NextRequest) {
       if (functionCalls.length === 0) break;
 
       const functionResponses: FunctionResponsePart[] = [];
-      const pendingActions: Array<{ tool: string; args: Record<string, unknown>; draft: string }> = [];
 
       for (const part of functionCalls) {
         if (!part.functionCall) continue;
@@ -102,7 +109,7 @@ export async function POST(req: NextRequest) {
         );
 
         if (toolResult.confirmationRequired) {
-          pendingActions.push({
+          allPendingActions.push({
             tool:  toolResult.confirmationRequired.tool,
             args:  toolResult.confirmationRequired.args,
             draft: toolResult.confirmationRequired.draft,
@@ -110,7 +117,7 @@ export async function POST(req: NextRequest) {
           functionResponses.push({
             functionResponse: {
               name:     part.functionCall.name,
-              response: { status: "awaiting_confirmation" },
+              response: { status: "Draft prepared. User confirmation pending. You can proceed with other actions." },
             },
           });
         } else {
@@ -123,36 +130,38 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (pendingActions.length > 0) {
-        novaSession.pendingActions = pendingActions;
-        
-        // Build a combined frontend pendingAction object to avoid breaking the frontend
-        const combinedDraft = pendingActions.map(p => `• ${p.draft}`).join('\n');
-        const frontendPendingAction = {
-          tool: "multiple",
-          args: {},
-          draft: combinedDraft
-        };
-
-        novaSession.pendingAction = frontendPendingAction;
-
-        if (!isNewChat) {
-          novaSession.history.push({ role: "user", parts: [{ text: body.transcript }] });
-        }
-        const textParts = candidate.content.parts.filter((p) => p.text).map((p) => ({ text: p.text! }));
-        novaSession.history.push(
-          { role: "model", parts: textParts.length > 0 ? textParts : [{ text: `Here's what I'll do:\n${combinedDraft}` }] },
-        );
-        await saveNovaSession(session.user.id, novaSession, body.chatId);
-        return NextResponse.json({
-          response:            `Here's what I'll do:\n${combinedDraft}`,
-          confirmationPending: true,
-          pendingAction:       frontendPendingAction,
-          pendingActions:      pendingActions,
-        });
-      }
-
       result = await withRetry(() => chat.sendMessage(functionResponses));
+    }
+
+    if (allPendingActions.length > 0) {
+      novaSession.pendingActions = allPendingActions;
+      
+      const combinedDraft = allPendingActions.map(p => `• ${p.draft}`).join('\n');
+      const frontendPendingAction = {
+        tool: "multiple",
+        args: {},
+        draft: combinedDraft
+      };
+
+      novaSession.pendingAction = frontendPendingAction;
+
+      const candidate = result.response.candidates?.[0];
+      const textParts = candidate?.content.parts.filter((p) => p.text).map((p) => ({ text: p.text! })) || [];
+      const responseText = textParts.length > 0 ? textParts.map(t => t.text).join("") : `Here's what I'll do:\n${combinedDraft}`;
+
+      if (!isNewChat) {
+        novaSession.history.push({ role: "user", parts: [{ text: transcriptToProcess }] });
+      }
+      novaSession.history.push(
+        { role: "model", parts: [{ text: responseText }] },
+      );
+      await saveNovaSession(session.user.id, novaSession, body.chatId);
+      return NextResponse.json({
+        response:            responseText,
+        confirmationPending: true,
+        pendingAction:       frontendPendingAction,
+        pendingActions:      allPendingActions,
+      });
     }
 
     const responseText =
@@ -162,7 +171,7 @@ export async function POST(req: NextRequest) {
         .join("") ?? "I couldn't get a response. Please try again.";
 
     if (!isNewChat) {
-      novaSession.history.push({ role: "user", parts: [{ text: body.transcript }] });
+      novaSession.history.push({ role: "user", parts: [{ text: transcriptToProcess }] });
     }
     novaSession.history.push({ role: "model", parts: [{ text: responseText }] });
     
@@ -178,6 +187,7 @@ export async function POST(req: NextRequest) {
 function summariseResult(tool: string, data: unknown): string {
   if (tool === "sendEmail")           return "Your email has been sent.";
   if (tool === "createCalendarEvent") return "The event has been added to your calendar.";
+  if (tool === "deleteCalendarEvent") return "The event has been successfully deleted from your calendar.";
   return "Done.";
 }
 

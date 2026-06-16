@@ -28,6 +28,7 @@ export const env = createEnv({
     CRON_SECRET: z.string().min(16),
     ELEVENLABS_API_KEY: z.string().optional(),
     ELEVENLABS_VOICE_ID: z.string().optional(),
+    CLOUDINARY_URL: z.string().url(),
   },
 
   /**
@@ -37,6 +38,7 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
+    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().min(1),
   },
 
   /**
@@ -62,6 +64,8 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY,
     ELEVENLABS_VOICE_ID: process.env.ELEVENLABS_VOICE_ID,
+    CLOUDINARY_URL: process.env.CLOUDINARY_URL,
+    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -122,13 +122,19 @@ export async function executeTool(
       draft =
         `Send email to ${args.to as string}` +
         (args.subject ? ` — subject: "${args.subject as string}"` : "") +
+        (args.attachments && Array.isArray(args.attachments) && args.attachments.length > 0 ? `\n[Attachments: ${args.attachments.map((att: any) => att.name).join(', ')}]` : "") +
         `\n\n${(args.body as string).slice(0, 200)}${(args.body as string).length > 200 ? "…" : ""}`;
     }
 
     if (toolName === "createCalendarEvent") {
       draft =
         `Create event: "${args.summary as string}" at ${args.time as string}` +
-        (args.duration ? ` for ${args.duration as string}` : "");
+        (args.duration ? ` for ${args.duration as string}` : "") +
+        (args.description ? `\nDescription: ${(args.description as string).slice(0, 100)}...` : "");
+    }
+
+    if (toolName === "deleteCalendarEvent") {
+      draft = `Delete calendar event: "${args.summary as string}"`;
     }
 
     return {
@@ -140,20 +146,27 @@ export async function executeTool(
   // ── CONFIRMED EXECUTION ───────────────────────────────────────────────────
 
   if (toolName === "__confirmed_sendEmail") {
-    const a      = args as { to: string; subject?: string; body: string };
+    const a      = args as { to: string; subject?: string; body: string; attachments?: {name: string, url: string}[] };
     const result = await caller.email.sendEmail({
       to:      a.to,
       subject: a.subject ?? "(no subject)",
       body:    a.body,
+      attachments: a.attachments,
     });
     return { data: { sent: true, messageId: result.messageId } };
   }
 
   if (toolName === "__confirmed_createCalendarEvent") {
-    const a           = args as { summary: string; time: string; duration?: string };
+    const a           = args as { summary: string; description?: string; time: string; duration?: string };
     const meetingTime = a.duration ? `${a.time} for ${a.duration}` : a.time;
-    const result      = await caller.calendar.createEvent({ summary: a.summary, meetingTime });
+    const result      = await caller.calendar.createEvent({ summary: a.summary, description: a.description, meetingTime });
     return { data: { created: true, event: result.event } };
+  }
+
+  if (toolName === "__confirmed_deleteCalendarEvent") {
+    const a = args as { eventId: string };
+    const result = await caller.calendar.deleteEvent({ eventId: a.eventId });
+    return { data: { deleted: true } };
   }
 
   return { data: { error: `Unknown tool: ${toolName}` } };

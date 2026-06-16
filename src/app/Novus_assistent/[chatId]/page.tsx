@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect, use } from 'react';
-import { Sparkles, Paperclip, Send, Loader2 } from 'lucide-react';
+import { Sparkles, Paperclip, Send, Loader2, X } from 'lucide-react';
 import { api } from "~/trpc/react";
 import ComposeModal from "~/components/compose/compose-modal";
 import { useSearchParams } from 'next/navigation';
+import { CldUploadWidget } from 'next-cloudinary';
 
 export default function ChatPage({ params }: { params: Promise<{ chatId: string }> }) {
   const resolvedParams = use(params);
@@ -15,9 +16,18 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Flag to know if user has typed/sent
   const [hasSentMessage, setHasSentMessage] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [attachments, setAttachments] = useState<{ name: string; url: string }[]>([]);
+
+  const handleUploadSuccess = (result: any) => {
+    if (result.event === "success") {
+      setAttachments(prev => [...prev, {
+        name: result.info.original_filename + "." + result.info.format,
+        url: result.info.secure_url
+      }]);
+    }
+  };
 
   const [messages, setMessages] = useState<{ role: 'user' | 'ai', content: string }[]>([]);
 
@@ -67,17 +77,28 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   );
 
   useEffect(() => {
+    // Retrieve any attachments passed from the workspace page
+    const storedAttachmentsStr = sessionStorage.getItem(`nova_attachments_${chatId}`);
+    let storedAttachments = [];
+    if (storedAttachmentsStr) {
+      try {
+        storedAttachments = JSON.parse(storedAttachmentsStr);
+        setAttachments(storedAttachments);
+        sessionStorage.removeItem(`nova_attachments_${chatId}`);
+      } catch(e) {}
+    }
+
     if (historyLoaded && historyData && historyData.length > 0) {
       const formatted = historyData.map((t: any) => ({
         role: t.role === "user" ? "user" : "ai",
-        content: t.parts.map((p: any) => p.text).join("\n")
+        content: t.parts.map((p: any) => p.text).join("\n").replace(/\[System Note:[\s\S]*?\]/g, "").trim()
       })) as { role: 'user' | 'ai', content: string }[];
       setMessages(formatted);
       setHasSentMessage(true);
       scrollToBottom();
-    } else if (historyLoaded && initialQuery && !hasSentMessage) {
-      // If no history but we have initial query from workspace
-      handleSubmit(initialQuery);
+    } else if (historyLoaded && (initialQuery || storedAttachments.length > 0) && !hasSentMessage) {
+      // If no history but we have initial query or attachments from workspace
+      handleSubmit(initialQuery || "I have attached some files.");
     }
   }, [historyLoaded, historyData]);
 
@@ -95,13 +116,13 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
-  const handleAskNova = async (prompt: string, confirmed?: boolean, modifiedActions?: any[]) => {
+  const handleAskNova = async (prompt: string, confirmed?: boolean, modifiedActions?: any[], attachmentsToSend?: any[]) => {
     setIsNovaPending(true);
     try {
       const res = await fetch("/api/nova", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: prompt, confirmed, chatId, modifiedActions }),
+        body: JSON.stringify({ transcript: prompt, confirmed, chatId, modifiedActions, attachments: attachmentsToSend }),
       });
       const data = await res.json();
 
@@ -125,9 +146,13 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   };
 
   const handleSubmit = async (promptToSubmit: string) => {
-    if (!promptToSubmit.trim() || generateDraftMutation.isPending || isNovaPending) return;
+    if ((!promptToSubmit.trim() && attachments.length === 0) || generateDraftMutation.isPending || isNovaPending) return;
     setHasSentMessage(true);
     setInputValue("");
+    
+    const attachmentsToSend = [...attachments];
+    setAttachments([]);
+
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -156,9 +181,13 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
     }
 
     // Standard Chat using Nova API
-    setMessages((prev) => [...prev, { role: 'user', content: promptToSubmit }]);
+    let displayMessage = promptToSubmit;
+    if (attachmentsToSend.length > 0) {
+      displayMessage += `\n[Attached: ${attachmentsToSend.map(a => a.name).join(', ')}]`;
+    }
+    setMessages((prev) => [...prev, { role: 'user', content: displayMessage }]);
     scrollToBottom();
-    handleAskNova(promptToSubmit);
+    handleAskNova(promptToSubmit, false, undefined, attachmentsToSend);
   };
 
   const handleSend = () => {
@@ -305,6 +334,36 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                               }}
                             />
                           </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Description</label>
+                            <textarea
+                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[60px] resize-y"
+                              value={action.args.description || ""}
+                              onChange={(e) => {
+                                const newActions = [...pendingNovaAction];
+                                newActions[idx].args.description = e.target.value;
+                                setPendingNovaAction(newActions);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (action.tool === "deleteCalendarEvent") {
+                      return (
+                        <div key={idx} className="border border-red-500/30 p-4 rounded-xl flex flex-col gap-3 bg-red-50/50 w-full shadow-sm">
+                          <div className="text-[11px] font-bold text-red-600 uppercase tracking-wider flex items-center gap-2">
+                            <X className="w-3.5 h-3.5" /> Cancel Calendar Event
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-red-800/70 ml-1">Title</label>
+                            <input
+                              className="text-sm p-2.5 border border-red-200/60 rounded-lg w-full bg-white focus:ring-2 focus:ring-red-500/20 outline-none transition-all text-red-900"
+                              value={action.args.summary || "Unknown Event"}
+                              readOnly
+                            />
+                          </div>
+                          <p className="text-xs text-red-600 font-medium mt-1">This will permanently delete the event from your Google Calendar.</p>
                         </div>
                       );
                     }
@@ -419,6 +478,18 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
       {/* Input Bar Area */}
       <div className="w-full p-4 md:p-6 bg-transparent shrink-0 relative z-10">
         <div className="max-w-4xl mx-auto">
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-2 pb-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {attachments.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-full px-3 py-1.5 text-sm font-medium text-gray-700">
+                  <span className="truncate max-w-[150px]">{file.name}</span>
+                  <button onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-red-500 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className={`bg-surface-container-highest/60 backdrop-blur-xl border border-outline-variant rounded-2xl shadow-2xl p-2 transition-all focus-within:ring-2 focus-within:ring-primary/20 ${!hasSentMessage ? 'input-glow-expand' : ''}`}>
             {/* Real Input Area */}
             <div className="flex items-end gap-2 p-2">
@@ -439,12 +510,16 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                 rows={1}
               />
               <div className="flex items-center gap-1 h-full pb-1">
-                <button className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
-                  <Paperclip className="w-5 h-5" />
-                </button>
+                <CldUploadWidget uploadPreset="superman_preset" onSuccess={handleUploadSuccess}>
+                  {({ open }) => (
+                    <button onClick={() => open()} className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                      <Paperclip className="w-5 h-5 cursor-pointer" />
+                    </button>
+                  )}
+                </CldUploadWidget>
                 <button
                   onClick={handleSend}
-                  disabled={generateDraftMutation.isPending || isNovaPending || !inputValue.trim()}
+                  disabled={generateDraftMutation.isPending || isNovaPending || (!inputValue.trim() && attachments.length === 0)}
                   className="p-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-container transition-all active:scale-95 group disabled:opacity-50"
                 >
                   {generateDraftMutation.isPending || isNovaPending ? (

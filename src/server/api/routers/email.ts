@@ -182,7 +182,7 @@ export const emailRouter = createTRPCRouter({
     .input(z.object({ messageId: z.string(), isStarred: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
 
       try {
         // 1. Update in Gmail
@@ -272,7 +272,7 @@ export const emailRouter = createTRPCRouter({
     .input(z.object({ threadId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
 
       // Get all message entities belonging to this thread and tenant
       const messages = await ctx.db
@@ -417,7 +417,7 @@ export const emailRouter = createTRPCRouter({
     const tenantId = ctx.session.user.id;
 
     // Use the corsair client to fetch latest messages from Gmail API
-    const client = corsair.withTenant(tenantId);
+    const client = corsair.withTenant(tenantId) as any;
 
     // Fetch the latest 50 INBOX messages
     const listResult = (await client.gmail!.api!.messages!.list({
@@ -536,25 +536,70 @@ export const emailRouter = createTRPCRouter({
         isHtml: z.boolean().default(false),
         aiDraftText: z.string().optional(),
         threadId: z.string().optional(),
+        attachments: z.array(z.object({
+          name: z.string(),
+          url: z.string()
+        })).optional()
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
 
-      // Build RFC 2822 email message
+      let raw: string;
+      const hasAttachments = input.attachments && input.attachments.length > 0;
       const contentType = input.isHtml ? "text/html" : "text/plain";
-      const lines: string[] = [
-        `To: ${input.to}`,
-        ...(input.cc ? [`Cc: ${input.cc}`] : []),
-        ...(input.bcc ? [`Bcc: ${input.bcc}`] : []),
-        `Subject: ${input.subject}`,
-        `Content-Type: ${contentType}; charset=UTF-8`,
-        `MIME-Version: 1.0`,
-        ``,
-        input.body,
-      ];
-      const raw = lines.join("\r\n");
+
+      if (hasAttachments) {
+        const boundary = "====Boundary_XYZ====";
+        const lines: string[] = [
+          `To: ${input.to}`,
+          ...(input.cc ? [`Cc: ${input.cc}`] : []),
+          ...(input.bcc ? [`Bcc: ${input.bcc}`] : []),
+          `Subject: ${input.subject}`,
+          `MIME-Version: 1.0`,
+          `Content-Type: multipart/mixed; boundary="${boundary}"`,
+          ``,
+          `--${boundary}`,
+          `Content-Type: ${contentType}; charset=UTF-8`,
+          ``,
+          input.body,
+        ];
+        
+        for (const attachment of input.attachments!) {
+           try {
+             const res = await fetch(attachment.url);
+             const arrayBuffer = await res.arrayBuffer();
+             const base64Content = Buffer.from(arrayBuffer).toString('base64');
+             
+             lines.push(
+               ``,
+               `--${boundary}`,
+               `Content-Type: application/octet-stream; name="${attachment.name}"`,
+               `Content-Disposition: attachment; filename="${attachment.name}"`,
+               `Content-Transfer-Encoding: base64`,
+               ``,
+               ...(base64Content.match(/.{1,76}/g) || [base64Content])
+             );
+           } catch(e) {
+             console.error(`Failed to fetch attachment ${attachment.name}:`, e);
+           }
+        }
+        lines.push(``, `--${boundary}--`);
+        raw = lines.join("\r\n");
+      } else {
+        const lines: string[] = [
+          `To: ${input.to}`,
+          ...(input.cc ? [`Cc: ${input.cc}`] : []),
+          ...(input.bcc ? [`Bcc: ${input.bcc}`] : []),
+          `Subject: ${input.subject}`,
+          `Content-Type: ${contentType}; charset=UTF-8`,
+          `MIME-Version: 1.0`,
+          ``,
+          input.body,
+        ];
+        raw = lines.join("\r\n");
+      }
 
       // Base64url encode (required by Gmail API)
       const encoded = Buffer.from(raw)
@@ -619,7 +664,7 @@ export const emailRouter = createTRPCRouter({
   getSentEmails: protectedProcedure
     .query(async ({ ctx }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
       
       try {
         const listResult = (await client.gmail!.api!.messages!.list({
@@ -786,7 +831,7 @@ export const emailRouter = createTRPCRouter({
     .input(z.object({ ids: z.array(z.string()) }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
 
       // 1. Update in Gmail (remove INBOX label)
       try {
@@ -819,7 +864,7 @@ export const emailRouter = createTRPCRouter({
     .input(z.object({ ids: z.array(z.string()) }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
 
       // 1. Update in Gmail (trash them)
       try {
@@ -857,7 +902,7 @@ export const emailRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
 
       // 1. Update in Gmail (add/remove UNREAD label)
       try {

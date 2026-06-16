@@ -1,40 +1,19 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
 import { corsair } from "~/server/corsair";
 import crypto from "crypto";
+import * as chrono from "chrono-node";
 
 function parseMeetingTime(timeStr: string): { start: Date; end: Date } {
-  let start = new Date(timeStr);
-
-  if (isNaN(start.getTime())) {
-    const today = new Date();
-    const timeLower = timeStr.toLowerCase();
-
-    let targetDate = new Date();
-    if (timeLower.includes("tomorrow")) {
-      targetDate.setDate(today.getDate() + 1);
-    } else if (timeLower.includes("next week")) {
-      targetDate.setDate(today.getDate() + 7);
-    }
-
-    const timeRegex = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i;
-    const match = timeStr.match(timeRegex);
-    if (match) {
-      let hours = parseInt(match[1]!, 10);
-      const minutes = match[2] ? parseInt(match[2]!, 10) : 0;
-      const ampm = match[3]?.toLowerCase();
-
-      if (ampm === "pm" && hours < 12) hours += 12;
-      if (ampm === "am" && hours === 12) hours = 0;
-
-      targetDate.setHours(hours, minutes, 0, 0);
-      start = targetDate;
-    } else {
-      start = new Date();
-      start.setHours(start.getHours() + 1, 0, 0, 0);
-    }
+  const parsed = chrono.parseDate(timeStr);
+  const start = parsed || new Date();
+  
+  // If no specific time was provided (e.g. just "18 June"), default to next hour
+  if (parsed && !timeStr.toLowerCase().match(/\d{1,2}\s*(am|pm)/) && !timeStr.includes(':')) {
+    start.setHours(start.getHours() > 0 ? start.getHours() : 9, 0, 0, 0); 
   }
 
   const end = new Date(start.getTime() + 30 * 60 * 1000); // default 30 mins
@@ -127,8 +106,8 @@ export const calendarRouter = createTRPCRouter({
 
       // ── 2. Fallback: live fetch from Google Calendar API ──────────────────
       try {
-        const client = corsair.withTenant(tenantId);
-        const result = (await client.googlecalendar!.api!.events!.getMany({
+        const client = corsair.withTenant(tenantId) as any;
+        const result = (await client.googlecalendar!.api!.events!.list({
           timeMin,
           timeMax,
           maxResults: 100,
@@ -162,7 +141,7 @@ export const calendarRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
 
       const now = new Date();
       const timeMin = new Date(
@@ -174,18 +153,6 @@ export const calendarRouter = createTRPCRouter({
         Date.now() + input.daysAhead * 24 * 60 * 60 * 1000,
       ).toISOString();
 
-      // showDeleted: true → Google returns cancelled events so we can delete them
-      const result = (await client.googlecalendar!.api!.events!.getMany({
-        timeMin,
-        timeMax,
-        maxResults: 250,
-        singleEvents: true,
-        orderBy: "startTime",
-        showDeleted: true,
-      })) as { items?: any[] } | null;
-
-      const items = result?.items ?? [];
-
       // Get all account rows for the tenant (to handle duplicates)
       const accountRows = await ctx.db
         .select({ id: corsairAccounts.id })
@@ -196,6 +163,24 @@ export const calendarRouter = createTRPCRouter({
 
       const accountIds = accountRows.map((r) => r.id);
       const primaryAccountId = accountIds[0]!;
+
+      let result: { items?: any[] } | null = null;
+      try {
+        // showDeleted: true → Google returns cancelled events so we can delete them
+        result = (await client.googlecalendar!.api!.events!.list({
+          timeMin,
+          timeMax,
+          maxResults: 250,
+          singleEvents: true,
+          orderBy: "startTime",
+          showDeleted: true,
+        })) as { items?: any[] } | null;
+      } catch (err) {
+        console.error("[syncEvents] Google Calendar API error:", err);
+        return { synced: 0, deleted: 0, total: 0 };
+      }
+
+      const items = result?.items ?? [];
 
       // Separate cancelled (deleted) events from active ones
       const cancelledIds = items
@@ -352,7 +337,7 @@ export const calendarRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const client = corsair.withTenant(tenantId);
+      const client = corsair.withTenant(tenantId) as any;
 
       const { start, end } = parseMeetingTime(input.meetingTime);
 
@@ -379,7 +364,7 @@ export const calendarRouter = createTRPCRouter({
           .limit(1);
 
         const accountId = accountRow[0]?.id;
-        if (accountId && result && result.id) {
+        if (accountId && result?.id) {
           await ctx.db.insert(corsairEntities).values({
             id: crypto.randomUUID(),
             accountId,
@@ -393,11 +378,39 @@ export const calendarRouter = createTRPCRouter({
         return { success: true, event: result };
       } catch (err) {
         console.error("[calendar.createEvent] failed:", err);
-        throw new Error(
-          err instanceof Error
-            ? err.message
-            : "Failed to create event in Google Calendar",
-        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            err instanceof Error
+              ? err.message
+              : "Failed to create event in Google Calendar",
+        });
+      }
+    }),
+
+  /**
+   * Delete an event on Google Calendar and local DB.
+   */
+  deleteEvent: protectedProcedure
+    .input(z.object({ eventId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const client = corsair.withTenant(tenantId) as any;
+
+      try {
+        await client.googlecalendar!.api!.events!.delete({
+          calendarId: "primary",
+          id: input.eventId,
+        });
+
+        await ctx.db
+          .delete(corsairEntities)
+          .where(eq(corsairEntities.entityId, input.eventId));
+
+        return { success: true };
+      } catch (err) {
+        console.error(`[calendar.deleteEvent] failed for event ${input.eventId}:`, err);
+        throw new Error("Failed to delete event in Google Calendar");
       }
     }),
 
@@ -409,7 +422,7 @@ export const calendarRouter = createTRPCRouter({
    */
   registerWebhook: protectedProcedure.mutation(async ({ ctx }) => {
     const tenantId = ctx.session.user.id;
-    const client = corsair.withTenant(tenantId);
+    const client = corsair.withTenant(tenantId) as any;
 
     const webhookUrl = process.env.NEXT_PUBLIC_APP_URL
       ? `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks`

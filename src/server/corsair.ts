@@ -5,6 +5,7 @@ import { conn } from "./db";
 import { googlecalendar } from "@corsair-dev/googlecalendar";
 import { env } from "~/env";
 
+// @ts-expect-error - Zod version mismatch between plugins and core
 export const corsair = createCorsair({
   plugins: [
     gmail({

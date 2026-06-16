@@ -91,6 +91,17 @@ export const NOVA_TOOLS: Tool[] = [
                 "Full email body. Write a complete, polished email. " +
                 "Apply the user's writing style.",
             },
+            attachments: {
+              type: SchemaType.ARRAY,
+              description: "List of attachments provided by the user. Must exactly match the attachments array from the System Note if the user wants to attach files.",
+              items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  name: { type: SchemaType.STRING },
+                  url: { type: SchemaType.STRING }
+                }
+              }
+            }
           },
           required: ["to", "body"],
         },
@@ -102,7 +113,8 @@ export const NOVA_TOOLS: Tool[] = [
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
-            summary:  { type: SchemaType.STRING, description: "Event title."                                   },
+            summary:  { type: SchemaType.STRING, description: "Event title. MUST include the word 'Meeting' or 'Sync' if it is an appointment, to ensure proper categorization." },
+            description: { type: SchemaType.STRING, description: "Detailed description of the event. Include agenda or notes here." },
             time:     { type: SchemaType.STRING, description: "Natural language time, e.g. 'tomorrow at 3pm'." },
             duration: { type: SchemaType.STRING, description: "How long, e.g. '30 minutes'. Optional."         },
           },
@@ -127,6 +139,19 @@ export const NOVA_TOOLS: Tool[] = [
           required: [],
         },
       },
+      {
+        name: "deleteCalendarEvent",
+        description:
+          "Delete or cancel a calendar event. You MUST call getCalendarEvents first to find the exact eventId before calling this tool. Requires user confirmation.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            eventId: { type: SchemaType.STRING, description: "The ID of the event to delete." },
+            summary: { type: SchemaType.STRING, description: "The title of the event (for display purposes to the user)." }
+          },
+          required: ["eventId", "summary"],
+        },
+      },
     ],
   },
 ];
@@ -134,6 +159,7 @@ export const NOVA_TOOLS: Tool[] = [
 export const DESTRUCTIVE_TOOLS = new Set([
   "sendEmail",
   "createCalendarEvent",
+  "deleteCalendarEvent",
   "deleteDraft",
 ]);
 
@@ -146,6 +172,7 @@ and manage calendar events. Use them whenever the user's request requires real d
 Rules:
 - Always use a tool when the user asks about emails or calendar — never invent data.
 - Before sending email to a person by name, ALWAYS call getContact first.
+- **CRITICAL**: If the user asks for multiple actions (e.g., sending an email AND scheduling a meeting), gather all necessary information FIRST (like calling getContact). Once you have all the info, you MUST call all the required destructive tools (e.g., sendEmail AND createCalendarEvent) simultaneously in the EXACT SAME TURN. Do not call a destructive tool if you still need to look up info for another one.
 - If getContact returns multiple matches, ask the user to clarify before proceeding.
 - If the user's input appears to be a stack trace, error message, random code, or garbage text, DO NOT execute any tools. Respond politely that you did not understand the request.
 - Never assume the user wants to perform a destructive action (like sending an email or creating a calendar event) unless they explicitly ask for it. Do not infer intent from random error logs.

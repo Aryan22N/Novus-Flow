@@ -25,7 +25,7 @@ export async function ensureThreadSynced(ctx: any, threadId: string, tenantId: s
   }
 
   try {
-    const client = corsair.withTenant(tenantId);
+    const client = corsair.withTenant(tenantId) as any;
     const accountRow = await ctx.db
       .select({ id: corsairAccounts.id })
       .from(corsairAccounts)
