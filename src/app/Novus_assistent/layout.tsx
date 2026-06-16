@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 export default function NovusAssistantLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(true);
+  const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(false);
   
   const { data: chats, isLoading } = api.ai.getNovaChats.useQuery(undefined, {
     refetchInterval: 10000,
@@ -73,22 +73,16 @@ export default function NovusAssistantLayout({ children }: { children: React.Rea
         <AppSidebar isOpen={isSidebarOpen} />
         
         {/* Main Content Area */}
-        <main className="flex-1 flex flex-col overflow-hidden relative w-full bg-gradient-to-br from-[#f7f9fc] via-[#eef3fb] to-[#e2eaf5]">
+        <main className="flex-1 flex flex-col overflow-hidden relative w-full bg-gradient-to-br from-[#f7f9fc] via-[#eef3fb] to-[#e2eaf5] pr-12">
           {children}
         </main>
 
         {/* Chat History Sidebar (Right Side) */}
         <div 
-          className={`flex-shrink-0 border-l border-outline-variant bg-surface transition-all duration-300 ease-in-out flex flex-col relative ${isChatSidebarOpen ? 'w-64' : 'w-12'}`}
+          onMouseEnter={() => setIsChatSidebarOpen(true)}
+          onMouseLeave={() => setIsChatSidebarOpen(false)}
+          className={`absolute right-0 top-0 bottom-0 z-20 border-l border-outline-variant bg-[#F3F6FB] transition-all duration-300 ease-in-out flex flex-col ${isChatSidebarOpen ? 'w-64 shadow-2xl' : 'w-12'}`}
         >
-          {/* Toggle Button */}
-          <button 
-            onClick={() => setIsChatSidebarOpen(!isChatSidebarOpen)}
-            className="absolute -left-3 top-6 bg-surface border border-outline-variant rounded-full p-1 z-10 hover:bg-surface-container transition-colors shadow-sm"
-          >
-            {isChatSidebarOpen ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          </button>
-
           {isChatSidebarOpen && (
             <div className="flex flex-col h-full overflow-hidden message-fade-in w-64">
               <div className="p-4 flex-shrink-0 border-b border-outline-variant/50">
@@ -131,7 +125,7 @@ export default function NovusAssistantLayout({ children }: { children: React.Rea
           )}
           
           {!isChatSidebarOpen && (
-            <div className="flex flex-col items-center py-4 w-12 h-full border-l border-outline-variant bg-surface">
+            <div className="flex flex-col items-center py-4 w-12 h-full border-l border-outline-variant bg-[#F3F6FB]">
                <button
                   onClick={() => router.push('/Novus_assistent')}
                   className="p-2 bg-primary text-white rounded-lg hover:bg-primary-container transition-colors shadow-sm"

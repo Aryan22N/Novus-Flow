@@ -12,6 +12,9 @@ import {
   Clock3,
   Star,
   Pencil,
+  BrainCircuit,
+  MessageSquareDashed,
+  Bot,
 } from "lucide-react";
 import ComposeModal from "~/components/compose/compose-modal";
 import Spline from '@splinetool/react-spline';
@@ -44,7 +47,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
   return (
     <>
       <div
-        className={`relative mt-2 h-screen shrink-0 transition-all duration-300 ${isOpen ? "w-[250px]" : "w-[72px]"}`}
+        className={`relative mt-2 pt-1 h-screen shrink-0 transition-all duration-300 ${isOpen ? "w-[250px]" : "w-[72px]"}`}
       >
         <nav
           onMouseEnter={() => setIsHovered(true)}
@@ -57,7 +60,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
           >
             <button
               onClick={() => setShowCompose(true)}
-              className={`flex h-15 items-center justify-center gap-2 bg-[#C9E6FC] font-[14px] text-[#0c2038] shadow-sm transition-all duration-300 ${isExpanded ? "w-[160px] rounded-lg" : "w-12 rounded-2xl"}`}
+              className={`flex h-15 items-center justify-center gap-2 bg-[#C9E6FC] font-[14px] text-[#0c2038] shadow-sm hover:shadow-[0_6px_16px_-2px_rgba(0,0,0,0.45)] transition-all duration-300 ${isExpanded ? "w-[160px] rounded-lg" : "w-12 rounded-2xl"}`}
             >
               <Pencil size={18} className="shrink-0" />
               {isExpanded && <span>Compose</span>}
@@ -82,6 +85,11 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
               )}
             </Link>
 
+            <Link href="/Novus_assistent" className={getLinkClass("/Novus_assistent")}>
+              <Bot size={18} className="shrink-0" />
+              {isExpanded && <span>Novus Assistent</span>}
+            </Link>
+
             <Link href="/Calendar" className={getLinkClass("/Calendar")}>
               <Calendar size={18} className="shrink-0" />
               {isExpanded && <span>Calendar</span>}
@@ -104,10 +112,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
               {isExpanded && <span>Sent</span>}
             </Link>
 
-            <Link href="/Novus_assistent" className={getLinkClass("/Novus_assistent")}>
-              <Clock3 size={18} className="shrink-0" />
-              {isExpanded && <span>Novus Assistent</span>}
-            </Link>
+
 
             <Link href="/starred" className={getLinkClass("/starred")}>
               <Star size={18} className="shrink-0" />

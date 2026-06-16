@@ -100,8 +100,8 @@ export default function OnboardingPage() {
 
           <button
             onClick={() =>
-              (window.location.href =
-                "/api/corsair/connect?plugin=googlecalendar")
+            (window.location.href =
+              "/api/corsair/connect?plugin=googlecalendar")
             }
             className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-blue-200 hover:shadow-md"
           >

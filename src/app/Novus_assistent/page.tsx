@@ -1,13 +1,33 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import { ArrowUp } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowUp, Paperclip, Pin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { authClient } from '~/server/better-auth/client';
 
 export default function WorkspacePage() {
   const router = useRouter();
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const { data: session } = authClient.useSession();
+  const [greeting, setGreeting] = useState('Evening');
+
+  useEffect(() => {
+    const updateGreeting = () => {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Kolkata',
+        hour: 'numeric',
+        hour12: false
+      });
+      const currentHour = parseInt(formatter.format(new Date()), 10);
+
+      if (currentHour >= 5 && currentHour < 12) setGreeting('Morning');
+      else if (currentHour >= 12 && currentHour < 17) setGreeting('Afternoon');
+      else setGreeting('Evening');
+    };
+
+    updateGreeting();
+  }, []);
 
   const handleStartChat = () => {
     if (inputValue.trim()) {
@@ -23,6 +43,8 @@ export default function WorkspacePage() {
     }
   };
 
+  const userName = session?.user?.name?.split(' ')[0] || '';
+
   return (
     <div className="flex-1 overflow-y-auto bg-transparent relative flex items-center justify-center p-4 h-full">
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -34,11 +56,10 @@ export default function WorkspacePage() {
       <div className="relative w-full max-w-3xl z-10 flex flex-col items-center">
         <div className="text-center mb-10 space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <h1 className="font-serif text-5xl md:text-7xl text-on-surface tracking-tight leading-tight">
-            Evening, Aryan
+            {greeting}{userName ? `, ${userName}` : ''}
           </h1>
           <p className="text-on-surface-variant max-w-md mx-auto">
-            Your workspace is optimized. Novus AI has prepared priority insights.
-          </p>
+            Your workspace is optimized. Novus AI continuously learns from every interaction to deliver a flawless experience.          </p>
         </div>
 
         <div className="w-full space-y-6">
@@ -55,10 +76,17 @@ export default function WorkspacePage() {
               />
               <div className="flex items-center gap-1">
                 <button
+                  onClick={() => { }}
+                  className="bg-blue-600 text-white p-2 rounded-2xl flex items-center justify-center shadow-md hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                >
+
+                  <Paperclip className="w-5 h-5" />
+                </button>                <button
                   onClick={handleStartChat}
                   disabled={!inputValue.trim()}
                   className="bg-blue-600 text-white p-2 rounded-2xl flex items-center justify-center shadow-md hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
                 >
+
                   <ArrowUp className="w-5 h-5" />
                 </button>
               </div>

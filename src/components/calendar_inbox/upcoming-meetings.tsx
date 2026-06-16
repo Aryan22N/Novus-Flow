@@ -222,13 +222,13 @@ export default function UpcomingMeetings() {
   }, [calendarData]);
 
   return (
-    <div className=" border-outline-variant flex h-[300px] flex-col rounded-xl border p-4 shrink-0" style={{ backgroundImage: 'linear-gradient(to top, #dfe9f3 0%, white 100%)' }}>
-      <h3 className="text-title-sm font-title-sm text-on-surface mb-4 flex shrink-0 items-center gap-2 select-none">
+    <div className=" border-outline-variant flex h-[450px] flex-col rounded-xl border pt-4 shrink-0" style={{ backgroundImage: 'linear-gradient(to top, #dfe9f3 0%, white 100%)' }}>
+      <h3 className="text-title-sm font-title-sm text-on-surface mb-4 pl-4 flex shrink-0 items-center gap-2 select-none">
         <CalendarDays size={18} className="text-secondary" />
         Upcoming Meetings
       </h3>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
         {meetings.map((meeting) => {
           if (meeting.type === "live") {
             return (
@@ -276,9 +276,9 @@ export default function UpcomingMeetings() {
             return (
               <div
                 key={meeting.id}
-                className="border-secondary bg-surface-container-low animate-fadeIn rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-sm"
+                className="border-secondary bg-surface-container-low animate-fadeIn rounded-r-lg  transition-shadow hover:shadow-sm"
               >
-                <div className="mb-1 flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-2">
                   <span
                     className="text-body-md text-on-surface flex-1 truncate font-bold"
                     title={meeting.title}
@@ -309,9 +309,16 @@ export default function UpcomingMeetings() {
         })}
 
         {meetings.length === 0 && !isLoading && (
-          <p className="text-on-surface-variant p-4 text-center text-xs italic select-none">
-            No upcoming meetings.
-          </p>
+          <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-lg min-h-[180px] w-full h-full">
+            <div
+              className="absolute inset-0 bg-[length:100%_100%] bg-no-repeat bg-center opacity-80"
+              style={{ backgroundImage: "url('/meetings_illus.jpg')" }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-100/90 to-gray-50/70" />
+            <p className="text-on-surface-variant relative z-10 p-4 text-center text-xs italic font-medium select-none shadow-sm">
+              No upcoming meetings.
+            </p>
+          </div>
         )}
 
         {isLoading && (

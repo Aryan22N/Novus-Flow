@@ -62,7 +62,7 @@ export default function TopSearchBar({
           <img
             src="/Nexus_Flow_logo.png"
             alt="Logo"
-            className="h-auto w-32 object-contain select-none"
+            className="h-30  w-32 object-contain select-none"
           />
         </Link>
       </div>
