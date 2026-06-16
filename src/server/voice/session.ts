@@ -15,6 +15,11 @@ export interface NovaSession {
     args:  Record<string, unknown>;
     draft: string;
   };
+  pendingActions?: Array<{
+    tool:  string;
+    args:  Record<string, unknown>;
+    draft: string;
+  }>;
 }
 
 export interface NovaChatMeta {

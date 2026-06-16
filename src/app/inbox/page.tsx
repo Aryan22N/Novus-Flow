@@ -49,7 +49,7 @@ export default function InboxPage() {
             />
             <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
               <UpcomingMeetings />
-              
+
             </div>
           </div>
         </main>

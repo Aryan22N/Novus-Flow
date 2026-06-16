@@ -36,7 +36,7 @@ export async function ensureThreadSynced(ctx: any, threadId: string, tenantId: s
     const accountId = accountRow[0].id;
 
     // Fetch the full thread from Gmail
-    const thread = (await client.gmail.api.threads.get({
+    const thread = (await client.gmail!.api!.threads!.get({
       id: threadId,
       format: "full",
     })) as any;

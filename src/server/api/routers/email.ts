@@ -186,7 +186,7 @@ export const emailRouter = createTRPCRouter({
 
       try {
         // 1. Update in Gmail
-        await client.gmail.api.messages.modify({
+        await client.gmail!.api!.messages!.modify({
           id: input.messageId,
           addLabelIds: input.isStarred ? ["STARRED"] : [],
           removeLabelIds: input.isStarred ? [] : ["STARRED"],
@@ -296,7 +296,7 @@ export const emailRouter = createTRPCRouter({
 
       if (messageIds.length > 0) {
         try {
-          await client.gmail.api.messages.batchModify({
+          await client.gmail!.api!.messages!.batchModify({
             ids: messageIds,
             removeLabelIds: ["UNREAD"],
           });
@@ -420,7 +420,7 @@ export const emailRouter = createTRPCRouter({
     const client = corsair.withTenant(tenantId);
 
     // Fetch the latest 50 INBOX messages
-    const listResult = (await client.gmail.api.messages.list({
+    const listResult = (await client.gmail!.api!.messages!.list({
       maxResults: 50,
       labelIds: ["INBOX"],
     })) as { messages?: { id: string }[] } | null;
@@ -447,7 +447,7 @@ export const emailRouter = createTRPCRouter({
     for (const msg of messageIds) {
       try {
         // Fetch full message (typed as any — Corsair's Gmail return type is not publicly exported)
-        const fullMsg = (await client.gmail.api.messages.get({
+        const fullMsg = (await client.gmail!.api!.messages!.get({
           id: msg.id,
           format: "full",
         })) as any;
@@ -564,7 +564,7 @@ export const emailRouter = createTRPCRouter({
         .replace(/=+$/, "");
 
       // Send via Corsair Gmail client
-      const result = (await client.gmail.api.messages.send({
+      const result = (await client.gmail!.api!.messages!.send({
         raw: encoded,
       })) as { id?: string } | null;
 
@@ -622,7 +622,7 @@ export const emailRouter = createTRPCRouter({
       const client = corsair.withTenant(tenantId);
       
       try {
-        const listResult = (await client.gmail.api.messages.list({
+        const listResult = (await client.gmail!.api!.messages!.list({
           maxResults: 20,
           labelIds: ["SENT"],
         })) as { messages?: { id: string }[] } | null;
@@ -632,7 +632,7 @@ export const emailRouter = createTRPCRouter({
 
         const emails = await Promise.all(
           messageIds.map(async (msg) => {
-            const fullMsg = (await client.gmail.api.messages.get({
+            const fullMsg = (await client.gmail!.api!.messages!.get({
               id: msg.id,
               format: "full",
             })) as any;
@@ -790,7 +790,7 @@ export const emailRouter = createTRPCRouter({
 
       // 1. Update in Gmail (remove INBOX label)
       try {
-        await client.gmail.api.messages.batchModify({
+        await client.gmail!.api!.messages!.batchModify({
           ids: input.ids,
           removeLabelIds: ["INBOX"],
         });
@@ -823,7 +823,7 @@ export const emailRouter = createTRPCRouter({
 
       // 1. Update in Gmail (trash them)
       try {
-        await client.gmail.api.messages.batchModify({
+        await client.gmail!.api!.messages!.batchModify({
           ids: input.ids,
           addLabelIds: ["TRASH"],
         });
@@ -861,7 +861,7 @@ export const emailRouter = createTRPCRouter({
 
       // 1. Update in Gmail (add/remove UNREAD label)
       try {
-        await client.gmail.api.messages.batchModify({
+        await client.gmail!.api!.messages!.batchModify({
           ids: input.ids,
           addLabelIds: input.isRead ? [] : ["UNREAD"],
           removeLabelIds: input.isRead ? ["UNREAD"] : [],

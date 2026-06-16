@@ -1,5 +1,6 @@
 "use client";
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { authClient } from "~/server/better-auth/client";
 import { useRouter } from "next/navigation";
 import {
@@ -218,9 +219,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative pt-32 pb-24">
-      <AuroraBackground />
-      <Particles count={22} />
+    <section className="relative pt-38 pb-37">
       <div className="relative mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-2 lg:items-center">
         <div>
 
@@ -306,13 +305,13 @@ export function Problem() {
     { name: "Tasks", c: "#6063EE" },
   ];
   return (
-    <section className="relative py-28">
+    <section className="relative py-8">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-[36px] font-semibold tracking-[-0.02em] text-ink sm:text-[44px]">
             Stop switching between five different apps.
           </h2>
-          <p className="mt-4 text-[17px] text-ink-soft">Modern work is fragmented. Nexus Flow brings it back together.</p>
+          <p className="mt-4 text-[17px] text-ink-soft">Modern work is fragmented. Novus Flow brings it back together.</p>
         </div>
 
         <div className="mt-16 grid items-center gap-12 lg:grid-cols-2">
@@ -374,7 +373,7 @@ export function Problem() {
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <div>
-                  <div className="text-sm font-semibold text-ink">Nexus Flow workspace</div>
+                  <div className="text-sm font-semibold text-ink">Novus Flow workspace</div>
                   <div className="text-[12px] text-ink-soft">One context. Everything connected.</div>
                 </div>
               </div>
@@ -418,7 +417,7 @@ const overview = [
   },
   {
     icon: Sparkles,
-    title: "Nexus Assistant",
+    title: "Novus Assistant",
     features: ["Thread Analysis", "Draft Generation", "Summaries", "Task Extraction"],
   },
   {
@@ -427,42 +426,187 @@ const overview = [
     features: ["Voice Commands", "Inbox Navigation", "Meeting Creation", "Email Drafting"],
   },
 ];
+// export function Overview() {
+//   return (
+//     // <section id="features" className="relative py-28">
+//     //   <div className="mx-auto max-w-7xl px-6">
+//     //     <div className="mx-auto max-w-2xl text-center">
+//     //       <span className="rounded-full bg-ai px-3 py-1 text-[12px] font-medium text-[#1c2541]">Product</span>
+//     //       <h2 className="mt-4 text-[36px] font-semibold tracking-[-0.02em] text-ink sm:text-[44px]">
+//     //         Everything you need. <span className="text-gradient">One workspace.</span>
+//     //       </h2>
+//     //     </div>
+
+//     //     <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+//     //       {overview.map((c, i) => (
+//     //         <motion.div
+//     //           key={c.title}
+//     //           initial={{ opacity: 0, y: 20 }}
+//     //           whileInView={{ opacity: 1, y: 0 }}
+//     //           viewport={{ once: true, margin: "-80px" }}
+//     //           transition={{ delay: i * 0.06 }}
+//     //           whileHover={{ scale: 1.03 }}
+//     //           className="group relative overflow-hidden rounded-3xl glass p-6 transition hover:ring-glow"
+//     //         >
+//     //           <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-ai opacity-60 blur-2xl transition group-hover:opacity-100" />
+//     //           <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-cta text-white shadow-[0_10px_30px_-10px_rgba(26,115,232,0.6)]">
+//     //             <c.icon className="h-5 w-5" />
+//     //           </span>
+//     //           <h3 className="relative mt-5 text-[18px] font-semibold text-ink">{c.title}</h3>
+//     //           <ul className="relative mt-3 space-y-1.5 text-[13.5px] text-ink-soft">
+//     //             {c.features.map((f) => (
+//     //               <li key={f} className="flex items-center gap-2">
+//     //                 <Check className="h-3.5 w-3.5 text-[#1A73E8]" /> {f}
+//     //               </li>
+//     //             ))}
+//     //           </ul>
+//     //         </motion.div>
+//     //       ))}
+//     //     </div>
+//     //   </div>
+//     // </section>
+//     <section id="features" className="relative overflow-hidden bg-slate-50 py-24 sm:py-32">
+//       {/* Subtle Background Glow */}
+//       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/40 via-slate-50 to-slate-50"></div>
+
+//       <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
+//         <div className="mx-auto max-w-2xl text-center">
+//           <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-600 shadow-sm">
+//             Product Features
+//           </span>
+//           <h2 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+//             Everything you need.{" "}
+//             <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
+//               One workspace.
+//             </span>
+//           </h2>
+//         </div>
+
+//         <div className="mx-auto mt-16 max-w-7xl">
+//           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+//             {overview.map((c, i) => (
+//               <motion.div
+//                 key={c.title}
+//                 initial={{ opacity: 0, y: 30 }}
+//                 whileInView={{ opacity: 1, y: 0 }}
+//                 viewport={{ once: true, margin: "-100px" }}
+//                 transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
+//                 whileHover={{ y: -5 }}
+//                 className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10"
+//               >
+//                 {/* Decorative Corner Glow on Hover */}
+//                 <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl transition-opacity duration-500 group-hover:bg-blue-500/20" />
+
+//                 {/* Modern Icon Container */}
+//                 <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-100/50 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
+//                   <c.icon className="h-6 w-6" />
+//                 </div>
+
+//                 <h3 className="mb-3 text-lg font-bold text-slate-900">{c.title}</h3>
+
+//                 {/* Feature List */}
+//                 <ul className="mt-auto flex flex-col gap-3">
+//                   {c.features.map((f) => (
+//                     <li key={f} className="flex items-start text-sm text-slate-600">
+//                       <span className="mr-3 mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+//                         <Check className="h-3 w-3" strokeWidth={3} />
+//                       </span>
+//                       {f}
+//                     </li>
+//                   ))}
+//                 </ul>
+//               </motion.div>
+//             ))}
+//           </div>
+//         </div>
+//       </div>
+//     </section>
+//   );
+// }
 export function Overview() {
+  // Helper to create the asymmetrical bento pattern
+  const getSpanClass = (index: number) => {
+    // Top row: Wide (2), Square (1)
+    // Bottom row: Square (1), Wide (2)
+    if (index === 0) return "md:col-span-2 lg:col-span-2";
+    if (index === 1) return "md:col-span-2 lg:col-span-1";
+    if (index === 2) return "md:col-span-2 lg:col-span-1";
+    if (index === 3) return "md:col-span-2 lg:col-span-2";
+    return "col-span-1";
+  };
+
   return (
-    <section id="features" className="relative py-28">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="features" className="relative overflow-hidden bg-[#f8fafc] py-24 sm:py-32">
+      {/* Subtle Background Elements */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/20 via-[#f8fafc] to-[#f8fafc]"></div>
+
+      <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
+        {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <span className="rounded-full bg-ai px-3 py-1 text-[12px] font-medium text-[#1c2541]">Product</span>
-          <h2 className="mt-4 text-[36px] font-semibold tracking-[-0.02em] text-ink sm:text-[44px]">
-            Everything you need. <span className="text-gradient">One workspace.</span>
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-900 shadow-sm">
+            Deployments made easy
+          </span>
+          <h2 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            Everything you need.{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
+              One workspace.
+            </span>
           </h2>
         </div>
 
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {overview.map((c, i) => (
-            <motion.div
-              key={c.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ delay: i * 0.06 }}
-              whileHover={{ scale: 1.03 }}
-              className="group relative overflow-hidden rounded-3xl glass p-6 transition hover:ring-glow"
-            >
-              <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-ai opacity-60 blur-2xl transition group-hover:opacity-100" />
-              <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-cta text-white shadow-[0_10px_30px_-10px_rgba(26,115,232,0.6)]">
-                <c.icon className="h-5 w-5" />
-              </span>
-              <h3 className="relative mt-5 text-[18px] font-semibold text-ink">{c.title}</h3>
-              <ul className="relative mt-3 space-y-1.5 text-[13.5px] text-ink-soft">
-                {c.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 text-[#1A73E8]" /> {f}
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
+        {/* Bento Grid Container */}
+        <div className="mx-auto mt-20 max-w-7xl">
+          <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {overview.map((c, i) => (
+              <motion.div
+                key={c.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
+                className={`group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-white p-8 sm:p-10 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-slate-200/50 ${getSpanClass(i)}`}
+              >
+                {/* Decorative Background Gradient for visual interest */}
+                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-blue-50/50 to-indigo-50/50 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+
+                <div className={`relative z-10 flex h-full flex-col ${i === 0 || i === 3 ? "lg:flex-row lg:gap-10" : ""}`}>
+
+                  {/* Text & Icon Content */}
+                  <div className="flex flex-1 flex-col">
+                    <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-900 ring-1 ring-inset ring-slate-100 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white group-hover:ring-blue-600">
+                      <c.icon className="h-5 w-5" strokeWidth={2.5} />
+                    </div>
+
+                    <h3 className="mb-3 text-xl font-bold text-slate-900">{c.title}</h3>
+
+                    {/* For smaller squares, we keep text light. For wide rectangles, we might have a description. */}
+                    <p className="mb-8 text-sm leading-relaxed text-slate-500">
+                      With our intuitive workflow, you can easily manage your tasks and deployments without complex steps.
+                    </p>
+
+                    {/* Feature List pushes to bottom */}
+                    <ul className="mt-auto flex flex-col gap-3">
+                      {c.features.map((f) => (
+                        <li key={f} className="flex items-start text-sm font-medium text-slate-700">
+                          <span className="mr-3 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <Check className="h-3 w-3" strokeWidth={3} />
+                          </span>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Optional Visual Placeholder for Wide Cards (To match the reference image's empty space) */}
+                  {(i === 0 || i === 3) && (
+                    <div className="mt-8 hidden flex-1 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 lg:mt-0 lg:flex">
+                      <span className="text-xs font-semibold text-slate-400">Dashboard UI / Visual Asset goes here</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -563,80 +707,170 @@ const caps = [
   { i: Sparkles, t: "Adaptive Learning", d: "Gets sharper as it learns your workflows." },
   { i: Search, t: "Semantic Search", d: "Find anything by meaning — not just keywords." },
 ];
-export function Capabilities() {
-  return (
-    <section id="assistant" className="relative py-28">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-[36px] font-semibold tracking-[-0.02em] text-ink sm:text-[44px]">
-            Powered by <span className="text-gradient">Nexus Intelligence.</span>
-          </h2>
-        </div>
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {caps.map((c, i) => (
-            <motion.div
-              key={c.t}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ delay: i * 0.05 }}
-              whileHover={{ scale: 1.03 }}
-              className="group relative overflow-hidden rounded-3xl glass p-6 transition hover:ring-glow"
-            >
-              <div className="absolute -left-10 -top-10 h-28 w-28 rounded-full bg-ai opacity-60 blur-2xl transition group-hover:opacity-100" />
-              <span className="relative grid h-11 w-11 place-items-center rounded-2xl bg-ai">
-                <c.i className="h-5 w-5 text-[#4648D4]" />
-              </span>
-              <h3 className="relative mt-5 text-[17px] font-semibold text-ink">{c.t}</h3>
-              <p className="relative mt-2 text-[13.5px] leading-relaxed text-ink-soft">{c.d}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+
+
+/* ============ HOW IT WORKS ============ */
+// const steps = [
+//   { i: Plug, t: "Connect Gmail", d: "Secure OAuth. Your mail stays yours." },
+//   { i: CalendarDays, t: "Connect Google Calendar", d: "Two-way sync, instantly." },
+//   { i: Cpu, t: "AI understands context", d: "Nexus learns your people, projects, priorities." },
+//   { i: Zap, t: "Work faster with Nova", d: "Voice or keyboard. Inbox-zero on autopilot." },
+// ];
+// export function Timeline() {
+//   return (
+//     <section className="relative overflow-hidden bg-white py-24 sm:py-32">
+//       {/* Subtle grid background for a tech-focused feel */}
+//       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+//       <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
+//         {/* Header */}
+//         <div className="mx-auto max-w-2xl text-center">
+//           <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-600 shadow-sm">
+//             The Process
+//           </span>
+//           <h2 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+//             How Nexus works.
+//           </h2>
+//           <p className="mt-4 text-lg text-slate-500">
+//             Get up and running in minutes with our simple, streamlined workflow.
+//           </p>
+//         </div>
+
+//         {/* Timeline Container */}
+//         <div className="relative mt-20">
+//           {/* Central Line (Left-aligned on mobile, centered on desktop) */}
+//           <div className="absolute bottom-4 left-[23px] top-4 w-0.5 bg-gradient-to-b from-transparent via-slate-200 to-transparent md:left-1/2 md:-ml-[1px]" />
+
+//           <div className="space-y-12 md:space-y-8">
+//             {steps.map((s, i) => {
+//               const isEven = i % 2 === 0;
+
+//               return (
+//                 <motion.div
+//                   key={s.t}
+//                   initial={{ opacity: 0, y: 20 }}
+//                   whileInView={{ opacity: 1, y: 0 }}
+//                   viewport={{ once: true, margin: "-100px" }}
+//                   transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
+//                   className="relative flex flex-col md:flex-row md:items-center"
+//                 >
+//                   {/* Icon Indicator */}
+//                   <div className="absolute left-0 top-4 flex h-12 w-12 items-center justify-center md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2">
+//                     <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-4 ring-white transition-transform duration-300 hover:scale-110">
+//                       <s.i className="h-6 w-6" strokeWidth={2} />
+//                       {/* Pulse effect */}
+//                       <span className="absolute inset-0 rounded-2xl ring-2 ring-blue-600/20 animate-[ping_3s_ease-in-out_infinite]" />
+//                     </span>
+//                   </div>
+
+//                   {/* Content Card */}
+//                   <div
+//                     className={`w-full md:w-1/2 ${isEven
+//                       ? "pl-20 md:pl-0 md:pr-16 md:text-right"
+//                       : "pl-20 md:ml-auto md:pl-16"
+//                       }`}
+//                   >
+//                     <div className="group relative rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-100 hover:shadow-md sm:p-8">
+//                       <div className="mb-2 font-mono text-xs font-bold tracking-widest text-blue-600 uppercase">
+//                         Step 0{i + 1}
+//                       </div>
+//                       <h3 className="mb-3 text-xl font-bold text-slate-900">
+//                         {s.t}
+//                       </h3>
+//                       <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
+//                         {s.d}
+//                       </p>
+//                     </div>
+//                   </div>
+//                 </motion.div>
+//               );
+//             })}
+//           </div>
+//         </div>
+//       </div>
+//     </section>
+//   );
+// }
+
 
 /* ============ HOW IT WORKS ============ */
 const steps = [
   { i: Plug, t: "Connect Gmail", d: "Secure OAuth. Your mail stays yours." },
   { i: CalendarDays, t: "Connect Google Calendar", d: "Two-way sync, instantly." },
-  { i: Cpu, t: "AI understands context", d: "Nexus learns your people, projects, priorities." },
+  { i: Cpu, t: "AI understands context", d: "Novus learns your people, projects, priorities." },
   { i: Zap, t: "Work faster with Nova", d: "Voice or keyboard. Inbox-zero on autopilot." },
 ];
-export function Timeline() {
+
+export function HowItWorksSection() {
   return (
-    <section className="relative py-28">
-      <div className="mx-auto max-w-5xl px-6">
+    <section className="relative overflow-hidden bg-white py-24 sm:py-32">
+      {/* Interactive Aurora & Grid Background */}
+      <AuroraBackground />
+      <Particles count={15} />
+
+      <div className="relative z-10 mx-auto max-w-5xl px-6 lg:px-8">
+        {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-[36px] font-semibold tracking-[-0.02em] text-ink sm:text-[44px]">How Nexus works.</h2>
+          <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-600 shadow-sm">
+            The Process
+          </span>
+          <h2 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            How Novus works.
+          </h2>
+          <p className="mt-4 text-lg text-slate-500">
+            Get up and running in minutes with our simple, streamlined workflow.
+          </p>
         </div>
-        <div className="relative mt-16">
-          <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-[#1A73E8]/0 via-[#6063EE]/60 to-[#1A73E8]/0 md:left-1/2" />
-          <div className="space-y-10">
-            {steps.map((s, i) => (
-              <motion.div
-                key={s.t}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ delay: i * 0.08 }}
-                className={`relative grid items-center gap-6 md:grid-cols-2 ${i % 2 ? "md:[&>div:first-child]:order-2" : ""}`}
-              >
-                <div className={`pl-16 md:pl-0 ${i % 2 ? "md:pl-14" : "md:pr-14 md:text-right"}`}>
-                  <div className="text-[11px] font-mono uppercase tracking-wider text-[#1A73E8]">Step 0{i + 1}</div>
-                  <h3 className="mt-1 text-[22px] font-semibold text-ink">{s.t}</h3>
-                  <p className="mt-2 text-[14px] text-ink-soft">{s.d}</p>
-                </div>
-                <div className="absolute left-0 top-1 md:left-1/2 md:-translate-x-1/2">
-                  <span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-cta text-white shadow-[0_14px_40px_-12px_rgba(70,72,212,0.6)]">
-                    <s.i className="h-5 w-5" />
-                    <span className="absolute inset-0 rounded-2xl ring-2 ring-[#1A73E8]/20 animate-pulse-ring" />
-                  </span>
-                </div>
-                <div className="hidden md:block" />
-              </motion.div>
-            ))}
+
+        {/* Timeline Container */}
+        <div className="relative mt-20">
+          {/* Central Line (Left-aligned on mobile, centered on desktop) */}
+          <div className="absolute bottom-4 left-[23px] top-4 w-0.5 bg-gradient-to-b from-transparent via-slate-200 to-transparent md:left-1/2 md:-ml-[1px]" />
+
+          <div className="space-y-12 md:space-y-8">
+            {steps.map((s, i) => {
+              const isEven = i % 2 === 0;
+
+              return (
+                <motion.div
+                  key={s.t}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
+                  className="relative flex flex-col md:flex-row md:items-center"
+                >
+                  {/* Icon Indicator */}
+                  <div className="absolute left-0 top-4 flex h-12 w-12 items-center justify-center md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2">
+                    <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-4 ring-white transition-transform duration-300 hover:scale-110">
+                      <s.i className="h-6 w-6" strokeWidth={2} />
+                      {/* Pulse effect */}
+                      <span className="absolute inset-0 rounded-2xl ring-2 ring-blue-600/20 animate-[ping_3s_ease-in-out_infinite]" />
+                    </span>
+                  </div>
+
+                  {/* Content Card */}
+                  <div
+                    className={`w-full md:w-1/2 ${isEven
+                      ? "pl-20 md:pl-0 md:pr-16 md:text-right"
+                      : "pl-20 md:ml-auto md:pl-16"
+                      }`}
+                  >
+                    <div className="group relative rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-blue-100 hover:shadow-md sm:p-8">
+                      <div className="mb-2 font-mono text-xs font-bold tracking-widest text-blue-600 uppercase">
+                        Step 0{i + 1}
+                      </div>
+                      <h3 className="mb-3 text-xl font-bold text-slate-900">
+                        {s.t}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                        {s.d}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -644,7 +878,20 @@ export function Timeline() {
   );
 }
 
-/* ============ SCREENSHOTS ============ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============ SCREENSHOTS DATA ============ */
 const shots = [
   { t: "Inbox", sub: "Priority + categorized" },
   { t: "Email Thread", sub: "With AI summary" },
@@ -652,180 +899,105 @@ const shots = [
   { t: "Calendar", sub: "Two-way Google sync" },
   { t: "Voice Interface", sub: "Nova listening" },
 ];
+
+/* Minimal Wireframe Placeholder for the UI */
+const ScreenshotsFakeUI = () => (
+  <div className="flex h-full w-full flex-col bg-slate-50/50">
+    {/* Browser/Window Top Bar */}
+    <div className="flex h-10 items-center border-b border-slate-200/60 bg-white/50 px-4 backdrop-blur-md">
+      <div className="flex gap-2">
+        <div className="h-3 w-3 rounded-full bg-slate-200" />
+        <div className="h-3 w-3 rounded-full bg-slate-200" />
+        <div className="h-3 w-3 rounded-full bg-slate-200" />
+      </div>
+    </div>
+    {/* Dashboard Body */}
+    <div className="flex flex-1 gap-4 p-4">
+      {/* Sidebar */}
+      <div className="w-1/4 rounded-xl border border-slate-100 bg-white/50 shadow-sm" />
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col gap-3">
+        <div className="h-12 w-full rounded-xl border border-slate-100 bg-white shadow-sm" />
+        <div className="flex-1 rounded-xl border border-slate-100 bg-white shadow-sm" />
+      </div>
+    </div>
+  </div>
+);
+
 export function Screenshots() {
-  return (
-    <section id="demo" className="relative py-28">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-[36px] font-semibold tracking-[-0.02em] text-ink sm:text-[44px]">
-            Designed for <span className="text-gradient">modern work.</span>
-          </h2>
-        </div>
-      </div>
-      <div className="mt-14 overflow-x-auto pb-6">
-        <div className="flex min-w-max gap-6 px-6 lg:px-16">
-          {shots.map((s, i) => (
-            <motion.div
-              key={s.t}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ delay: i * 0.06 }}
-              className="group relative w-[460px] shrink-0 rounded-3xl glass-strong p-3 transition hover:-translate-y-2"
-            >
-              <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-[#0c1220]">
-                <FakeAppUI />
-              </div>
-              <div className="flex items-end justify-between px-2 pt-3">
-                <div>
-                  <div className="text-[15px] font-semibold text-ink">{s.t}</div>
-                  <div className="text-[12px] text-ink-soft">{s.sub}</div>
-                </div>
-                <span className="rounded-full bg-ai px-2.5 py-1 text-[10px] font-mono text-[#1c2541]">0{i + 1}</span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+  const targetRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+  });
 
-/* ============ FUTURE OF WORK ============ */
-export function Future() {
-  const principles = [
-    { n: "01", t: "Context-aware", d: "Understands who matters, why, and when to surface them.", icon: Brain },
-    { n: "02", t: "Voice-first", d: "Talk to Nova naturally. No menus. No friction.", icon: Mic },
-    { n: "03", t: "Always learning", d: "Adapts to your tone, priorities, and rhythm every day.", icon: Cpu },
-  ];
+  // Moving by -35% shifts it by roughly two cards, leaving 3, 4, and 5 fully visible on large screens!
+  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-35%"]);
 
   return (
-    <section className="relative overflow-hidden py-32" style={{ background: "#05070F" }}>
-      {/* Grid + glow backdrop */}
-      <div
-        className="absolute inset-0 opacity-[0.18]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-          maskImage: "radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 75%)",
-        }}
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(700px circle at 75% 25%, rgba(96,99,238,0.30), transparent 60%), radial-gradient(600px circle at 15% 85%, rgba(26,115,232,0.25), transparent 60%)",
-        }}
-      />
-      <Particles count={36} />
+    <div ref={targetRef} className="relative h-[200vh] bg-white">
+      <section id="demo" className="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white">
+        {/* Subtle Background Accent */}
+        <div className="absolute top-0 left-1/2 -ml-[50vw] h-1/2 w-screen bg-gradient-to-b from-slate-50 to-white" />
 
-      <div className="relative mx-auto max-w-7xl px-6">
-        {/* Top eyebrow row */}
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6063EE] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#6063EE]" />
-            </span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-white/60">
-              Manifesto / 2026
-            </span>
-          </div>
-          <span className="hidden font-mono text-[11px] uppercase tracking-[0.25em] text-white/40 sm:block">
-            §04 — The Future of Work
-          </span>
-        </div>
-
-        {/* Hero statement */}
-        <div className="mt-12 grid items-end gap-10 lg:grid-cols-12">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="lg:col-span-8"
-          >
-            <h2 className="text-[44px] font-semibold leading-[0.98] tracking-[-0.035em] text-white sm:text-[72px] lg:text-[88px]">
-              The future
-              <br />
-              isn't another{" "}
-              <span className="relative inline-block">
-                <span className="relative z-10 italic font-light text-transparent" style={{ WebkitTextStroke: "1px rgba(255,255,255,0.55)" }}>
-                  inbox.
-                </span>
-                <svg className="absolute -bottom-2 left-0 w-full" height="14" viewBox="0 0 300 14" preserveAspectRatio="none">
-                  <path d="M2 8 Q 75 2, 150 7 T 298 6" stroke="url(#fline)" strokeWidth="2" fill="none" strokeLinecap="round" />
-                  <defs>
-                    <linearGradient id="fline" x1="0" x2="1">
-                      <stop offset="0" stopColor="#1A73E8" />
-                      <stop offset="1" stopColor="#6063EE" />
-                    </linearGradient>
-                  </defs>
-                </svg>
+        <div className="relative mx-auto w-full max-w-7xl shrink-0 px-6 lg:px-8">
+          {/* Header */}
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+              Designed for{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
+                modern work.
               </span>
-              <br />
-              <span className="text-gradient">It's an intelligence layer.</span>
             </h2>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.15 }}
-            className="lg:col-span-4"
-          >
-            <div className="border-l border-white/15 pl-5">
-              <p className="text-[15px] leading-relaxed text-white/70">
-                Nexus Flow doesn't just hold your messages. It reads context, understands intent, and quietly orchestrates your day — so the work that matters surfaces first.
-              </p>
-              <div className="mt-5 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-white/40">
-                <span className="h-px w-8 bg-white/30" />
-                Nexus Flow OS
-              </div>
-            </div>
-          </motion.div>
+            <p className="mt-4 text-lg text-slate-500">
+              A seamless interface that adapts to your workflow, not the other way around.
+            </p>
+          </div>
         </div>
 
-        {/* Principles */}
-        <div className="mt-20 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/5 sm:grid-cols-3">
-          {principles.map((p, i) => {
-            const Icon = p.icon;
-            return (
-              <motion.div
-                key={p.n}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="group relative overflow-hidden bg-[#05070F] p-8 transition-colors hover:bg-[#0A0F1F]"
+        {/* Scrolling Carousel Area */}
+        <div className="relative mt-16 flex w-full shrink-0 items-center overflow-hidden">
+          <motion.div style={{ x }} className="flex w-max gap-6 px-6 lg:px-[10vw]">
+            {shots.map((s, i) => (
+              <div
+                key={s.t}
+                className="group relative w-[85vw] max-w-[460px] shrink-0 sm:w-[460px]"
               >
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                <div className="flex items-start justify-between">
-                  <span className="font-mono text-[11px] tracking-[0.2em] text-white/40">{p.n}</span>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/80 transition-all group-hover:border-[#6063EE]/50 group-hover:text-white">
-                    <Icon className="h-4 w-4" />
+                {/* Card Container */}
+                <div className="flex flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-slate-200">
+                  {/* Image / Mockup Area */}
+                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-900/5">
+                    <ScreenshotsFakeUI />
+                    {/* Subtle inner overlay for gloss effect */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  </div>
+
+                  {/* Meta details */}
+                  <div className="mt-4 flex items-center justify-between px-3 pb-2">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{s.t}</h3>
+                      <p className="text-sm font-medium text-slate-500">{s.sub}</p>
+                    </div>
+
+                    {/* Index Pill */}
+                    <span className="flex h-8 items-center justify-center rounded-full bg-blue-50 px-3 font-mono text-xs font-bold text-blue-600 ring-1 ring-inset ring-blue-100 transition-colors group-hover:bg-blue-600 group-hover:text-white group-hover:ring-blue-600">
+                      0{i + 1}
+                    </span>
                   </div>
                 </div>
-                <div className="mt-12 text-[22px] font-semibold tracking-[-0.01em] text-white">
-                  {p.t}
-                </div>
-                <p className="mt-2 text-[14px] leading-relaxed text-white/60">{p.d}</p>
-                <div
-                  className="pointer-events-none absolute -bottom-20 -right-20 h-48 w-48 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-60"
-                  style={{ background: "radial-gradient(circle, #6063EE, transparent 70%)" }}
-                />
-              </motion.div>
-            );
-          })}
+              </div>
+            ))}
+            {/* End spacer to create breathing room after the last card */}
+            <div className="w-[10vw] shrink-0" />
+          </motion.div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
-/* ============ CTA ============ */
+
+
+
 export function CTA() {
   const { data: session } = authClient.useSession();
   const router = useRouter();
@@ -843,33 +1015,48 @@ export function CTA() {
   };
 
   return (
-    <section id="cta" className="relative px-6 py-24">
-      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[36px] bg-cta p-12 text-center shadow-[0_40px_120px_-30px_rgba(70,72,212,0.6)] sm:p-16">
-        <div className="absolute inset-0 opacity-50" style={{
-          background:
-            "radial-gradient(600px circle at 20% 0%, rgba(255,255,255,0.35), transparent 60%), radial-gradient(600px circle at 100% 100%, rgba(255,255,255,0.25), transparent 60%)",
-        }} />
-        <div className="relative">
-          <Sparkles className="mx-auto h-7 w-7 text-white/90" />
-          <h2 className="mt-4 text-[40px] font-semibold tracking-[-0.02em] text-white sm:text-[52px]">
+    <section id="cta" className="relative px-6 py-24 sm:py-32 bg-slate-50">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative mx-auto max-w-5xl overflow-hidden rounded-[3rem] border border-slate-200 bg-white p-10 text-center shadow-xl shadow-blue-900/5 sm:p-16"
+      >
+        {/* Soft, Light Background Glow - No dark/violet colors */}
+        <div className="absolute inset-0 pointer-events-none opacity-80" style={{ background: "radial-gradient(ellipse at bottom, var(--color-blue-400), transparent 70%)" }} />
+
+        {/* Content */}
+        <div className="relative z-10">
+
+
+          <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
             Ready to work smarter?
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-[16px] text-white/85">
-            Join the future of email, calendar, and AI productivity.
+          <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-500">
+            Join the future of email, calendar, and AI productivity. Experience the workspace that adapts to your rhythm.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+
+          {/* Action Buttons */}
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
             <button
               onClick={handleSignIn}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#1A73E8] shadow-soft hover:shadow-glow"
+              className="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 sm:w-auto"
             >
-              {session ? "Go to Inbox" : "Get Started"} <ArrowRight className="h-4 w-4" />
+              {session ? "Go to Inbox" : "Get Started"}
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </button>
-            <a href="#demo" className="inline-flex items-center gap-2 rounded-full glass-dark px-5 py-3 text-sm font-semibold text-white">
-              <PlayCircle className="h-4 w-4" /> Watch Demo
+
+            <a
+              href="#demo"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-bold text-slate-700 ring-1 ring-inset ring-slate-200 transition-all duration-300 hover:bg-slate-50 sm:w-auto"
+            >
+              <PlayCircle className="h-4 w-4 text-slate-400 transition-colors duration-300 group-hover:text-blue-600" />
+              Watch Demo
             </a>
           </div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -890,7 +1077,7 @@ export function Footer() {
               <Sparkles className="h-4 w-4" />
             </span>
             <span className="text-[15px] font-semibold text-ink">
-              Nexus<span className="text-gradient"> Flow</span>
+              Novus<span className="text-gradient"> Flow</span>
             </span>
           </div>
           <p className="mt-4 max-w-xs text-[13px] text-ink-soft">
@@ -909,7 +1096,7 @@ export function Footer() {
         ))}
       </div>
       <div className="mx-auto mt-10 flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-black/[0.06] pt-6 text-[12px] text-ink-soft">
-        <div>© 2026 Nexus Flow</div>
+        <div>© 2026 Novus Flow</div>
         <div>Built with AI-powered productivity at its core.</div>
       </div>
     </footer>

@@ -15,7 +15,7 @@ export function useNova() {
   const [state,         setState]         = useState<NovaState>("idle");
   const [transcript,    setTranscript]    = useState("");
   const [responseText,  setResponseText]  = useState("");
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [pendingAction, setPendingAction] = useState<any | null>(null);
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks        = useRef<Blob[]>([]);
@@ -109,12 +109,13 @@ export function useNova() {
         response:            string;
         confirmationPending?: boolean;
         pendingAction?:       PendingAction;
+        pendingActions?:      any[];
       };
 
       setResponseText(data.response || "Something went wrong.");
 
-      if (data.confirmationPending && data.pendingAction) {
-        setPendingAction(data.pendingAction);
+      if (data.confirmationPending && (data.pendingAction || data.pendingActions)) {
+        setPendingAction(data.pendingActions || (data.pendingAction ? [data.pendingAction] : null));
         setState("confirming");
         await speak(data.response);
         return;
@@ -132,7 +133,7 @@ export function useNova() {
     }
   };
 
-  const confirm = async (yes: boolean) => {
+  const confirm = async (yes: boolean, modifiedActions?: any[]) => {
     setPendingAction(null);
     setState("thinking");
 
@@ -140,7 +141,7 @@ export function useNova() {
       const res = await fetch("/api/nova", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ transcript: "", confirmed: yes }),
+        body:    JSON.stringify({ transcript: "", confirmed: yes, modifiedActions }),
       });
       const data = await res.json();
       setResponseText(data.response || "");
@@ -158,6 +159,7 @@ export function useNova() {
     transcript,
     responseText,
     pendingAction,
+    setPendingAction,
     startRecording,
     stopRecording,
     confirm,

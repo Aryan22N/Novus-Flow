@@ -28,7 +28,7 @@ interface Task {
 import { useNova } from '~/hooks/use-nova';
 
 export default function NexusAIVoiceInteraction() {
-    const { state: novaState, transcript: novaTranscript, responseText, startRecording, stopRecording, confirm, pendingAction } = useNova();
+    const { state: novaState, transcript: novaTranscript, responseText, startRecording, stopRecording, confirm, pendingAction, setPendingAction } = useNova();
 
     const isListening = novaState === "recording";
     const statusText = novaState === "recording" ? "listening" : (novaState === "transcribing" || novaState === "thinking" || novaState === "confirming") ? "processing" : "paused";
@@ -403,12 +403,59 @@ export default function NexusAIVoiceInteraction() {
                                 <div className="space-y-2 mb-4">
                                     <h4 className="text-[10px] uppercase font-bold tracking-widest text-error">Action Required</h4>
                                     <div className="bg-error-container/30 border border-error/20 p-3.5 rounded-xl space-y-3">
-                                        <p className="text-xs text-on-surface font-medium leading-relaxed">
-                                            {pendingAction.draft}
-                                        </p>
+                                        <div className="flex flex-col gap-3">
+                                            {Array.isArray(pendingAction) ? pendingAction.map((action: any, idx: number) => {
+                                                if (action.tool === "sendEmail") {
+                                                    return (
+                                                        <div key={idx} className="flex flex-col gap-2">
+                                                            <div className="text-[10px] font-bold text-error uppercase tracking-wider">Send Email</div>
+                                                            <input
+                                                                className="text-xs p-1.5 border border-error/20 rounded bg-white w-full"
+                                                                value={action.args.to || ""}
+                                                                onChange={(e) => {
+                                                                    const newActions = [...pendingAction];
+                                                                    newActions[idx].args.to = e.target.value;
+                                                                    setPendingAction(newActions);
+                                                                }}
+                                                            />
+                                                            <input
+                                                                className="text-xs p-1.5 border border-error/20 rounded bg-white w-full"
+                                                                value={action.args.subject || ""}
+                                                                onChange={(e) => {
+                                                                    const newActions = [...pendingAction];
+                                                                    newActions[idx].args.subject = e.target.value;
+                                                                    setPendingAction(newActions);
+                                                                }}
+                                                            />
+                                                            <textarea
+                                                                className="text-xs p-1.5 border border-error/20 rounded bg-white w-full min-h-[60px]"
+                                                                value={action.args.body || ""}
+                                                                onChange={(e) => {
+                                                                    const newActions = [...pendingAction];
+                                                                    newActions[idx].args.body = e.target.value;
+                                                                    setPendingAction(newActions);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    );
+                                                }
+                                                return (
+                                                    <p key={idx} className="text-xs text-on-surface font-medium leading-relaxed">
+                                                        {action.draft}
+                                                    </p>
+                                                );
+                                            }) : (
+                                                <p className="text-xs text-on-surface font-medium leading-relaxed">
+                                                    {pendingAction.draft}
+                                                </p>
+                                            )}
+                                        </div>
                                         <div className="flex gap-2">
                                             <button
-                                                onClick={() => confirm(true)}
+                                                onClick={() => {
+                                                    const actionsToSubmit = Array.isArray(pendingAction) ? [...pendingAction] : [];
+                                                    confirm(true, actionsToSubmit);
+                                                }}
                                                 className="flex-1 bg-primary text-on-primary text-xs py-1.5 rounded-lg hover:bg-primary/90 transition-colors"
                                             >
                                                 Confirm

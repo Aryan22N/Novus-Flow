@@ -93,7 +93,7 @@ async function syncGmailEvent(event: {
   try {
     const client = corsair.withTenant(tenantId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fetchedMsg = (await client.gmail.api.messages.get({
+    const fetchedMsg = (await client.gmail!.api!.messages!.get({
       id: msgId,
       format: "full",
     })) as any;
@@ -213,7 +213,7 @@ async function syncCalendarEvent(emailAddress: string) {
   const timeMin = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   const timeMax = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
 
-  const result = (await client.googlecalendar.api.events.getMany({
+  const result = (await client.googlecalendar!.api!.events!.getMany({
     timeMin,
     timeMax,
     maxResults: 250,

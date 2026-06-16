@@ -71,6 +71,7 @@ export default function WorkspacePage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
+                spellCheck={false}
                 className="flex-1 bg-transparent border-none focus:ring-0 text-lg font-body-md text-gray-800 placeholder:text-gray-400 outline-none w-full"
                 placeholder="How can I help you today?"
               />

@@ -124,7 +124,20 @@ export default function UpcomingMeetings() {
             d.setHours(0, 0, 0, 0);
           }
         }
-        return d >= todayStart && d <= tomorrowEnd;
+        const nowTime = new Date();
+        const endTime = ev.end ? new Date(ev.end) : null;
+        
+        // Filter out meetings that have already ended
+        if (endTime && endTime < nowTime) {
+          return false;
+        }
+
+        // If no end time is available, fallback to checking if it started before today
+        if (!endTime && d < todayStart) {
+          return false;
+        }
+
+        return d <= tomorrowEnd;
       })
       .map((ev) => {
         // Clean description: remove HTML tags, keep only first line or first 60 chars
@@ -162,6 +175,11 @@ export default function UpcomingMeetings() {
         const cache = JSON.parse(cachedDataStr) as Record<string, CacheEntry>;
         for (const [threadId, entry] of Object.entries(cache)) {
           if (entry.isScheduled && entry.meetingTime) {
+            const meetingStart = new Date(entry.meetingTime);
+            const meetingEnd = new Date(meetingStart.getTime() + 30 * 60000); // 30 mins default duration
+            if (meetingEnd < new Date()) {
+              continue;
+            }
             // Self-healing: If we have an eventId, verify that the event still exists in Google Calendar
             if (entry.eventId && calendarData) {
               const existsInCalendar = (calendarData.events ?? []).some(

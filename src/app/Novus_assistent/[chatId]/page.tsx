@@ -11,16 +11,16 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   const chatId = resolvedParams.chatId;
   const searchParams = useSearchParams();
   const initialQuery = searchParams?.get('q') || '';
-  
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+
   // Flag to know if user has typed/sent
   const [hasSentMessage, setHasSentMessage] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  
+
   const [messages, setMessages] = useState<{ role: 'user' | 'ai', content: string }[]>([]);
-  
+
   const [generatedDraft, setGeneratedDraft] = useState<any>(null);
   const [summaryResult, setSummaryResult] = useState<any>(null);
   const [matchingContacts, setMatchingContacts] = useState<any[]>([]);
@@ -95,21 +95,21 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
-  const handleAskNova = async (prompt: string, confirmed?: boolean) => {
+  const handleAskNova = async (prompt: string, confirmed?: boolean, modifiedActions?: any[]) => {
     setIsNovaPending(true);
     try {
       const res = await fetch("/api/nova", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: prompt, confirmed, chatId }),
+        body: JSON.stringify({ transcript: prompt, confirmed, chatId, modifiedActions }),
       });
       const data = await res.json();
-      
+
       // Invalidate the chat list to update the sidebar preview
       utils.ai.getNovaChats.invalidate();
 
       if (data.confirmationPending) {
-        setPendingNovaAction(data.pendingAction);
+        setPendingNovaAction(data.pendingActions || (data.pendingAction ? [data.pendingAction] : null));
         setMessages((prev) => [...prev, { role: 'ai', content: data.response }]);
       } else {
         setPendingNovaAction(null);
@@ -203,12 +203,12 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
               </div>
             ) : (
               <div key={idx} className="flex flex-col items-start message-fade-in">
-                <div className="flex items-center gap-3 mb-3">
+                {/* <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 bg-primary-container text-white rounded-full flex items-center justify-center">
                     <Sparkles className="w-4 h-4 fill-white" />
                   </div>
                   <span className="font-bold text-primary">Novus AI</span>
-                </div>
+                </div> */}
                 <div className="max-w-full md:max-w-[90%] space-y-4">
                   <div className="bg-surface-container-lowest p-4 md:p-5 rounded-2xl rounded-tl-none border border-outline-variant shadow-sm text-on-surface leading-relaxed">
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -219,19 +219,110 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
           ))}
 
           {/* Pending Nova Action UI */}
-          {pendingNovaAction && (
-            <div className="flex flex-col items-start message-fade-in mt-6">
+          {pendingNovaAction && Array.isArray(pendingNovaAction) && (
+            <div className="flex flex-col items-start message-fade-in mt-6 w-full">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 bg-primary-container text-white rounded-full flex items-center justify-center">
                   <Sparkles className="w-4 h-4 fill-white" />
                 </div>
                 <span className="font-bold text-primary">Confirmation Required</span>
               </div>
-              <div className="bg-surface-container-lowest p-4 md:p-5 rounded-2xl rounded-tl-none border border-outline-variant shadow-sm text-on-surface">
-                <p className="text-sm mb-4 text-on-surface-variant font-medium">Novus wants to proceed. Do you confirm?</p>
+              <div className="bg-surface-container-lowest p-4 md:p-5 rounded-2xl rounded-tl-none border border-outline-variant shadow-sm text-on-surface w-full max-w-[90%] md:max-w-[75%]">
+                <p className="text-sm mb-4 text-on-surface-variant font-medium">Novus wants to proceed. Please review and edit before confirming:</p>
+
+                <div className="flex flex-col gap-4 mb-5 w-full">
+                  {pendingNovaAction.map((action: any, idx: number) => {
+                    if (action.tool === "sendEmail") {
+                      return (
+                        <div key={idx} className="border border-outline-variant/60 p-4 rounded-xl flex flex-col gap-3 bg-surface w-full shadow-sm">
+                          <div className="text-[11px] font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                            <Send className="w-3.5 h-3.5" /> Send Email
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">To</label>
+                            <input
+                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                              value={action.args.to || ""}
+                              onChange={(e) => {
+                                const newActions = [...pendingNovaAction];
+                                newActions[idx].args.to = e.target.value;
+                                setPendingNovaAction(newActions);
+                              }}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Subject</label>
+                            <input
+                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                              value={action.args.subject || ""}
+                              onChange={(e) => {
+                                const newActions = [...pendingNovaAction];
+                                newActions[idx].args.subject = e.target.value;
+                                setPendingNovaAction(newActions);
+                              }}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Message</label>
+                            <textarea
+                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[120px] resize-y"
+                              value={action.args.body || ""}
+                              onChange={(e) => {
+                                const newActions = [...pendingNovaAction];
+                                newActions[idx].args.body = e.target.value;
+                                setPendingNovaAction(newActions);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (action.tool === "createCalendarEvent") {
+                      return (
+                        <div key={idx} className="border border-outline-variant/60 p-4 rounded-xl flex flex-col gap-3 bg-surface w-full shadow-sm">
+                          <div className="text-[11px] font-bold text-primary uppercase tracking-wider">Create Calendar Event</div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Title</label>
+                            <input
+                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                              value={action.args.summary || ""}
+                              onChange={(e) => {
+                                const newActions = [...pendingNovaAction];
+                                newActions[idx].args.summary = e.target.value;
+                                setPendingNovaAction(newActions);
+                              }}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Time</label>
+                            <input
+                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                              value={action.args.time || ""}
+                              onChange={(e) => {
+                                const newActions = [...pendingNovaAction];
+                                newActions[idx].args.time = e.target.value;
+                                setPendingNovaAction(newActions);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={idx} className="text-sm p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/60">
+                        {action.draft}
+                      </div>
+                    );
+                  })}
+                </div>
+
                 <div className="flex gap-2">
-                  <button onClick={() => { setPendingNovaAction(null); handleAskNova("Yes, proceed.", true); }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12px] font-bold shadow-sm transition-colors">Yes, proceed</button>
-                  <button onClick={() => { setPendingNovaAction(null); handleAskNova("No, cancel that.", false); }} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[12px] font-bold border border-slate-200 transition-colors">Cancel</button>
+                  <button onClick={() => {
+                    const actionsToSubmit = [...pendingNovaAction];
+                    setPendingNovaAction(null);
+                    handleAskNova("Yes, proceed.", true, actionsToSubmit);
+                  }} className="px-5 py-2.5 bg-primary hover:bg-primary-container hover:text-on-primary-container text-white rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all">Confirm & Execute</button>
+                  <button onClick={() => { setPendingNovaAction(null); handleAskNova("No, cancel that.", false); }} className="px-5 py-2.5 bg-surface hover:bg-surface-container-highest text-on-surface-variant rounded-xl text-sm font-bold border border-outline-variant transition-all">Cancel</button>
                 </div>
               </div>
             </div>
@@ -335,6 +426,7 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                 ref={textareaRef}
                 value={inputValue}
                 onChange={handleTextareaInput}
+                spellCheck={false}
                 disabled={generateDraftMutation.isPending || isNovaPending}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {

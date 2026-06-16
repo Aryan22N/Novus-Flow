@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       transcript: string;
       confirmed?: boolean;
       chatId?: string;
+      modifiedActions?: any[];
     };
 
     const novaSession: NovaSession = await getNovaSession(session.user.id, body.chatId);
@@ -36,20 +37,29 @@ export async function POST(req: NextRequest) {
 
     // ── CONFIRMATION RESPONSE ─────────────────────────────────────────────────
 
-    if (body.confirmed === true && novaSession.pendingAction) {
-      const { tool, args } = novaSession.pendingAction;
-      const result         = await executeTool(`__confirmed_${tool}`, args, session, novaSession);
+    if (body.confirmed === true && (novaSession.pendingAction || novaSession.pendingActions)) {
+      const actionsToRun = body.modifiedActions || novaSession.pendingActions || (novaSession.pendingAction ? [novaSession.pendingAction] : []);
+      const summaries: string[] = [];
+      
+      for (const action of actionsToRun) {
+        const { tool, args } = action;
+        const result         = await executeTool(`__confirmed_${tool}`, args, session, novaSession);
+        summaries.push(summariseResult(tool, result.data));
+      }
+
       novaSession.pendingAction = undefined;
+      novaSession.pendingActions = undefined;
       novaSession.history.push(
         { role: "user",  parts: [{ text: "Yes, go ahead." }] },
-        { role: "model", parts: [{ text: "Done." }] },
+        { role: "model", parts: [{ text: summaries.join(" ") }] },
       );
       await saveNovaSession(session.user.id, novaSession, body.chatId);
-      return NextResponse.json({ response: summariseResult(tool, result.data) });
+      return NextResponse.json({ response: summaries.join(" ") });
     }
 
-    if (body.confirmed === false && novaSession.pendingAction) {
+    if (body.confirmed === false && (novaSession.pendingAction || novaSession.pendingActions)) {
       novaSession.pendingAction = undefined;
+      novaSession.pendingActions = undefined;
       await saveNovaSession(session.user.id, novaSession, body.chatId);
       return NextResponse.json({ response: "Okay, I've cancelled that." });
     }
@@ -65,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     const historyForGemini: Content[] = novaSession.history.map((turn) => ({
       role:  turn.role,
-      parts: turn.parts,
+      parts: turn.parts && turn.parts.length > 0 ? turn.parts : [{ text: "Okay." }],
     }));
 
     const chat   = model.startChat({ history: historyForGemini });
@@ -79,7 +89,7 @@ export async function POST(req: NextRequest) {
       if (functionCalls.length === 0) break;
 
       const functionResponses: FunctionResponsePart[] = [];
-      let   pendingAction: NovaSession["pendingAction"] | undefined;
+      const pendingActions: Array<{ tool: string; args: Record<string, unknown>; draft: string }> = [];
 
       for (const part of functionCalls) {
         if (!part.functionCall) continue;
@@ -92,11 +102,11 @@ export async function POST(req: NextRequest) {
         );
 
         if (toolResult.confirmationRequired) {
-          pendingAction = {
+          pendingActions.push({
             tool:  toolResult.confirmationRequired.tool,
             args:  toolResult.confirmationRequired.args,
             draft: toolResult.confirmationRequired.draft,
-          };
+          });
           functionResponses.push({
             functionResponse: {
               name:     part.functionCall.name,
@@ -113,19 +123,32 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (pendingAction) {
-        novaSession.pendingAction = pendingAction;
+      if (pendingActions.length > 0) {
+        novaSession.pendingActions = pendingActions;
+        
+        // Build a combined frontend pendingAction object to avoid breaking the frontend
+        const combinedDraft = pendingActions.map(p => `• ${p.draft}`).join('\n');
+        const frontendPendingAction = {
+          tool: "multiple",
+          args: {},
+          draft: combinedDraft
+        };
+
+        novaSession.pendingAction = frontendPendingAction;
+
         if (!isNewChat) {
           novaSession.history.push({ role: "user", parts: [{ text: body.transcript }] });
         }
+        const textParts = candidate.content.parts.filter((p) => p.text).map((p) => ({ text: p.text! }));
         novaSession.history.push(
-          { role: "model", parts: candidate.content.parts.filter((p) => p.text).map((p) => ({ text: p.text! })) },
+          { role: "model", parts: textParts.length > 0 ? textParts : [{ text: `Here's what I'll do:\n${combinedDraft}` }] },
         );
         await saveNovaSession(session.user.id, novaSession, body.chatId);
         return NextResponse.json({
-          response:            `Here's what I'll do: ${pendingAction.draft}`,
+          response:            `Here's what I'll do:\n${combinedDraft}`,
           confirmationPending: true,
-          pendingAction,
+          pendingAction:       frontendPendingAction,
+          pendingActions:      pendingActions,
         });
       }
 

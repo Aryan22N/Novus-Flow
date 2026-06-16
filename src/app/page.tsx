@@ -1,13 +1,15 @@
 import { Navbar } from "~/components/nexus/Navbar";
+import { AuroraBackground, Particles } from "~/components/nexus/Background";
 import {
   Hero,
   Problem,
   Overview,
   Nova,
-  Capabilities,
-  Timeline,
+  // Capabilities,
+  // Timeline,
+  HowItWorksSection,
   Screenshots,
-  Future,
+  // Future,
   CTA,
   Footer,
 } from "~/components/nexus/Sections";
@@ -16,15 +18,20 @@ import {
 
 export default function Index() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background">
+    <div className="relative min-h-screen bg-background">
       <Navbar />
       <main>
-        <Hero />
-        <Problem />
-        <Overview />
+        <div className="relative">
+          <AuroraBackground />
+          <Particles count={30} />
+          <Hero />
+          <Problem />
+          <Overview />
+        </div>
         <Nova />
-        <Capabilities />
-        <Timeline />
+        {/* <Capabilities /> */}
+        {/* <Timeline /> */}
+        <HowItWorksSection />
         <Screenshots />
         <CTA />
       </main>
