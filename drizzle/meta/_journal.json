@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1781021060540,
-      "tag": "0000_great_masque",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1781021954802,
-      "tag": "0001_magical_changeling",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1781080426169,
-      "tag": "0002_shocking_wolfsbane",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1781179172816,
-      "tag": "0003_loving_catseye",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1781336718451,
-      "tag": "0004_motionless_jubilee",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1781364460285,
-      "tag": "0005_lonely_nightshade",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1781425983658,
-      "tag": "0006_dapper_glorian",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1781688387432,
-      "tag": "0007_fancy_red_wolf",
+      "when": 1781723601498,
+      "tag": "0000_keen_jane_foster",
       "breakpoints": true
     }
   ]
