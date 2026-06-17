@@ -9,6 +9,7 @@ import { env }                                          from "~/env";
 import { NOVA_TOOLS, NOVA_SYSTEM_PROMPT }               from "~/server/voice/tools";
 import { getNovaSession, saveNovaSession, createNewChat, type NovaSession } from "~/server/voice/session";
 import { executeTool }                                  from "~/server/voice/actions";
+import { checkLimit, incrementUsage } from "~/server/ai/check-limit";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY!);
 
@@ -71,6 +72,12 @@ export async function POST(req: NextRequest) {
     }
 
     // ── AGENT LOOP ────────────────────────────────────────────────────────────
+
+    try {
+      await checkLimit(session.user.id, "ai_request");
+    } catch (limitError) {
+      return NextResponse.json({ response: "You have reached your daily AI request limit. Please upgrade to Pro for unlimited requests." });
+    }
 
     const model = genAI.getGenerativeModel({
       model:             "gemini-2.5-flash",
@@ -156,6 +163,7 @@ export async function POST(req: NextRequest) {
         { role: "model", parts: [{ text: responseText }] },
       );
       await saveNovaSession(session.user.id, novaSession, body.chatId);
+      await incrementUsage(session.user.id, "ai_request");
       return NextResponse.json({
         response:            responseText,
         confirmationPending: true,
@@ -176,6 +184,7 @@ export async function POST(req: NextRequest) {
     novaSession.history.push({ role: "model", parts: [{ text: responseText }] });
     
     await saveNovaSession(session.user.id, novaSession, body.chatId);
+    await incrementUsage(session.user.id, "ai_request");
 
     return NextResponse.json({ response: responseText });
   } catch (error: any) {

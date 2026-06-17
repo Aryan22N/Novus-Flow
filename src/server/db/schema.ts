@@ -205,4 +205,23 @@ export const contacts = pgTable("contacts", {
   uniqueIndex("contacts_user_email_unique_idx").on(t.userId, t.email),
 ]);
 
+export const subscriptions = pgTable("subscriptions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  plan: varchar("plan", { length: 50 }).notNull(), // 'free', 'pro', etc.
+  status: varchar("status", { length: 50 }).notNull().default("active"),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .$defaultFn(() => new Date())
+    .notNull(),
+}, (t) => [
+  index("subscriptions_user_idx").on(t.userId),
+]);
+
 export * from "./corsair-schema";

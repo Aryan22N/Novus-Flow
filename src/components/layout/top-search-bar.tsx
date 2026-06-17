@@ -12,7 +12,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { authClient } from "~/server/better-auth/client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
 export default function TopSearchBar({
@@ -24,6 +24,8 @@ export default function TopSearchBar({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+  const isSettings = pathname === '/settings';
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -90,8 +92,11 @@ export default function TopSearchBar({
           <CircleHelp size={20} className="text-gray-600" />
         </button>
 
-        <button className="rounded-full p-2 transition-colors hover:bg-gray-100">
-          <Settings size={20} className="text-gray-600" />
+        <button 
+          onClick={() => router.push('/settings')}
+          className={`rounded-full p-2 transition-colors ${isSettings ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'}`}
+        >
+          <Settings size={20} className={isSettings ? "text-blue-600" : "text-gray-600"} />
         </button>
 
         <button className="rounded-full p-2 transition-colors hover:bg-gray-100">

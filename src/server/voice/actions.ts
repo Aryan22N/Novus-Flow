@@ -43,7 +43,8 @@ export async function executeTool(
   }
 
   if (toolName === "summarizeInbox") {
-    const result = await caller.ai.summarizeRecentEmails();
+    const onlyImportant = (args.onlyImportant as boolean) ?? false;
+    const result = await caller.ai.summarizeRecentEmails({ onlyImportant });
     return { data: result };
   }
 

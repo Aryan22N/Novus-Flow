@@ -28,7 +28,7 @@ export const NOVA_TOOLS: Tool[] = [
       {
         name: "summarizeInbox",
         description:
-          "Summarize recent important emails into key updates, tasks, " +
+          "Summarize recent emails into key updates, tasks, " +
           "meetings, and deadlines. Use when the user asks for a summary.",
         parameters: {
           type: SchemaType.OBJECT,
@@ -38,6 +38,10 @@ export const NOVA_TOOLS: Tool[] = [
               format: "enum",
               enum: ["today", "unread"],
               description: "Which emails to summarize. Default: unread.",
+            },
+            onlyImportant: {
+              type: SchemaType.BOOLEAN,
+              description: "If true, skips promotional, social, and updates emails, and only summarizes important/personal ones. Use this when the user specifically asks to summarize only important emails.",
             },
           },
           required: [],

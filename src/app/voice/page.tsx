@@ -13,10 +13,13 @@ import {
     ArrowRight,
     Database,
     Volume2,
-    VolumeX
+    VolumeX,
+    Lock
 } from 'lucide-react';
 import AppSidebar from "~/components/layout/app-sidebar";
 import TopSearchBar from "~/components/layout/top-search-bar";
+import { api } from "~/trpc/react";
+import { UpgradeModal } from "~/components/upgrade-modal";
 
 interface Task {
     id: string;
@@ -27,7 +30,7 @@ interface Task {
 
 import { useNova } from '~/hooks/use-nova';
 
-export default function NexusAIVoiceInteraction() {
+function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarOpen: boolean, setIsSidebarOpen: (v: boolean) => void }) {
     const { state: novaState, transcript: novaTranscript, responseText, startRecording, stopRecording, confirm, pendingAction, setPendingAction } = useNova();
 
     const isListening = novaState === "recording";
@@ -36,7 +39,6 @@ export default function NexusAIVoiceInteraction() {
 
     const [isContinuous, setIsContinuous] = useState(true);
     const [isMuted, setIsMuted] = useState(false);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const [tasks, setTasks] = useState<Task[]>([
         {
@@ -499,4 +501,43 @@ export default function NexusAIVoiceInteraction() {
             </div>
         </>
     );
+}
+
+export default function NexusAIVoiceInteraction() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const { data: billingData, isPending } = api.billing.getPlanAndUsage.useQuery();
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+    if (isPending) return null;
+
+    if (billingData?.plan === "free") {
+        return (
+            <div className="flex flex-col h-screen overflow-hidden antialiased bg-background text-on-background">
+                <TopSearchBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <div className="flex flex-1 pt-1 overflow-hidden">
+                    <AppSidebar isOpen={isSidebarOpen} />
+                    <main className="flex-1 flex items-center justify-center bg-slate-50 p-6 rounded-xl relative" style={{ backgroundImage: "linear-gradient(to top, #dfe9f3 0%, white 100%)" }}>
+                        <div className="bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-10 max-w-lg w-full text-center shadow-xl">
+                            <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                <Lock className="w-10 h-10" />
+                            </div>
+                            <h2 className="text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">Nova Voice is Pro Only</h2>
+                            <p className="text-slate-500 mb-10 text-base leading-relaxed">
+                                Upgrade to Pro to unlock the interactive voice assistant. Speak naturally to Nova, create tasks instantly, and supercharge your productivity.
+                            </p>
+                            <button
+                                onClick={() => setUpgradeModalOpen(true)}
+                                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-4 px-6 rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98]"
+                            >
+                                Upgrade To Pro
+                            </button>
+                        </div>
+                    </main>
+                </div>
+                <UpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
+            </div>
+        );
+    }
+
+    return <VoiceInteractionInner isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />;
 }

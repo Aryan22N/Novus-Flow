@@ -16,6 +16,7 @@ import {
   type Attachment,
 } from "~/server/utils/email-parsing";
 import { ensureThreadSynced } from "~/server/utils/thread-sync";
+import { checkLimit, incrementUsage } from "~/server/ai/check-limit";
 
 interface ThreadMessage {
   id: string;
@@ -110,7 +111,7 @@ export const aiRouter = createTRPCRouter({
   analyzeThread: publicProcedure
     .input(z.object({ threadId: z.string().nullish() }).optional())
     .query(async ({ ctx, input }) => {
-      if (!input?.threadId || !ctx.session?.user) {
+      if (!input?.threadId || input.threadId === "skip" || !ctx.session?.user) {
         return null;
       }
       const tenantId = ctx.session.user.id;
@@ -136,9 +137,12 @@ export const aiRouter = createTRPCRouter({
         const contextStr    = `User Name: ${ctx.session.user.name ?? "User"}\nUser Email: ${ctx.session.user.email ?? ""}\n${contextPrompt}`;
 
         const provider = getAiProvider();
+        await checkLimit(tenantId, "summary");
         const result = await provider.analyzeThread(threadText, contextStr);
+        await incrementUsage(tenantId, "summary");
         return result;
       } catch (error: any) {
+        if (error instanceof TRPCError) throw error;
         console.error("AI analysis failed:", error);
         const isRateLimit =
           error.message?.includes("429") ||
@@ -147,7 +151,7 @@ export const aiRouter = createTRPCRouter({
         throw new TRPCError({
           code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
           message: isRateLimit
-            ? "AI rate limit or quota exceeded. Please wait a moment before trying again, or switch model providers in your config."
+            ? "The AI Provider (Gemini/OpenAI) rate limit was exceeded. Please wait a minute and try again."
             : `Failed to analyze thread with AI: ${error.message || "Unknown error"}.`,
         });
       }
@@ -183,13 +187,16 @@ export const aiRouter = createTRPCRouter({
         const contextStr    = `User Name: ${ctx.session.user.name ?? "User"}\nUser Email: ${ctx.session.user.email ?? ""}\n${contextPrompt}`;
 
         const provider = getAiProvider();
+        await checkLimit(tenantId, "ai_request");
         const result = await provider.generateReplyDraft(
           threadText,
           input.userBriefPrompt,
           contextStr
         );
+        await incrementUsage(tenantId, "ai_request");
         return result;
       } catch (error: any) {
+        if (error instanceof TRPCError) throw error;
         console.error("AI reply draft generation failed:", error);
         const isRateLimit =
           error.message?.includes("429") ||
@@ -198,7 +205,7 @@ export const aiRouter = createTRPCRouter({
         throw new TRPCError({
           code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
           message: isRateLimit
-            ? "AI rate limit or quota exceeded. Please wait a moment before trying again."
+            ? "The AI Provider (Gemini/OpenAI) rate limit was exceeded. Please wait a minute and try again."
             : `Failed to generate reply draft with AI: ${error.message || "Unknown error"}.`,
         });
       }
@@ -217,9 +224,12 @@ export const aiRouter = createTRPCRouter({
         const contextStr    = `User Name: ${ctx.session.user.name ?? "User"}\nUser Email: ${ctx.session.user.email ?? ""}\n${contextPrompt}`;
 
         const provider = getAiProvider();
+        await checkLimit(tenantId, "ai_request");
         const result = await provider.generateGlobalDraft(input.prompt, contextStr);
+        await incrementUsage(tenantId, "ai_request");
         return result;
       } catch (error: any) {
+        if (error instanceof TRPCError) throw error;
         console.error("AI global draft generation failed:", error);
         const isRateLimit =
           error.message?.includes("429") ||
@@ -228,13 +238,15 @@ export const aiRouter = createTRPCRouter({
         throw new TRPCError({
           code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
           message: isRateLimit
-            ? "AI rate limit or quota exceeded. Please wait a moment before trying again."
+            ? "The AI Provider (Gemini/OpenAI) rate limit was exceeded. Please wait a minute and try again."
             : `Failed to generate global draft with AI: ${error.message || "Unknown error"}.`,
         });
       }
     }),
 
-  summarizeRecentEmails: protectedProcedure.mutation(async ({ ctx }) => {
+  summarizeRecentEmails: protectedProcedure
+    .input(z.object({ onlyImportant: z.boolean().optional() }).optional())
+    .mutation(async ({ ctx, input }) => {
     const tenantId = ctx.session.user.id;
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -255,6 +267,12 @@ export const aiRouter = createTRPCRouter({
         const data = message.data as any;
         if (!data?.payload) return false;
         if (!data.labelIds?.includes("UNREAD")) return false;
+
+        if (input?.onlyImportant) {
+          if (data.labelIds?.includes("CATEGORY_PROMOTIONS")) return false;
+          if (data.labelIds?.includes("CATEGORY_SOCIAL")) return false;
+          if (data.labelIds?.includes("CATEGORY_UPDATES")) return false;
+        }
 
         const headers = data.payload.headers ?? [];
         const dateHeader = getHeader(headers, "Date");
@@ -304,9 +322,12 @@ export const aiRouter = createTRPCRouter({
       const contextStr    = `User Name: ${ctx.session.user.name ?? "User"}\nUser Email: ${ctx.session.user.email ?? ""}\n${contextPrompt}`;
 
       const provider = getAiProvider();
+      await checkLimit(tenantId, "summary");
       const result = await provider.summarizeRecentEmails(emailsText, contextStr);
+      await incrementUsage(tenantId, "summary");
       return result;
     } catch (error: any) {
+      if (error instanceof TRPCError) throw error;
       console.error("AI summary generation failed:", error);
       const isRateLimit =
         error.message?.includes("429") ||
@@ -315,7 +336,7 @@ export const aiRouter = createTRPCRouter({
       throw new TRPCError({
         code: isRateLimit ? "TOO_MANY_REQUESTS" : "INTERNAL_SERVER_ERROR",
         message: isRateLimit
-          ? "AI rate limit or quota exceeded. Please wait a moment before trying again, or switch model providers in your config."
+          ? "The AI Provider (Gemini/OpenAI) rate limit was exceeded. Please wait a minute and try again."
           : `Failed to summarize emails with AI: ${error.message || "Unknown error"}.`,
       });
     }
@@ -355,7 +376,9 @@ export const aiRouter = createTRPCRouter({
 
       try {
         const provider = getAiProvider();
+        await checkLimit(tenantId, "ai_request");
         const result = await provider.generateSuggestions(threadText);
+        await incrementUsage(tenantId, "ai_request");
         return result.suggestions;
       } catch (error) {
         console.error("AI suggested replies generation failed:", error);
@@ -369,9 +392,11 @@ export const aiRouter = createTRPCRouter({
 
   askQuestion: protectedProcedure
     .input(z.object({ prompt: z.string(), context: z.string().optional() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const provider = getAiProvider();
+      await checkLimit(ctx.session.user.id, "ai_request");
       const result = await provider.askQuestion(input.prompt, input.context);
+      await incrementUsage(ctx.session.user.id, "ai_request");
       return result;
     }),
 

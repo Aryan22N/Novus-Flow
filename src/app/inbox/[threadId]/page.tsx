@@ -49,6 +49,14 @@ export default function ThreadPage(props: {
   const [aiDraftText, setAiDraftText] = useState<string | undefined>(undefined);
   const [showHelpMeWrite, setShowHelpMeWrite] = useState(false);
   const [helpMeWritePrompt, setHelpMeWritePrompt] = useState("");
+  const [showAiReplies, setShowAiReplies] = useState(true);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('superman_settings_auto_summarize');
+    if (stored !== null) {
+      setShowAiReplies(stored === 'true');
+    }
+  }, []);
 
   const { data: thread, isPending } = api.email.getThread.useQuery({
     threadId: params.threadId,
@@ -628,48 +636,50 @@ export default function ThreadPage(props: {
                             </div>
 
                             {/* AI Suggested Replies */}
-                            <div className="mx-auto mt-4 grid w-full max-w-5xl grid-cols-1 gap-4 select-none md:grid-cols-3">
-                              {suggestionsLoading ? (
-                                <div className="bg-surface-container-lowest border-outline-variant col-span-3 flex animate-pulse items-center justify-center gap-2 rounded-xl border p-6 text-sm text-gray-500 shadow-sm">
-                                  <Loader2
-                                    className="text-primary animate-spin"
-                                    size={16}
-                                  />
-                                  <span>
-                                    Analyzing message to generate replies...
-                                  </span>
-                                </div>
-                              ) : (
-                                (suggestedRepliesData || []).map(
-                                  (suggestion, idx) => (
-                                    <button
-                                      key={idx}
-                                      onClick={() => {
-                                        setReplyText(suggestion);
-                                        setAiDraftText(suggestion);
-                                      }}
-                                      className="bg-surface-container-lowest border-outline-variant hover:border-primary/50 group cursor-pointer rounded-xl border p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-95"
-                                      suppressHydrationWarning
-                                    >
-                                      {idx === 0 && (
-                                        <div className="text-primary mb-2 flex items-center gap-2">
-                                          <Sparkles
-                                            size={18}
-                                            className="animate-pulse fill-current"
-                                          />
-                                          <span className="text-label-caps font-label-caps">
-                                            AI SUGGESTION
-                                          </span>
-                                        </div>
-                                      )}
-                                      <p className="text-body-md text-on-surface font-sans">
-                                        "{suggestion}"
-                                      </p>
-                                    </button>
-                                  ),
-                                )
-                              )}
-                            </div>
+                            {showAiReplies && (
+                              <div className="mx-auto mt-4 grid w-full max-w-5xl grid-cols-1 gap-4 select-none md:grid-cols-3">
+                                {suggestionsLoading ? (
+                                  <div className="bg-surface-container-lowest border-outline-variant col-span-3 flex animate-pulse items-center justify-center gap-2 rounded-xl border p-6 text-sm text-gray-500 shadow-sm">
+                                    <Loader2
+                                      className="text-primary animate-spin"
+                                      size={16}
+                                    />
+                                    <span>
+                                      Analyzing message to generate replies...
+                                    </span>
+                                  </div>
+                                ) : (
+                                  (suggestedRepliesData || []).map(
+                                    (suggestion, idx) => (
+                                      <button
+                                        key={idx}
+                                        onClick={() => {
+                                          setReplyText(suggestion);
+                                          setAiDraftText(suggestion);
+                                        }}
+                                        className="bg-surface-container-lowest border-outline-variant hover:border-primary/50 group cursor-pointer rounded-xl border p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-95"
+                                        suppressHydrationWarning
+                                      >
+                                        {idx === 0 && (
+                                          <div className="text-primary mb-2 flex items-center gap-2">
+                                            <Sparkles
+                                              size={18}
+                                              className="animate-pulse fill-current"
+                                            />
+                                            <span className="text-label-caps font-label-caps">
+                                              AI SUGGESTION
+                                            </span>
+                                          </div>
+                                        )}
+                                        <p className="text-body-md text-on-surface font-sans">
+                                          "{suggestion}"
+                                        </p>
+                                      </button>
+                                    ),
+                                  )
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

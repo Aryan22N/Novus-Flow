@@ -12,7 +12,7 @@ import {
   Loader2,
   Copy,
   Check,
-  Sparkle,
+  Sparkle
 } from "lucide-react";
 import { api } from "~/trpc/react";
 
@@ -41,6 +41,31 @@ interface CacheEntry {
   eventId?: string;
 }
 
+function AiAnalyzer({
+  threadId,
+  onAnalysis,
+  onError,
+}: {
+  threadId: string;
+  onAnalysis: (data: any) => void;
+  onError: (err: any) => void;
+}) {
+  const { data, error } = api.ai.analyzeThread.useQuery(
+    { threadId },
+    { refetchOnWindowFocus: false },
+  );
+
+  useEffect(() => {
+    if (data) onAnalysis(data);
+  }, [data, onAnalysis]);
+
+  useEffect(() => {
+    if (error) onError(error);
+  }, [error, onError]);
+
+  return null;
+}
+
 export default function AiPanel({
   defaultOpen = false,
   threadId,
@@ -61,6 +86,14 @@ export default function AiPanel({
   >(null);
   const [isCacheLoading, setIsCacheLoading] = useState(true);
   const [hasCache, setHasCache] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('superman_settings_auto_summarize');
+    if (stored !== null) {
+      setAiEnabled(stored === 'true');
+    }
+  }, []);
 
   // Load cache from localStorage when threadId changes
   useEffect(() => {
@@ -136,20 +169,42 @@ export default function AiPanel({
     }
   };
 
-  // Fetch AI thread analysis automatically when threadId is loaded and not cached
-  const {
-    data: analysis,
-    isLoading: isQueryLoading,
-    error,
-  } = api.ai.analyzeThread.useQuery(
-    { threadId },
-    {
-      enabled: !!threadId && !isCacheLoading && !hasCache,
-      refetchOnWindowFocus: false,
-    },
-  );
+  // Determine if we should be fetching right now
+  const shouldFetch = !!threadId && !isCacheLoading && !hasCache && aiEnabled;
+  const [queryError, setQueryError] = useState<any>(null);
 
+  const isQueryLoading = shouldFetch && !activeAnalysis && !queryError;
   const isLoading = isCacheLoading || (isQueryLoading && !hasCache);
+
+  const handleAnalysisSuccess = (analysis: CacheEntry["analysis"]) => {
+    if (!threadId) return;
+    setActiveAnalysis(analysis);
+    setGeneratedDraft(analysis.defaultDraft);
+    setIsScheduled(false);
+    setMeetingTime("");
+    setCompletedTasks({});
+    setUserBriefPrompt("");
+    setHasCache(true);
+
+    try {
+      const cachedDataStr = localStorage.getItem("superman_ai_analysis_cache");
+      const cache = cachedDataStr
+        ? (JSON.parse(cachedDataStr) as Record<string, CacheEntry>)
+        : {};
+      cache[threadId] = {
+        analysis,
+        generatedDraft: analysis.defaultDraft,
+        isScheduled: false,
+        meetingTime: "",
+        completedTasks: {},
+        userBriefPrompt: "",
+        timestamp: Date.now(),
+      };
+      localStorage.setItem("superman_ai_analysis_cache", JSON.stringify(cache));
+    } catch (err) {
+      console.error("Error writing to localStorage cache:", err);
+    }
+  };
 
   // Mutation to draft response based on user brief description
   const draftMutation = api.ai.generateReplyDraft.useMutation({
@@ -180,42 +235,7 @@ export default function AiPanel({
     }
   }, [threadId]);
 
-  // Sync state and write to cache when new thread analysis is fetched from the API
-  useEffect(() => {
-    if (analysis && threadId) {
-      setActiveAnalysis(analysis);
-      setGeneratedDraft(analysis.defaultDraft);
-      setIsScheduled(false);
-      setMeetingTime("");
-      setCompletedTasks({});
-      setUserBriefPrompt("");
-      setHasCache(true);
-
-      try {
-        const cachedDataStr = localStorage.getItem(
-          "superman_ai_analysis_cache",
-        );
-        const cache = cachedDataStr
-          ? (JSON.parse(cachedDataStr) as Record<string, CacheEntry>)
-          : {};
-        cache[threadId] = {
-          analysis,
-          generatedDraft: analysis.defaultDraft,
-          isScheduled: false,
-          meetingTime: "",
-          completedTasks: {},
-          userBriefPrompt: "",
-          timestamp: Date.now(),
-        };
-        localStorage.setItem(
-          "superman_ai_analysis_cache",
-          JSON.stringify(cache),
-        );
-      } catch (err) {
-        console.error("Error writing to localStorage cache:", err);
-      }
-    }
-  }, [analysis, threadId]);
+  // We removed the old useEffect because we now handle it in handleAnalysisSuccess
 
   // Copy draft to clipboard utility
   const handleCopyDraft = async () => {
@@ -322,9 +342,31 @@ export default function AiPanel({
         </button>
       </div>
 
+      {shouldFetch && (
+        <AiAnalyzer
+          threadId={threadId!}
+          onAnalysis={handleAnalysisSuccess}
+          onError={setQueryError}
+        />
+      )}
+
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">
-        {!threadId ? (
+        {!aiEnabled ? (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-4 py-12 text-center select-none">
+            <div className="bg-primary/10 text-primary rounded-full p-4">
+              <Brain size={32} />
+            </div>
+            <div>
+              <h3 className="text-title-sm text-on-surface font-bold">
+                AI Assistant Disabled
+              </h3>
+              <p className="text-body-sm text-on-surface-variant mt-1.5 leading-relaxed">
+                Please enable the Auto-Summarize Threads setting in the settings page to use the Nexus Assistant.
+              </p>
+            </div>
+          </div>
+        ) : !threadId ? (
           // Welcome View when no email is selected
           <div className="flex h-full flex-col items-center justify-center gap-4 px-4 py-12 text-center select-none">
             <div className="bg-primary/10 text-primary rounded-full p-4">
@@ -380,13 +422,12 @@ export default function AiPanel({
               <div className="h-12 w-full rounded bg-gray-200"></div>
             </div>
           </div>
-        ) : error && !activeAnalysis ? (
+        ) : queryError && !activeAnalysis ? (
           // Error State View
           <div className="flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800">
             <h4 className="text-body-md font-bold">Analysis Failed</h4>
             <p className="text-body-sm text-red-700">
-              There was an error communicating with OpenAI to analyze this
-              thread. Please verify your API Key and network.
+              {queryError?.message || "There was an error communicating with OpenAI to analyze this thread. Please verify your API Key and network."}
             </p>
           </div>
         ) : activeAnalysis ? (
@@ -430,9 +471,8 @@ export default function AiPanel({
                       />
                       <label
                         htmlFor={`task-${idx}`}
-                        className={`cursor-pointer leading-tight transition-all select-none ${
-                          completedTasks[idx] ? "line-through opacity-50" : ""
-                        }`}
+                        className={`cursor-pointer leading-tight transition-all select-none ${completedTasks[idx] ? "line-through opacity-50" : ""
+                          }`}
                       >
                         {task}
                       </label>
@@ -464,7 +504,7 @@ export default function AiPanel({
 
                 {activeAnalysis.meetingDetails.suggestedDateTimes &&
                   activeAnalysis.meetingDetails.suggestedDateTimes.length >
-                    0 && (
+                  0 && (
                     <div className="mt-1.5">
                       <p className="text-on-surface-variant/80 mb-1.5 text-xs font-semibold select-none">
                         Extracted Times (click to autofill):
