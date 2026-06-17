@@ -9,7 +9,10 @@ import UpcomingMeetings from "~/components/calendar_inbox/upcoming-meetings";
 
 import AiPanel from "~/components/ai/ai-panel";
 
-export default function InboxPage() {
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+
+function InboxContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -17,10 +20,13 @@ export default function InboxPage() {
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [currentEmails, setCurrentEmails] = useState<{ id: string }[]>([]);
 
-  // Clear selection when page or category changes
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q") || "";
+
+  // Clear selection when page, category, or search changes
   useEffect(() => {
     setSelectedEmails([]);
-  }, [page, category]);
+  }, [page, category, searchQuery]);
 
   return (
     <div className="bg-background text-on-background flex h-screen overflow-hidden flex-col">
@@ -37,6 +43,7 @@ export default function InboxPage() {
             selectedEmails={selectedEmails}
             setSelectedEmails={setSelectedEmails}
             emails={currentEmails}
+            searchQuery={searchQuery}
           />
           <div className="flex min-h-0 flex-1 gap-4">
             <EmailList
@@ -46,6 +53,7 @@ export default function InboxPage() {
               selectedEmails={selectedEmails}
               setSelectedEmails={setSelectedEmails}
               onEmailsChange={setCurrentEmails}
+              searchQuery={searchQuery}
             />
             <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
               <UpcomingMeetings />
@@ -56,5 +64,13 @@ export default function InboxPage() {
         {/* <AiPanel /> */}
       </div>
     </div>
+  );
+}
+
+export default function InboxPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <InboxContent />
+    </Suspense>
   );
 }

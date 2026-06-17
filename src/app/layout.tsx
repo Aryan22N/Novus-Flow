@@ -8,7 +8,7 @@ import { TRPCReactProvider } from "~/trpc/react";
 export const metadata: Metadata = {
   title: "Novus Flow",
   description: "Manage Email and Calendar with AI",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/Novus_favi.png" }],
 };
 
 const inter = Inter({

@@ -76,8 +76,19 @@ export default function TopSearchBar({
 
           <input
             type="text"
+            spellCheck={false}
             placeholder="Search mail, people, and files..."
             className="h-full w-full rounded-full bg-transparent py-2 pr-12 pl-12 text-sm outline-none"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const query = e.currentTarget.value.trim();
+                if (query) {
+                  router.push(`/inbox?q=${encodeURIComponent(query)}`);
+                } else {
+                  router.push(`/inbox`);
+                }
+              }
+            }}
           />
 
           <button className="absolute right-4">
@@ -92,7 +103,7 @@ export default function TopSearchBar({
           <CircleHelp size={20} className="text-gray-600" />
         </button>
 
-        <button 
+        <button
           onClick={() => router.push('/settings')}
           className={`rounded-full p-2 transition-colors ${isSettings ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'}`}
         >

@@ -107,7 +107,7 @@ export const calendarRouter = createTRPCRouter({
       // ── 2. Fallback: live fetch from Google Calendar API ──────────────────
       try {
         const client = corsair.withTenant(tenantId) as any;
-        const result = (await client.googlecalendar!.api!.events!.list({
+        const result = (await client.googlecalendar!.api!.events!.getMany({
           timeMin,
           timeMax,
           maxResults: 100,
@@ -167,7 +167,7 @@ export const calendarRouter = createTRPCRouter({
       let result: { items?: any[] } | null = null;
       try {
         // showDeleted: true → Google returns cancelled events so we can delete them
-        result = (await client.googlecalendar!.api!.events!.list({
+        result = (await client.googlecalendar!.api!.events!.getMany({
           timeMin,
           timeMax,
           maxResults: 250,

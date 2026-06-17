@@ -15,6 +15,7 @@ interface EmailListProps {
   selectedEmails: string[];
   setSelectedEmails: React.Dispatch<React.SetStateAction<string[]>>;
   onEmailsChange?: (emails: any[]) => void;
+  searchQuery?: string;
 }
 
 export default function EmailList({
@@ -25,12 +26,27 @@ export default function EmailList({
   selectedEmails,
   setSelectedEmails,
   onEmailsChange,
+  searchQuery,
 }: EmailListProps) {
-  const { data, isPending } = api.email.getInboxThreads.useQuery({
-    page,
-    category,
-    isStarred: isStarredOnly,
-  });
+  const isSearchMode = !!searchQuery?.trim();
+
+  const inboxQuery = api.email.getInboxThreads.useQuery(
+    {
+      page,
+      category,
+      isStarred: isStarredOnly,
+    },
+    { enabled: !isSearchMode }
+  );
+
+  const searchQueryFetch = api.email.searchEmails.useQuery(
+    { query: searchQuery || "" },
+    { enabled: isSearchMode }
+  );
+
+  const data = isSearchMode ? searchQueryFetch.data : inboxQuery.data;
+  const isPending = isSearchMode ? searchQueryFetch.isPending : inboxQuery.isPending;
+
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   // Surface total count to parent for the pagination label in InboxHeader
@@ -156,7 +172,14 @@ export default function EmailList({
         </div>
       ) : emails?.length === 0 ? (
         <div className="flex h-32 items-center justify-center text-gray-500">
-          No threads found
+          {isSearchMode ? (
+            <div className="flex flex-col items-center gap-2 mt-10">
+              <span className="text-lg font-medium text-slate-600">🔍 No emails found for "{searchQuery}".</span>
+              <span className="text-sm">Try another keyword.</span>
+            </div>
+          ) : (
+            "No threads found"
+          )}
         </div>
       ) : (
         emails?.map((email) => {

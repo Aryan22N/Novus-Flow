@@ -24,6 +24,7 @@ interface InboxHeaderProps {
   selectedEmails: string[];
   setSelectedEmails: React.Dispatch<React.SetStateAction<string[]>>;
   emails: { id: string }[];
+  searchQuery?: string;
 }
 
 export default function InboxHeader({
@@ -36,6 +37,7 @@ export default function InboxHeader({
   selectedEmails,
   setSelectedEmails,
   emails,
+  searchQuery,
 }: InboxHeaderProps) {
   const utils = api.useUtils();
 
@@ -260,7 +262,13 @@ export default function InboxHeader({
         </div>
       </div>
 
-      <InboxFilters category={category} onCategoryChange={onCategoryChange} />
+      {searchQuery ? (
+        <div className="flex items-center px-2 py-1 text-[15px] text-gray-800 border-b border-gray-100 pb-2">
+          Search Results for <span className="font-semibold mx-1">"{searchQuery}"</span> ({total} emails found)
+        </div>
+      ) : (
+        <InboxFilters category={category} onCategoryChange={onCategoryChange} />
+      )}
     </div>
   );
 }

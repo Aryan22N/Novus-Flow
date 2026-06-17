@@ -2,24 +2,28 @@
 
 import { authClient } from "~/server/better-auth/client";
 import { useRouter } from "next/navigation";
-import { Mail, Calendar, ArrowRight } from "lucide-react";
+import { Mail, Calendar, ArrowRight, CheckCircle2 } from "lucide-react";
 import { api } from "~/trpc/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function OnboardingPage() {
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
   const router = useRouter();
-  const { data: hasConnectedAccounts, isPending: isCheckingAccounts } =
-    api.account.hasConnectedAccounts.useQuery(undefined, {
+
+  const { data: connectedIntegrations = [], isPending: isCheckingAccounts } =
+    api.account.getConnectedIntegrations.useQuery(undefined, {
       enabled: !!session?.user,
     });
 
   const registerWebhook = api.calendar.registerWebhook.useMutation();
   const hasTriggeredRef = useRef(false);
 
+  const hasEmail = connectedIntegrations.includes("gmail");
+  const hasCalendar = connectedIntegrations.includes("googlecalendar");
+
+  // Auto-route to inbox if both are connected
   useEffect(() => {
-    if (hasConnectedAccounts && !hasTriggeredRef.current) {
+    if (hasEmail && hasCalendar && !hasTriggeredRef.current) {
       hasTriggeredRef.current = true;
       registerWebhook.mutate(undefined, {
         onSettled: () => {
@@ -27,10 +31,9 @@ export default function OnboardingPage() {
         },
       });
     }
-  }, [hasConnectedAccounts, router, registerWebhook]);
+  }, [hasEmail, hasCalendar, router, registerWebhook]);
 
-  const isPending =
-    isSessionPending || isCheckingAccounts || hasConnectedAccounts;
+  const isPending = isSessionPending || isCheckingAccounts || (hasEmail && hasCalendar);
 
   if (isPending) {
     return (
@@ -48,91 +51,92 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-xl">
-        <div className="mb-10 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+    <div className="flex min-h-screen items-center justify-center bg-[#F3F6FB] p-4 font-sans">
+      <div className="w-full max-w-[480px] overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        {/* Header Section */}
+        <div className="bg-gradient-to-b from-blue-50/50 to-white p-8 pb-6 text-center">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-blue-100 shadow-sm">
             {session.user.image ? (
               <img
                 src={session.user.image}
                 alt="Avatar"
-                className="h-full w-full rounded-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-2xl font-bold text-blue-600">
+              <span className="text-3xl font-bold text-blue-600">
                 {session.user.name?.charAt(0) || "U"}
               </span>
             )}
           </div>
-          <h1 className="mb-2 text-3xl font-bold text-slate-900">
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-900">
             Welcome, {session.user.name?.split(" ")[0]}!
           </h1>
-          <p className="text-slate-500">
-            Let&apos;s set up your workspace by connecting your essential
-            accounts.
+          <p className="text-[15px] text-slate-500">
+            {!hasEmail 
+              ? "Let's set up your workspace by connecting your email account."
+              : "Great! Now let's connect your calendar to sync your schedule."}
           </p>
         </div>
 
-        <div className="space-y-4">
-          <button
-            onClick={() =>
-              (window.location.href = "/api/corsair/connect?plugin=gmail")
-            }
-            className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-red-200 hover:shadow-md"
-          >
-            <div className="absolute inset-0 bg-red-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100"></div>
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600">
-                <Mail size={20} />
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-slate-900">Connect Gmail</h3>
-                <p className="text-sm text-slate-500">
-                  Sync your inbox & emails
-                </p>
-              </div>
-            </div>
-            <ArrowRight
-              size={20}
-              className="relative transform text-slate-400 transition-all group-hover:translate-x-1 group-hover:text-red-500"
-            />
-          </button>
-
-          <button
-            onClick={() =>
-            (window.location.href =
-              "/api/corsair/connect?plugin=googlecalendar")
-            }
-            className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-blue-200 hover:shadow-md"
-          >
-            <div className="absolute inset-0 bg-blue-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100"></div>
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                <Calendar size={20} />
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-slate-900">
-                  Connect Calendar
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Sync your events & meetings
-                </p>
-              </div>
-            </div>
-            <ArrowRight
-              size={20}
-              className="relative transform text-slate-400 transition-all group-hover:translate-x-1 group-hover:text-blue-500"
-            />
-          </button>
+        {/* Progress Bar */}
+        <div className="px-8">
+          <div className="flex items-center gap-2">
+            <div className={`h-1.5 flex-1 rounded-full ${hasEmail ? 'bg-blue-600' : 'bg-blue-600'}`} />
+            <div className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${hasEmail ? 'bg-blue-600' : 'bg-slate-100'}`} />
+          </div>
+          <div className="mt-2 flex justify-between text-xs font-medium text-slate-400">
+            <span className={hasEmail ? "text-slate-600" : "text-blue-600"}>Email Sync</span>
+            <span className={hasEmail ? "text-blue-600" : ""}>Calendar Sync</span>
+          </div>
         </div>
 
-        <div className="mt-10 text-center">
-          <button
-            onClick={() => router.push("/inbox")}
-            className="text-primary hover:text-primary/80 mx-auto flex cursor-pointer items-center justify-center gap-2 text-sm font-semibold transition-colors"
-          >
-            Continue to Inbox <ArrowRight size={16} />
-          </button>
+        {/* Steps Content */}
+        <div className="p-8 pt-8">
+          {!hasEmail ? (
+            // STEP 1: Connect Email
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-6 rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-red-500 shadow-sm">
+                  <Mail size={24} strokeWidth={2.5} />
+                </div>
+                <h3 className="mb-1 font-semibold text-slate-900">Gmail Integration</h3>
+                <p className="text-sm text-slate-500">
+                  Required to sync your inbox, send emails, and use AI features.
+                </p>
+              </div>
+
+              <button
+                onClick={() => (window.location.href = "/api/corsair/connect?plugin=gmail")}
+                className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-semibold text-white transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 active:scale-[0.98]"
+              >
+                Connect Gmail
+                <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+              </button>
+            </div>
+          ) : (
+            // STEP 2: Connect Calendar
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-6 rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-500 shadow-sm">
+                  <Calendar size={24} strokeWidth={2.5} />
+                </div>
+                <h3 className="mb-1 font-semibold text-slate-900">Google Calendar</h3>
+                <p className="text-sm text-slate-500">
+                  Required to sync your meetings, schedule events, and manage your time.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => (window.location.href = "/api/corsair/connect?plugin=googlecalendar")}
+                  className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-semibold text-white transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 active:scale-[0.98]"
+                >
+                  Connect Calendar
+                  <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

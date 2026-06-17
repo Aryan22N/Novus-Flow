@@ -129,6 +129,113 @@ export const emailRouter = createTRPCRouter({
       };
     }),
 
+  searchEmails: protectedProcedure
+    .input(
+      z.object({
+        query: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const tenantId = ctx.session.user.id;
+      const searchTerms = `%${input.query}%`;
+
+      const messages = await ctx.db
+        .select({ entity: corsairEntities })
+        .from(corsairEntities)
+        .innerJoin(
+          corsairAccounts,
+          and(
+            eq(corsairEntities.accountId, corsairAccounts.id),
+            eq(corsairAccounts.tenantId, tenantId),
+          ),
+        )
+        .where(
+          and(
+            eq(corsairEntities.entityType, "messages"),
+            eq(corsairEntities.isArchived, false),
+            eq(corsairEntities.isDeleted, false),
+            or(
+              ilike(sql`${corsairEntities.data}->>'subject'`, searchTerms),
+              ilike(sql`${corsairEntities.data}->>'snippet'`, searchTerms),
+              ilike(sql`${corsairEntities.data}->>'from'`, searchTerms),
+              ilike(sql`${corsairEntities.data}->>'to'`, searchTerms)
+            )
+          )
+        )
+        .orderBy(desc(corsairEntities.createdAt))
+        .limit(200);
+
+      // Deduplicate by Gmail thread ID
+      const seen = new Set<string>();
+
+      const allEmails = messages
+        .filter(({ entity: message }) => {
+          const data = message.data as any;
+          return !!data?.payload;
+        })
+        .map(({ entity: message }) => {
+          const data = message.data as any;
+
+          const headers = data?.payload?.headers ?? [];
+
+          const from = getHeader(headers, "From");
+
+          const dateHeader = getHeader(headers, "Date");
+          const headerTimestamp = dateHeader
+            ? new Date(dateHeader).getTime()
+            : NaN;
+
+          const getEmailCategory = (labelIds?: string[]) => {
+            if (!labelIds) return "primary";
+            if (labelIds.includes("CATEGORY_PROMOTIONS")) return "promotions";
+            if (labelIds.includes("CATEGORY_SOCIAL")) return "socials";
+            if (labelIds.includes("CATEGORY_UPDATES")) return "updates";
+            return "primary";
+          };
+
+          return {
+            id: message.entityId,
+            threadId: data.threadId || message.entityId,
+
+            sender: extractSender(from),
+
+            senderEmail: from?.match(/<(.+?)>/)?.[1] ?? from,
+
+            subject: getHeader(headers, "Subject") ?? "(no subject)",
+
+            snippet: data.snippet ?? "",
+
+            unread: !message.isRead,
+
+            isStarred: data.labelIds?.includes("STARRED"),
+
+            category: getEmailCategory(data.labelIds),
+
+            date: new Date(
+              data.internalDate
+                ? Number(data.internalDate)
+                : !Number.isNaN(headerTimestamp)
+                  ? headerTimestamp
+                  : data.createdAt || Date.now(),
+            ),
+          };
+        })
+        .filter((email) => {
+          if (seen.has(email.threadId)) return false;
+          seen.add(email.threadId);
+          return true;
+        })
+        .slice(0, 50);
+
+      return {
+        emails: allEmails,
+        total: allEmails.length,
+        page: 1,
+        pageSize: 50,
+        pageCount: 1,
+      };
+    }),
+
   getUnreadCounts: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = ctx.session.user.id;
     const messages = await ctx.db

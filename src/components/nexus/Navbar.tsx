@@ -4,6 +4,7 @@ import { Sparkles, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { authClient } from "~/server/better-auth/client";
 import { useRouter } from "next/navigation";
+import { api } from "~/trpc/react";
 
 const nav = [
   { label: "Features", href: "#features" },
@@ -15,8 +16,19 @@ const nav = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
   const router = useRouter();
+
+  const { data: connectedIntegrations = [], isPending: isCheckingAccounts } =
+    api.account.getConnectedIntegrations.useQuery(undefined, {
+      enabled: !!session?.user,
+    });
+
+  const hasEmail = connectedIntegrations.includes("gmail");
+  const hasCalendar = connectedIntegrations.includes("googlecalendar");
+  const isFullyOnboarded = hasEmail && hasCalendar;
+
+  const isPending = isSessionPending || (!!session?.user && isCheckingAccounts);
 
   const handleSignIn = async () => {
     await authClient.signIn.social({
@@ -63,31 +75,22 @@ export function Navbar() {
         </nav>
         <div className="flex items-center gap-2">
           {isPending ? (
-            <div className="h-9 w-20 animate-pulse rounded-full bg-black/5" />
+            <div className="h-9 w-24 animate-pulse rounded-full bg-black/5" />
           ) : session ? (
             <button
-              onClick={() => router.push("/inbox")}
+              onClick={() => router.push(isFullyOnboarded ? "/inbox" : "/onboarding")}
               className="group inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-cta px-4 py-2 text-[13.5px] font-semibold text-white shadow-[0_8px_24px_-8px_rgba(26,115,232,0.7)] transition hover:shadow-[0_14px_40px_-12px_rgba(70,72,212,0.7)]"
             >
-              Go to Inbox
+              {isFullyOnboarded ? "Go to Inbox" : "Continue Setup"}
               <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
             </button>
           ) : (
-            <>
-              <button
-                onClick={handleSignIn}
-                className="hidden cursor-pointer rounded-full px-4 py-2 text-[13.5px] font-medium text-ink-soft hover:bg-black/[0.04] hover:text-ink sm:inline-block"
-              >
-                Sign in
-              </button>
-              <button
-                onClick={handleSignIn}
-                className="group inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-cta px-4 py-2 text-[13.5px] font-semibold text-white shadow-[0_8px_24px_-8px_rgba(26,115,232,0.7)] transition hover:shadow-[0_14px_40px_-12px_rgba(70,72,212,0.7)]"
-              >
-                Get Started
-                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-              </button>
-            </>
+            <button
+              onClick={handleSignIn}
+              className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            >
+              Sign in
+            </button>
           )}
         </div>
       </div>
