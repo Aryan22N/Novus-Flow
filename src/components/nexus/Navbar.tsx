@@ -62,7 +62,7 @@ export function Navbar() {
         >
           <img
             src="/Nexus_Flow_logo.png"
-            alt="Logo"
+            alt="Novus_Logo"
             className="h-35 w-35 pt-5 pb-3 object-contain select-none"
           />
         </motion.a>
