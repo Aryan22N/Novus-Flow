@@ -283,7 +283,7 @@ export default function AiPanel({
     scheduleMutation.mutate({
       summary:
         activeAnalysis?.meetingDetails.proposedTopic || "AI Scheduled Sync",
-      description: `Meeting scheduled by Nexus Assistant from thread: ${threadId}\n\nSummary:\n${activeAnalysis?.summary.replace(/<[^>]*>/g, "")}`,
+      description: `Meeting scheduled by Novus Assistant from thread: ${threadId}\n\nSummary:\n${activeAnalysis?.summary.replace(/<[^>]*>/g, "")}`,
       meetingTime: meetingTime,
     });
   };
@@ -307,7 +307,7 @@ export default function AiPanel({
           </button>
 
           <div className="text-label-caps text-on-surface-variant font-bold tracking-widest uppercase select-none [writing-mode:vertical-lr]">
-            Nexus Assistant
+            Novus Assistant
           </div>
         </div>
       </aside>
@@ -330,7 +330,7 @@ export default function AiPanel({
         <div className="text-primary flex items-center gap-2 select-none">
           <Brain size={20} className="animate-pulse" />
           <h2 className="text-title-sm font-title-sm font-bold">
-            Nexus Assistant
+            Novus Assistant
           </h2>
         </div>
 
@@ -362,7 +362,7 @@ export default function AiPanel({
                 AI Assistant Disabled
               </h3>
               <p className="text-body-sm text-on-surface-variant mt-1.5 leading-relaxed">
-                Please enable the Auto-Summarize Threads setting in the settings page to use the Nexus Assistant.
+                Please enable the Auto-Summarize Threads setting in the settings page to use the Novus Assistant.
               </p>
             </div>
           </div>
@@ -381,7 +381,7 @@ export default function AiPanel({
                 No Email Selected
               </h3>
               <p className="text-body-sm text-on-surface-variant mt-1.5 leading-relaxed">
-                Select an email thread from your inbox, and Nexus Assistant will
+                Select an email thread from your inbox, and Novus Assistant will
                 automatically analyze it for summaries, tasks, and scheduling
                 options.
               </p>

@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
 import { ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import AppSidebar from "~/components/layout/app-sidebar";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -329,6 +330,10 @@ export default function CalendarPage() {
         date: today.toISOString().substring(0, 10),
         time: "10:00",
       });
+      toast.success("Event created");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create event");
     },
   });
 

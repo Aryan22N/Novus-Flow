@@ -8,7 +8,7 @@ import { api } from "~/trpc/react";
 
 const nav = [
   { label: "Features", href: "#features" },
-  { label: "AI Assistant", href: "#assistant" },
+  // { label: "AI Assistant", href: "#assistant" },
   { label: "Nova Voice", href: "#nova" },
   { label: "Calendar", href: "#calendar" },
   { label: "Demo", href: "#demo" },
@@ -53,15 +53,19 @@ export function Navbar() {
       style={scrolled ? undefined : { backdropFilter: "blur(6px)" }}
     >
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-6">
-        <a href="#" className="flex items-center gap-2.5">
-          <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-cta text-white shadow-[0_8px_24px_-8px_rgba(26,115,232,0.6)]">
-            <Sparkles className="h-4.5 w-4.5" strokeWidth={2.4} />
-            <span className="absolute inset-0 rounded-xl ring-1 ring-white/40" />
-          </span>
-          <span className="text-[15px] font-semibold tracking-tight text-ink">
-            Novus<span className="text-gradient"> Flow</span>
-          </span>
-        </a>
+        <motion.a
+          href="/"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className="inline-block"
+        >
+          <img
+            src="/Nexus_Flow_logo.png"
+            alt="Logo"
+            className="h-35 w-35 pt-5 pb-3 object-contain select-none"
+          />
+        </motion.a>
         <nav className="hidden items-center gap-1 md:flex">
           {nav.map((n) => (
             <a

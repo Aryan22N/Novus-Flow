@@ -219,21 +219,40 @@ export function Hero() {
   };
 
   return (
-    <section className="relative pt-38 pb-37">
+    <section className="relative pt-32 pb-37">
       <div className="relative mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-2 lg:items-center">
         <div>
 
 
-          <motion.h1
+          {/* <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.05 }}
             className="mt-5 text-[44px] font-semibold leading-[1.05] tracking-[-0.02em] text-ink sm:text-[56px] lg:text-[72px] font-[family-name:var(--font-plus-jakarta-sans)]"
           >
-            Manage Email, Calendar, and{" "}
+            Manage Email, Calendar with{" "}
             <span className="text-gradient">AI</span> in One Place.
+          </motion.h1> */}
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.05 }}
+            className="mt-5 text-[43px] font-semibold leading-[1.05] tracking-[-0.02em] text-ink sm:text-[56px] lg:text-[69px] font-[family-name:var(--font-plus-jakarta-sans)]"
+          >
+            Every Opportunity Starts
+            <br />
+            With an <span className="text-gradient">Email.</span>
           </motion.h1>
 
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="mt-6 max-w-xl text-[18px] leading-relaxed text-ink-soft"
+          >
+            Leads, meetings, follow-ups, and important conversations all start in your inbox.
+            Nexus Flow ensures nothing slips through the cracks.
+          </motion.p>
 
 
           <motion.p
@@ -544,7 +563,7 @@ export function Overview() {
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
           <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-900 shadow-sm">
-            Deployments made easy
+            Never Miss an Opportunity
           </span>
           <h2 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
             Everything you need.{" "}
@@ -573,13 +592,13 @@ export function Overview() {
 
                   {/* Text & Icon Content */}
                   <div className="flex flex-1 flex-col">
-                    <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-900 ring-1 ring-inset ring-slate-100 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white group-hover:ring-blue-600">
+                    {/* REMOVED: group-hover classes to disable the icon animation */}
+                    <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-900 ring-1 ring-inset ring-slate-100">
                       <c.icon className="h-5 w-5" strokeWidth={2.5} />
                     </div>
 
                     <h3 className="mb-3 text-xl font-bold text-slate-900">{c.title}</h3>
 
-                    {/* For smaller squares, we keep text light. For wide rectangles, we might have a description. */}
                     <p className="mb-8 text-sm leading-relaxed text-slate-500">
                       With our intuitive workflow, you can easily manage your tasks and deployments without complex steps.
                     </p>
@@ -597,10 +616,42 @@ export function Overview() {
                     </ul>
                   </div>
 
-                  {/* Optional Visual Placeholder for Wide Cards (To match the reference image's empty space) */}
+                  {/* Visual Asset for Wide Cards */}
                   {(i === 0 || i === 3) && (
-                    <div className="mt-8 hidden flex-1 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 lg:mt-0 lg:flex">
-                      <span className="text-xs font-semibold text-slate-400">Dashboard UI / Visual Asset goes here</span>
+                    <div className="relative mt-8 hidden flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 lg:mt-0 lg:flex overflow-hidden shadow-inner">
+
+                      {/* Subtle gradient overlay to make labels pop */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-transparent to-transparent z-10 pointer-events-none" />
+
+                      {i === 0 && (
+                        <>
+                          <img
+                            src="/inbox_novus.png"
+                            alt="Inbox Novus"
+                            className="h-full w-full object-cover object-left-top transition-transform duration-700 ease-out group-hover:scale-105"
+                          />
+                          {/* Overlay Label */}
+                          <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-md ring-1 ring-black/5">
+                            <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                            Inbox Synced
+                          </div>
+                        </>
+                      )}
+
+                      {i === 3 && (
+                        <>
+                          <img
+                            src="/voice_nova.png"
+                            alt="Voice Nova"
+                            className="h-full w-full object-cover object-left-top transition-transform duration-700 ease-out group-hover:scale-105"
+                          />
+                          {/* Overlay Label */}
+                          <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-md ring-1 ring-black/5">
+                            <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>
+                            Voice AI Active
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -893,11 +944,11 @@ export function HowItWorksSection() {
 
 /* ============ SCREENSHOTS DATA ============ */
 const shots = [
-  { t: "Inbox", sub: "Priority + categorized" },
-  { t: "Email Thread", sub: "With AI summary" },
-  { t: "Assistant Panel", sub: "Draft · summarize · extract" },
-  { t: "Calendar", sub: "Two-way Google sync" },
-  { t: "Voice Interface", sub: "Nova listening" },
+  { t: "Inbox", sub: "Priority + categorized", video: "/Nova_inbox_assisst_vid.mp4" },
+  { t: "Email Thread", sub: "With AI summary", video: "/Nova_summary_vid.mp4" },
+  { t: "Assistant Panel", sub: "Draft · summarize · extract", video: "/Nova_assistent_vid.mp4" },
+  { t: "Calendar", sub: "Two-way Google sync", video: "/Nova_calendar_vid.mp4" },
+  { t: "Voice Interface", sub: "Nova listening", video: "/Nova_voice_vid.mp4" },
 ];
 
 /* Minimal Wireframe Placeholder for the UI */
@@ -966,7 +1017,18 @@ export function Screenshots() {
                 <div className="flex flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-slate-200">
                   {/* Image / Mockup Area */}
                   <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-900/5">
-                    <ScreenshotsFakeUI />
+                    {s.video ? (
+                      <video
+                        src={s.video}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="h-full w-full object-cover object-left-top"
+                      />
+                    ) : (
+                      <ScreenshotsFakeUI />
+                    )}
                     {/* Subtle inner overlay for gloss effect */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </div>
@@ -1073,9 +1135,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-cta text-white">
-              <Sparkles className="h-4 w-4" />
-            </span>
+
             <span className="text-[15px] font-semibold text-ink">
               Novus<span className="text-gradient"> Flow</span>
             </span>

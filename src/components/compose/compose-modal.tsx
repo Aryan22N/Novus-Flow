@@ -53,7 +53,7 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
   const [showToast, setShowToast] = useState(false);
   const [sentMessageId, setSentMessageId] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
-  
+
   // Autocomplete suggestions states
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -324,8 +324,7 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
           {/* AI Copilot Panel */}
           <div className="shrink-0 border-b border-slate-100 bg-slate-50 px-6 py-4">
             <div className="mb-3 flex items-center gap-2">
-              <Sparkles size={14} className="text-blue-600" />
-              <span className="bg-gradient-to-r from-blue-800 to-cyan-500 bg-clip-text text-xs font-bold tracking-wider text-transparent uppercase">
+              <span className="text-xs font-bold tracking-wider text-slate-700 uppercase">
                 Novus Flow
               </span>
             </div>
@@ -353,7 +352,7 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
                   });
                 }}
                 disabled={generateDraftMutation.isPending || !aiPrompt.trim()}
-                className="absolute top-1.5 right-2 rounded-lg bg-gradient-to-r from-blue-800 to-cyan-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="absolute top-1.5 right-2 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
                 {generateDraftMutation.isPending ? "Generating..." : "Generate Draft"}
               </button>
@@ -402,7 +401,7 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
               }}
               spellCheck={false}
             />
-            
+
             {showSuggestions && contactsSuggestions.length > 0 && (
               <div className="absolute left-14 top-full z-50 mt-1 max-h-60 w-[320px] overflow-y-auto rounded-xl border border-slate-100 bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 tracking-wider uppercase border-b border-slate-50">
@@ -518,19 +517,19 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
           {/* Footer Toolbar */}
           <footer className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-white px-3 py-2">
             <div className="flex items-center gap-4">
-              {/* Send Button Group */}
-              <div className="flex items-center overflow-hidden rounded-xl shadow-sm">
+              <div className="flex items-center rounded-full bg-[#0B57D0] shadow-sm">
                 <button
                   onClick={handleSend}
                   disabled={
                     sendMutation.isPending || !to.trim() || !subject.trim()
                   }
-                  className="rounded-l-full bg-[#2656C9] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1c46a3] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-l-full px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0842A0] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {sendMutation.isPending ? "Sending…" : "Send"}
+                  {sendMutation.isPending ? "Sending..." : "Send"}
                 </button>
-                <button className="rounded-r-full bg-[#2656C9] px-2 py-2.5 text-white transition-colors hover:bg-[#1c46a3] disabled:cursor-not-allowed disabled:opacity-50">
-                  <ChevronDown size={18} />
+                <div className="h-4 w-px bg-white/20" />
+                <button className="flex items-center justify-center rounded-r-full px-2 py-2 text-white transition-colors hover:bg-[#0842A0] disabled:cursor-not-allowed disabled:opacity-50">
+                  <ChevronDown size={16} />
                 </button>
               </div>
 

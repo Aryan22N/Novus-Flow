@@ -798,7 +798,6 @@ export const emailRouter = createTRPCRouter({
             return {
               id: fullMsg.id as string,
               threadId: fullMsg.threadId as string,
-              tenantId,
               to: extractSender(to),
               cc: null,
               bcc: null,
@@ -814,11 +813,12 @@ export const emailRouter = createTRPCRouter({
       } catch (error) {
         console.error("Failed to fetch sent emails from Gmail:", error);
         // Fallback to local DB if Gmail API fails
-        return ctx.db
+        const localSent = await ctx.db
           .select()
           .from(sentMail)
           .where(eq(sentMail.tenantId, tenantId))
           .orderBy(desc(sentMail.createdAt));
+        return localSent.map(({ tenantId, ...rest }) => rest);
       }
     }),
 
@@ -882,11 +882,12 @@ export const emailRouter = createTRPCRouter({
 
   getDrafts: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = ctx.session.user.id;
-    return ctx.db
+    const drafts = await ctx.db
       .select()
       .from(draftMail)
       .where(eq(draftMail.tenantId, tenantId))
       .orderBy(desc(draftMail.updatedAt));
+    return drafts.map(({ tenantId, ...rest }) => rest);
   }),
 
   deleteDraft: protectedProcedure
@@ -931,7 +932,7 @@ export const emailRouter = createTRPCRouter({
         .orderBy(desc(contacts.interactionCount), desc(contacts.lastContactedAt))
         .limit(5);
 
-      return results;
+      return results.map(({ userId, ...rest }) => rest);
     }),
 
   archiveEmails: protectedProcedure

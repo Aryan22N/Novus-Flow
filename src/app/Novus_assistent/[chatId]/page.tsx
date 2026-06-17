@@ -6,6 +6,7 @@ import { api } from "~/trpc/react";
 import ComposeModal from "~/components/compose/compose-modal";
 import { useSearchParams } from 'next/navigation';
 import { CldUploadWidget } from 'next-cloudinary';
+import { toast } from 'sonner';
 
 export default function ChatPage({ params }: { params: Promise<{ chatId: string }> }) {
   const resolvedParams = use(params);
@@ -40,7 +41,11 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   const [pendingNovaAction, setPendingNovaAction] = useState<any>(null);
 
   const utils = api.useUtils();
-  const createEventMutation = api.calendar.createEvent.useMutation();
+  const createEventMutation = api.calendar.createEvent.useMutation({
+    onError: (error) => {
+      toast.error(error.message || "Failed to create event in Google Calendar");
+    }
+  });
 
   const summarizeEmailsMutation = api.ai.summarizeRecentEmails.useMutation({
     onSuccess: (data) => {

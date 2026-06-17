@@ -124,8 +124,41 @@ export const calendarRouter = createTRPCRouter({
           return true;
         });
         return { events, source: "live" as const };
-      } catch (err) {
+      } catch (err: any) {
         console.error("[calendar.getEvents] live fetch failed:", err);
+        const errStr = String(err?.message || err);
+        if (errStr.includes("invalid_grant")) {
+          try {
+            const accounts = await ctx.db
+              .select({ id: corsairAccounts.id })
+              .from(corsairAccounts)
+              .where(
+                and(
+                  eq(corsairAccounts.tenantId, tenantId),
+                  eq(corsairAccounts.integrationId, "googlecalendar"),
+                ),
+              );
+            
+            for (const acc of accounts) {
+              await ctx.db.delete(corsairEntities).where(eq(corsairEntities.accountId, acc.id));
+              // Note: corsairEvents might exist, though calendar might not use them yet, safe to delete
+              // We need to import corsairEvents if we want to delete it. Let's just do it.
+            }
+
+            await ctx.db.delete(corsairAccounts).where(
+              and(
+                eq(corsairAccounts.tenantId, tenantId),
+                eq(corsairAccounts.integrationId, "googlecalendar")
+              )
+            );
+            console.log("[calendar.getEvents] Successfully deleted revoked Google Calendar account for tenant", tenantId);
+          } catch (dbErr) {
+            console.error("[calendar.getEvents] Failed to delete revoked account:", dbErr);
+          }
+          // Gracefully return to avoid unhandled promise rejection overlay. 
+          // The layout guard will catch the missing integration and redirect.
+          return { events: [], source: "error" as const };
+        }
         return { events: [], source: "error" as const };
       }
     }),
@@ -175,8 +208,39 @@ export const calendarRouter = createTRPCRouter({
           orderBy: "startTime",
           showDeleted: true,
         })) as { items?: any[] } | null;
-      } catch (err) {
+      } catch (err: any) {
         console.error("[syncEvents] Google Calendar API error:", err);
+        const errStr = String(err?.message || err);
+        if (errStr.includes("invalid_grant")) {
+          try {
+            const accounts = await ctx.db
+              .select({ id: corsairAccounts.id })
+              .from(corsairAccounts)
+              .where(
+                and(
+                  eq(corsairAccounts.tenantId, tenantId),
+                  eq(corsairAccounts.integrationId, "googlecalendar"),
+                ),
+              );
+
+            for (const acc of accounts) {
+              await ctx.db.delete(corsairEntities).where(eq(corsairEntities.accountId, acc.id));
+            }
+
+            await ctx.db.delete(corsairAccounts).where(
+              and(
+                eq(corsairAccounts.tenantId, tenantId),
+                eq(corsairAccounts.integrationId, "googlecalendar")
+              )
+            );
+            console.log("[syncEvents] Successfully deleted revoked Google Calendar account for tenant", tenantId);
+          } catch (dbErr) {
+            console.error("[syncEvents] Failed to delete revoked account:", dbErr);
+          }
+          // Gracefully return to avoid unhandled promise rejection overlay. 
+          // The layout guard will catch the missing integration and redirect.
+          return { synced: 0, deleted: 0, total: 0 };
+        }
         return { synced: 0, deleted: 0, total: 0 };
       }
 
@@ -376,8 +440,46 @@ export const calendarRouter = createTRPCRouter({
         }
 
         return { success: true, event: result };
-      } catch (err) {
+      } catch (err: any) {
         console.error("[calendar.createEvent] failed:", err);
+        const errStr = String(err?.message || err);
+
+        if (errStr.includes("Account not found") && errStr.includes("googlecalendar")) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Google Calendar is not connected. Please connect your account first.",
+          });
+        }
+
+        if (errStr.includes("invalid_grant")) {
+          try {
+            const accounts = await ctx.db
+              .select({ id: corsairAccounts.id })
+              .from(corsairAccounts)
+              .where(
+                and(
+                  eq(corsairAccounts.tenantId, tenantId),
+                  eq(corsairAccounts.integrationId, "googlecalendar"),
+                ),
+              );
+            for (const acc of accounts) {
+              await ctx.db.delete(corsairEntities).where(eq(corsairEntities.accountId, acc.id));
+            }
+            await ctx.db.delete(corsairAccounts).where(
+              and(
+                eq(corsairAccounts.tenantId, tenantId),
+                eq(corsairAccounts.integrationId, "googlecalendar")
+              )
+            );
+          } catch (dbErr) {
+            console.error("[calendar.createEvent] Failed to delete revoked account:", dbErr);
+          }
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Google Calendar connection expired. Please reconnect.",
+          });
+        }
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message:
