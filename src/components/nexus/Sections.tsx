@@ -279,7 +279,9 @@ export function Hero() {
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </button>
             <a
-              href="#demo"
+              href="https://youtu.be/JXwVIZw354U?si=lzrthk19XOmOKIIQ"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full glass px-5 py-3 text-sm font-semibold text-ink hover:bg-white"
             >
               <PlayCircle className="h-4.5 w-4.5 text-[#1A73E8]" />
@@ -1152,7 +1154,9 @@ export function CTA() {
             </button>
 
             <a
-              href="#demo"
+              href="https://youtu.be/JXwVIZw354U?si=lzrthk19XOmOKIIQ"
+              target="_blank"
+              rel="noopener noreferrer"
               className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-800 px-8 py-3.5 text-sm font-bold text-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-700 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-700 sm:w-auto"
             >
               <PlayCircle className="h-4 w-4 text-slate-400 dark:text-slate-300 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
