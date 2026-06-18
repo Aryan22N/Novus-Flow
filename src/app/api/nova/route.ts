@@ -11,6 +11,8 @@ import { getNovaSession, saveNovaSession, createNewChat, type NovaSession } from
 import { executeTool }                                  from "~/server/voice/actions";
 import { checkLimit, incrementUsage }                   from "~/server/ai/check-limit";
 
+export const maxDuration = 60;
+
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY!);
 
 // ── SSE helpers ───────────────────────────────────────────────────────────────

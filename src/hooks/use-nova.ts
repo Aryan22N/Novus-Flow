@@ -101,16 +101,61 @@ export function useNova() {
         body:    JSON.stringify(body),
       });
 
-      if (!res.ok && res.headers.get("content-type")?.includes("text/html")) {
-        throw new Error("Server returned HTML instead of JSON");
+      if (!res.ok) {
+        throw new Error("Server error");
       }
 
-      const data = await res.json() as {
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No reader");
+
+      const decoder = new TextDecoder();
+      let done = false;
+      let finalData: any = {};
+      let fullResponseText = "";
+      let hasStatus = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunkStr = decoder.decode(value, { stream: true });
+          const lines = chunkStr.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                if (data.status) {
+                  hasStatus = true;
+                  setResponseText(data.status);
+                }
+                
+                if (data.chunk) {
+                  fullResponseText += data.chunk;
+                  setResponseText(fullResponseText);
+                }
+                
+                if (data.response !== undefined || data.confirmationPending !== undefined) {
+                  finalData = { ...finalData, ...data };
+                }
+              } catch (e) {
+                // ignore parse errors for partial chunks
+              }
+            }
+          }
+        }
+      }
+
+      const data = finalData as {
         response:            string;
         confirmationPending?: boolean;
         pendingAction?:       PendingAction;
         pendingActions?:      any[];
       };
+
+      if (!data.response && fullResponseText) {
+        data.response = fullResponseText;
+      }
 
       setResponseText(data.response || "Something went wrong.");
 
