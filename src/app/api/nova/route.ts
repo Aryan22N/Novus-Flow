@@ -276,9 +276,18 @@ export async function POST(req: NextRequest) {
 
           controller.enqueue(encode({ response: responseText }));
           controller.close();
-        } catch (error: unknown) {
+        } catch (error: any) {
           console.error("Nova agent loop error:", error);
-          controller.enqueue(encode({ response: "I encountered an error while processing that." }));
+          const isRateLimit = 
+            error?.status === 429 || 
+            error?.message?.includes("429") || 
+            error?.message?.toLowerCase().includes("quota");
+            
+          const errorMessage = isRateLimit 
+            ? "I'm sorry, the AI rate limit was exceeded. Please wait a minute and try again."
+            : "I encountered an error while processing that.";
+            
+          controller.enqueue(encode({ response: errorMessage }));
           controller.close();
         }
       },

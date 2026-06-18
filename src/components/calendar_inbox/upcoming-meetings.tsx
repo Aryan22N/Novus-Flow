@@ -256,8 +256,8 @@ export default function CalendarEvents() {
 
   return (
     <div className="border-outline-variant dark:border-slate-800 flex h-[450px] flex-col rounded-xl border pt-4 shrink-0 shadow-sm transition-colors duration-300 bg-gradient-to-t from-[#dfe9f3] to-white dark:from-slate-900 dark:to-slate-900">
-      <h3 className="text-title-sm font-title-sm text-on-surface mb-3 pl-4 flex shrink-0 items-center gap-2 select-none">
-        <CalendarDays size={18} className="text-secondary" />
+      <h3 className="text-title-sm font-title-sm text-on-surface dark:text-slate-200 mb-3 pl-4 flex shrink-0 items-center gap-2 select-none">
+        <CalendarDays size={18} className="text-secondary dark:text-slate-400" />
         Calendar Events
       </h3>
 
@@ -295,19 +295,19 @@ export default function CalendarEvents() {
               >
                 <div className="mb-1 flex items-start justify-between gap-2">
                   <span
-                    className="text-body-md text-on-surface flex-1 truncate font-bold"
+                    className="text-body-md text-on-surface dark:text-slate-200 flex-1 truncate font-bold"
                     title={meeting.title}
                   >
                     {meeting.title}
                   </span>
-                  <div className="text-body-sm text-on-surface-variant flex shrink-0 items-center gap-1 whitespace-nowrap">
+                  <div className="text-body-sm text-on-surface-variant dark:text-slate-400 flex shrink-0 items-center gap-1 whitespace-nowrap">
                     <Clock3 size={14} />
                     <span>{meeting.time}</span>
                   </div>
                 </div>
                 {meeting.subtext && (
                   <p
-                    className="text-body-sm text-on-surface-variant mb-2 truncate"
+                    className="text-body-sm text-on-surface-variant dark:text-slate-400 mb-2 truncate"
                     title={meeting.subtext}
                   >
                     {meeting.subtext}
@@ -337,19 +337,19 @@ export default function CalendarEvents() {
               >
                 <div className="mb-1 flex items-start justify-between gap-2">
                   <span
-                    className="text-body-md text-on-surface flex-1 truncate font-bold"
+                    className="text-body-md text-on-surface dark:text-slate-200 flex-1 truncate font-bold"
                     title={meeting.title}
                   >
                     {meeting.title}
                   </span>
-                  <div className="text-body-sm text-on-surface-variant flex shrink-0 items-center gap-1 whitespace-nowrap">
+                  <div className="text-body-sm text-on-surface-variant dark:text-slate-400 flex shrink-0 items-center gap-1 whitespace-nowrap">
                     <Clock3 size={14} />
                     <span>{meeting.time}</span>
                   </div>
                 </div>
-                <div className="text-body-sm text-on-surface-variant mb-2 flex items-center gap-1">
-                  <Users size={14} className="text-secondary" />
-                  <span className="text-secondary text-xs font-medium">
+                <div className="text-body-sm text-on-surface-variant dark:text-slate-400 mb-2 flex items-center gap-1">
+                  <Users size={14} className="text-secondary dark:text-slate-400" />
+                  <span className="text-secondary dark:text-slate-300 text-xs font-medium">
                     {meeting.subtext}
                   </span>
                 </div>
@@ -379,7 +379,7 @@ export default function CalendarEvents() {
         )}
 
         {isLoading && (
-          <div className="text-on-surface-variant flex items-center justify-center gap-2 p-4 text-xs select-none">
+          <div className="text-on-surface-variant dark:text-slate-400 flex items-center justify-center gap-2 p-4 text-xs select-none">
             <Loader2 size={12} className="text-primary animate-spin" />
             <span>Loading calendar...</span>
           </div>
