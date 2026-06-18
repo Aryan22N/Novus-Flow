@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
 
           for (let i = 0; i < 8; i++) {
             const candidate    = result.response.candidates?.[0];
-            if (!candidate) break;
+            if (!candidate || !candidate.content || !candidate.content.parts) break;
 
             const functionCalls = candidate.content.parts.filter((p) => p.functionCall);
             if (functionCalls.length === 0) break;
@@ -234,7 +234,7 @@ export async function POST(req: NextRequest) {
             novaSession.pendingAction   = frontendPendingAction;
 
             const candidate    = result.response.candidates?.[0];
-            const textParts    = candidate?.content.parts.filter((p) => p.text).map((p) => p.text!) ?? [];
+            const textParts    = candidate?.content?.parts?.filter((p) => p.text).map((p) => p.text!) ?? [];
             const responseText = responseTextBuffer.length > 0 
               ? responseTextBuffer 
               : (textParts.length > 0 ? textParts.join("") : `Here's what I'll do:\n${combinedDraft}`);
@@ -259,8 +259,8 @@ export async function POST(req: NextRequest) {
           // ── Normal response ─────────────────────────────────────────────────
           const responseText = responseTextBuffer.length > 0 
             ? responseTextBuffer 
-            : (result.response.candidates?.[0]?.content.parts
-                .filter((p) => p.text)
+            : (result.response.candidates?.[0]?.content?.parts
+                ?.filter((p) => p.text)
                 .map((p)  => p.text)
                 .join("") ?? "I couldn't get a response. Please try again.");
 
@@ -294,7 +294,11 @@ export async function POST(req: NextRequest) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function summariseResult(tool: string, _data: unknown): string {
+function summariseResult(tool: string, data: any): string {
+  if (data && typeof data === "object" && data.error) {
+    const cleanTool = tool.replace("__confirmed_", "");
+    return `I encountered an error trying to run ${cleanTool}: ${String(data.error)}.`;
+  }
   if (tool === "sendEmail")           return "Your email has been sent.";
   if (tool === "createCalendarEvent") return "The event has been added to your calendar.";
   if (tool === "deleteCalendarEvent") return "The event has been successfully deleted from your calendar.";

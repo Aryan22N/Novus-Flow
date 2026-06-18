@@ -715,6 +715,7 @@ export const emailRouter = createTRPCRouter({
           subject: input.subject,
           body: input.body,
           messageId: result.id,
+          threadId: input.threadId || (result as any).threadId || null,
         });
 
         // Upsert contacts for successfully sent email
@@ -787,6 +788,7 @@ export const emailRouter = createTRPCRouter({
                 subject: subject as string,
                 body: (fullMsg.snippet as string) || "",
                 messageId: fullMsg.id as string,
+                threadId: fullMsg.threadId as string,
                 createdAt: date,
               };
             })
@@ -821,6 +823,7 @@ export const emailRouter = createTRPCRouter({
         bcc: z.string().optional(),
         subject: z.string().optional(),
         body: z.string().optional(),
+        threadId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -842,6 +845,7 @@ export const emailRouter = createTRPCRouter({
             bcc: input.bcc ?? "",
             subject: input.subject ?? "",
             body: input.body ?? "",
+            threadId: input.threadId ?? null,
             updatedAt: new Date(),
           })
           .where(eq(draftMail.id, draftId));
@@ -854,6 +858,7 @@ export const emailRouter = createTRPCRouter({
           bcc: input.bcc ?? "",
           subject: input.subject ?? "",
           body: input.body ?? "",
+          threadId: input.threadId ?? null,
         });
       }
 

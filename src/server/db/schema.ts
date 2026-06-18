@@ -120,6 +120,7 @@ export const sentMail = pgTable("sent_mail", {
   subject: text("subject").notNull(),
   body: text("body").notNull(),
   messageId: text("message_id"),
+  threadId: text("thread_id"),
   createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),
@@ -135,6 +136,7 @@ export const draftMail = pgTable("draft_mail", {
   bcc: text("bcc"),
   subject: text("subject"),
   body: text("body"),
+  threadId: text("thread_id"),
   createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),

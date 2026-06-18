@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
+import { authClient } from "~/server/better-auth/client";
 import {
   Inbox,
   Calendar,
@@ -23,6 +24,28 @@ import { motion } from "framer-motion";
 
 export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
+
+  const { data: connectedIntegrations = [], isPending: isChecking } =
+    api.account.getConnectedIntegrations.useQuery(undefined, {
+      enabled: !!session?.user,
+    });
+
+  const isPendingAuth = isSessionPending || isChecking;
+  const hasEmail = connectedIntegrations.includes("gmail");
+  const hasCalendar = connectedIntegrations.includes("googlecalendar");
+
+  useEffect(() => {
+    if (!isPendingAuth) {
+      if (!session?.user) {
+        router.push("/");
+      } else if (!hasEmail || !hasCalendar) {
+        router.push("/onboarding");
+      }
+    }
+  }, [isPendingAuth, session, hasEmail, hasCalendar, router]);
+
   const { data } = api.email.getUnreadCount.useQuery();
   const unreadCount = data?.count ?? 0;
 

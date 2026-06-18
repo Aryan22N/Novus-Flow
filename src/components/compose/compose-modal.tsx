@@ -209,6 +209,7 @@ export default function ComposeModal({ onClose, initialDraft }: ComposeModalProp
           bcc: bcc.trim(),
           subject: subject.trim(),
           body: body.trim(),
+          threadId: initialDraft?.threadId || undefined,
         });
       }, 1500);
     }
