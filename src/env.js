@@ -29,6 +29,7 @@ export const env = createEnv({
     ELEVENLABS_API_KEY: z.string().optional(),
     ELEVENLABS_VOICE_ID: z.string().optional(),
     CLOUDINARY_URL: z.string().url(),
+    GMAIL_PUBSUB_TOPIC: z.string().optional(),
   },
 
   /**
@@ -66,6 +67,7 @@ export const env = createEnv({
     ELEVENLABS_VOICE_ID: process.env.ELEVENLABS_VOICE_ID,
     CLOUDINARY_URL: process.env.CLOUDINARY_URL,
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    GMAIL_PUBSUB_TOPIC: process.env.GMAIL_PUBSUB_TOPIC,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -15,7 +15,8 @@ export default function OnboardingPage() {
       enabled: !!session?.user,
     });
 
-  const registerWebhook = api.calendar.registerWebhook.useMutation();
+  const registerCalendarWebhook = api.calendar.registerWebhook.useMutation();
+  const registerEmailWebhook = api.email.registerWebhook.useMutation();
   const hasTriggeredRef = useRef(false);
 
   const hasEmail = connectedIntegrations.includes("gmail");
@@ -25,13 +26,14 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (hasEmail && hasCalendar && !hasTriggeredRef.current) {
       hasTriggeredRef.current = true;
-      registerWebhook.mutate(undefined, {
-        onSettled: () => {
-          router.push("/inbox");
-        },
+      Promise.allSettled([
+        registerCalendarWebhook.mutateAsync(),
+        registerEmailWebhook.mutateAsync()
+      ]).then(() => {
+        router.push("/inbox");
       });
     }
-  }, [hasEmail, hasCalendar, router, registerWebhook]);
+  }, [hasEmail, hasCalendar, router, registerCalendarWebhook, registerEmailWebhook]);
 
   const isPending = isSessionPending || isCheckingAccounts || (hasEmail && hasCalendar);
 

@@ -1039,6 +1039,48 @@ export const emailRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  /**
+   * Registers a Gmail push-notification watch channel so that Google calls
+   * our /api/webhooks endpoint whenever the inbox changes.
+   */
+  registerWebhook: protectedProcedure.mutation(async ({ ctx }) => {
+    const tenantId = ctx.session.user.id;
+    const client = corsair.withTenant(tenantId) as any;
+    
+    const topicName = process.env.GMAIL_PUBSUB_TOPIC;
+    
+    if (!topicName) {
+      console.info("[email.registerWebhook] Skipping — GMAIL_PUBSUB_TOPIC is not set.");
+      return { success: false as const, reason: "no_topic_configured" };
+    }
+
+    try {
+      const res = await client.gmail!.api!.users!.watch({
+        userId: "me",
+        requestBody: {
+          topicName: topicName,
+          labelIds: ["INBOX"],
+        },
+      });
+
+      console.info(
+        `[email.registerWebhook] Watch registered: historyId=${res?.historyId} expiration=${res?.expiration}`
+      );
+
+      return {
+        success: true as const,
+        historyId: res?.historyId,
+        expiration: res?.expiration,
+      };
+    } catch (err) {
+      console.warn("[email.registerWebhook] Google rejected the watch request:", err);
+      return {
+        success: false as const,
+        reason: err instanceof Error ? err.message : "unknown",
+      };
+    }
+  }),
 });
 
 async function captureCorrection(data: {
