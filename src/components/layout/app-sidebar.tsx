@@ -36,31 +36,31 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
   const getLinkClass = (href: string) => {
     const isActive = pathname === href;
     const bgClass = isActive
-      ? "bg-[#d4e0fa] font-semibold"
-      : "hover:bg-[#DFDFE3]";
+      ? "bg-[#d4e0fa] dark:bg-[#1e293b] font-semibold"
+      : "hover:bg-[#DFDFE3] dark:hover:bg-slate-800";
     const layoutClass = isExpanded
       ? "px-6 py-3 rounded-r-full"
       : "justify-center w-12 h-12 rounded-full";
-    return `flex items-center gap-4 text-black transition-all duration-300 ${bgClass} ${layoutClass}`;
+    return `flex items-center gap-4 text-black dark:text-white transition-all duration-300 ${bgClass} ${layoutClass}`;
   };
 
   return (
     <>
       <div
-        className={`relative mt-2 pt-1 h-screen shrink-0 transition-all duration-300 ${isOpen ? "w-[250px]" : "w-[72px]"}`}
+        className={`relative  pt-1 h-screen shrink-0 transition-all duration-300 ${isOpen ? "w-[250px]" : "w-[72px]"}`}
       >
         <nav
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`sticky top-0 left-0 flex h-screen flex-col overflow-hidden bg-[#f7f9fc] py-4 text-[14px] transition-all duration-300 ${isExpanded ? "w-[250px]" : "w-[72px]"} ${isHovered && !isOpen ? "z-50 rounded-r-xl shadow-2xl" : "z-10"}`}
+          className={`sticky top-0 left-0 flex h-screen flex-col overflow-hidden bg-[#f7f9fc] dark:bg-[#0a0f1c] py-4 text-[14px] transition-all duration-300 ${isExpanded ? "w-[250px]" : "w-[72px]"} ${isHovered && !isOpen ? "z-50 rounded-r-xl shadow-2xl dark:shadow-black/50" : "z-10"}`}
         >
           {/* Compose Button */}
           <div
-            className={`mb-4 flex ${isExpanded ? "px-4" : "justify-center px-2"}`}
+            className={`mb-4 mt-7 flex ${isExpanded ? "px-4" : "justify-center px-2"}`}
           >
             <button
               onClick={() => setShowCompose(true)}
-              className={`flex h-15 items-center justify-center gap-2 bg-[#C9E6FC] font-[14px] text-[#0c2038] shadow-sm hover:shadow-[0_6px_16px_-2px_rgba(0,0,0,0.45)] transition-all duration-300 ${isExpanded ? "w-[160px] rounded-lg" : "w-12 rounded-2xl"}`}
+              className={`flex h-15 items-center justify-center gap-2 bg-[#C9E6FC] dark:bg-[#1e3a8a] font-[14px] text-[#0c2038] dark:text-[#bfdbfe] shadow-sm hover:shadow-[0_6px_16px_-2px_rgba(0,0,0,0.45)] dark:hover:shadow-[0_6px_16px_-2px_rgba(0,0,0,0.8)] transition-all duration-300 ${isExpanded ? "w-[160px] rounded-lg" : "w-12 rounded-2xl"}`}
             >
               <Pencil size={18} className="shrink-0" />
               {isExpanded && <span>Compose</span>}
@@ -77,7 +77,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
                 <>
                   <span className="flex-1">Inbox</span>
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-[#d4e0fa] px-2 py-0.5 text-[14px] font-normal text-black">
+                    <span className="rounded-full bg-[#d4e0fa] dark:bg-[#1e3a8a] px-2 py-0.5 text-[14px] font-normal text-black dark:text-[#bfdbfe]">
                       {unreadCount}
                     </span>
                   )}
@@ -135,7 +135,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
                   {/* Curved Arrow */}
                   <motion.path
                     d="M40 140 C40 80, 120 70, 150 110 C170 140, 130 155, 110 125 C90 95, 160 60, 210 45 C230 38, 245 25, 250 15"
-                    stroke="black"
+                    className="stroke-black dark:stroke-white"
                     strokeWidth="4"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -148,7 +148,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
                   {/* Arrow Head */}
                   <motion.path
                     d="M225 12 L250 15 L240 50"
-                    stroke="black"
+                    className="stroke-black dark:stroke-white"
                     strokeWidth="4"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -162,7 +162,7 @@ export default function AppSidebar({ isOpen = true }: { isOpen?: boolean }) {
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 1.5, duration: 0.5 }}
-                  className="text-xs text-black transform rotate-[-10deg] font-mono-custom mt-1 absolute top-7 right-1"
+                  className="text-xs text-black dark:text-white transform rotate-[-10deg] font-mono-custom mt-1 absolute top-7 right-1"
                 >
                   Nova Voice
                 </motion.div>

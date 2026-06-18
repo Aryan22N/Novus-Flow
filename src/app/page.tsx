@@ -18,7 +18,7 @@ import {
 
 export default function Index() {
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background dark:bg-[#0B0F19] transition-colors duration-500">
       <Navbar />
       <main>
         <div className="relative">

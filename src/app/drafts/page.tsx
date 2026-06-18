@@ -37,7 +37,7 @@ export default function DraftsPage() {
             </div> */}
           </div>
         </main>
-        <AiPanel />
+        {/* <AiPanel /> */}
       </div>
     </div>
   );

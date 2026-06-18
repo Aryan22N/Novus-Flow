@@ -42,7 +42,7 @@ export default function DraftMailList({
 
   return (
     <>
-      <div className="h-full flex-1 overflow-y-auto rounded-xl bg-[#F3F6FB]">
+      <div className="h-full flex-1 overflow-y-auto rounded-xl bg-[#F3F6FB] dark:bg-slate-900/50">
         {isPending ? (
           <div className="flex h-full items-center justify-center">
             <IsometricLoader />

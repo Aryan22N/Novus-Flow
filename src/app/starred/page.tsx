@@ -27,7 +27,7 @@ export default function StarredPage() {
       <TopSearchBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar isOpen={isSidebarOpen} />
-        <main className="bg-surface flex flex-1 flex-col overflow-hidden p-6 transition-all">
+        <main className="bg-surface flex flex-1 flex-col overflow-hidden p-1 transition-all min-w-0">
           <InboxHeader
             page={page}
             onPageChange={setPage}
@@ -38,7 +38,7 @@ export default function StarredPage() {
             setSelectedEmails={setSelectedEmails}
             emails={currentEmails}
           />
-          <div className="flex min-h-0 flex-1 gap-6">
+          <div className="flex min-h-0 flex-1 gap-4">
             <EmailList
               page={page}
               category={category}
@@ -48,13 +48,13 @@ export default function StarredPage() {
               setSelectedEmails={setSelectedEmails}
               onEmailsChange={setCurrentEmails}
             />
-            <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
+            {/* <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
               <UpcomingMeetings />
               
-            </div>
+            </div> */}
           </div>
         </main>
-        <AiPanel />
+        {/* <AiPanel /> */}
       </div>
     </div>
   );

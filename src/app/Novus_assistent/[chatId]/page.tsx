@@ -470,9 +470,10 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
 
           {(summarizeEmailsMutation.isPending || generateDraftMutation.isPending || isNovaPending) && (
             <div className="flex flex-col items-start message-fade-in mt-6">
-              <div className="flex items-center gap-3 rounded-2xl rounded-tl-none border border-outline-variant bg-surface p-4 shadow-sm text-on-surface-variant">
-                <Loader2 size={18} className="animate-spin text-primary" />
-                <span className="text-sm font-medium">Novus is processing your request...</span>
+              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-none border border-outline-variant bg-surface p-4 px-5 shadow-sm h-[52px]">
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
           )}

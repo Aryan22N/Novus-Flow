@@ -11,8 +11,8 @@ export default function googlecalendar() {
     <>
       <style>{`
         body {
-          background-color: #ffffff;
-          color: #3c4043;
+          background-color: var(--color-background, #ffffff);
+          color: var(--color-ink, #3c4043);
           overflow: hidden;
           height: 100vh;
         }
@@ -27,8 +27,8 @@ export default function googlecalendar() {
           overflow: hidden;
         }
         .calendar-grid div {
-          border-right: 1px solid #dadce0;
-          border-bottom: 1px solid #dadce0;
+          border-right: 1px solid var(--color-outline-variant, #dadce0);
+          border-bottom: 1px solid var(--color-outline-variant, #dadce0);
         }
         .calendar-grid .no-border-right {
           border-right: none;
@@ -43,7 +43,7 @@ export default function googlecalendar() {
           cursor: pointer;
         }
         .mini-calendar-cell:hover {
-          background-color: #f1f3f4;
+          background-color: var(--color-surface-container-high, #f1f3f4);
           border-radius: 50%;
         }
         .mini-calendar-today {
@@ -77,17 +77,17 @@ export default function googlecalendar() {
       <div className="app-container font-sans">
         {/* Main Header */}
         <header
-          className="border-google-border flex h-16 flex-shrink-0 items-center justify-between border-b px-4"
+          className="border-gray-200 dark:border-slate-800 flex h-16 flex-shrink-0 items-center justify-between border-b px-4 bg-white dark:bg-slate-900"
           data-purpose="top-navigation"
         >
           <div className="flex items-center gap-2">
             <button
-              className="hover:bg-google-hover rounded-full p-2"
+              className="hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full p-2"
               title="Main menu"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             >
               <svg
-                className="text-google-text h-6 w-6"
+                className="text-gray-700 dark:text-slate-200 h-6 w-6"
                 focusable="false"
                 viewBox="0 0 24 24"
               >
@@ -102,12 +102,12 @@ export default function googlecalendar() {
               />
             </Link>
             <div className="ml-10 flex items-center gap-2">
-              <button className="border-google-border rounded-custom hover:bg-google-hover border px-4 py-2 text-sm font-medium">
+              <button className="border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 rounded-custom hover:bg-gray-100 dark:hover:bg-slate-800 border px-4 py-2 text-sm font-medium">
                 Today
               </button>
               <div className="ml-2 flex items-center">
                 <button
-                  className="hover:bg-google-hover rounded-full p-2"
+                  className="hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-full p-2"
                   title="Previous month"
                 >
                   <svg
@@ -125,7 +125,7 @@ export default function googlecalendar() {
                   </svg>
                 </button>
                 <button
-                  className="hover:bg-google-hover rounded-full p-2"
+                  className="hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-full p-2"
                   title="Next month"
                 >
                   <svg
@@ -143,14 +143,14 @@ export default function googlecalendar() {
                   </svg>
                 </button>
               </div>
-              <h1 className="text-google-text ml-4 text-[22px]">June 2026</h1>
+              <h1 className="text-gray-700 dark:text-slate-200 ml-4 text-[22px]">June 2026</h1>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
-            <button className="hover:bg-google-hover rounded-full p-2">
+            <button className="hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full p-2">
               <svg
-                className="text-google-text h-6 w-6"
+                className="text-gray-700 dark:text-slate-200 h-6 w-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -163,9 +163,9 @@ export default function googlecalendar() {
                 ></path>
               </svg>
             </button>
-            <button className="hover:bg-google-hover rounded-full p-2">
+            <button className="hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full p-2">
               <svg
-                className="text-google-text h-6 w-6"
+                className="text-gray-700 dark:text-slate-200 h-6 w-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -178,9 +178,9 @@ export default function googlecalendar() {
                 ></path>
               </svg>
             </button>
-            <button className="hover:bg-google-hover mr-2 rounded-full p-2">
+            <button className="hover:bg-gray-100 dark:hover:bg-slate-800 mr-2 rounded-full p-2">
               <svg
-                className="text-google-text h-6 w-6"
+                className="text-gray-700 dark:text-slate-200 h-6 w-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -199,8 +199,8 @@ export default function googlecalendar() {
                 ></path>
               </svg>
             </button>
-            <div className="relative mr-2 inline-block text-left">
-              <button className="border-google-border rounded-custom hover:bg-google-hover flex items-center border px-3 py-1.5 text-sm font-medium">
+            <div className="relative mr-2 inline-block text-left text-gray-700 dark:text-slate-200">
+              <button className="border-gray-200 dark:border-slate-700 rounded-custom hover:bg-gray-100 dark:hover:bg-slate-800 flex items-center border px-3 py-1.5 text-sm font-medium">
                 Month
                 <svg
                   className="ml-1 h-4 w-4"
@@ -215,8 +215,8 @@ export default function googlecalendar() {
                 </svg>
               </button>
             </div>
-            <div className="rounded-custom mx-1 flex bg-[#e8f0fe] p-1">
-              <button className="rounded-custom bg-[#d2e3fc] p-1.5">
+            <div className="rounded-custom mx-1 flex bg-[#e8f0fe] dark:bg-blue-900/30 p-1">
+              <button className="rounded-custom bg-[#d2e3fc] dark:bg-blue-900/50 p-1.5">
                 <svg
                   className="text-primary h-5 w-5"
                   fill="currentColor"
@@ -225,9 +225,9 @@ export default function googlecalendar() {
                   <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"></path>
                 </svg>
               </button>
-              <button className="rounded-custom p-1.5 hover:bg-[#d2e3fc]">
+              <button className="rounded-custom p-1.5 hover:bg-[#d2e3fc] dark:hover:bg-blue-900/50">
                 <svg
-                  className="text-google-text h-5 w-5"
+                  className="text-gray-700 dark:text-slate-200 h-5 w-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -241,9 +241,9 @@ export default function googlecalendar() {
                 </svg>
               </button>
             </div>
-            <button className="hover:bg-google-hover rounded-full p-2">
+            <button className="hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full p-2">
               <svg
-                className="text-google-text h-6 w-6"
+                className="text-gray-700 dark:text-slate-200 h-6 w-6"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -261,45 +261,45 @@ export default function googlecalendar() {
 
           {/* Calendar Grid */}
           <section
-            className="flex flex-1 flex-col overflow-hidden bg-white"
+            className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-slate-900"
             data-purpose="calendar-month-view"
           >
             {/* Day Headers */}
             <div
-              className="border-google-border grid flex-shrink-0 grid-cols-7 border-b"
+              className="border-gray-200 dark:border-slate-800 grid flex-shrink-0 grid-cols-7 border-b bg-white dark:bg-slate-900"
               data-purpose="grid-headers"
             >
-              <div className="text-google-gray border-google-border border-r py-2 text-center text-[11px] font-medium">
+              <div className="text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-800 border-r py-2 text-center text-[11px] font-medium">
                 SUN
                 <br />
                 <span className="text-xs">31</span>
               </div>
-              <div className="text-google-gray border-google-border border-r py-2 text-center text-[11px] font-medium">
+              <div className="text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-800 border-r py-2 text-center text-[11px] font-medium">
                 MON
                 <br />
                 <span className="text-xs">Jun 1</span>
               </div>
-              <div className="text-google-gray border-google-border border-r py-2 text-center text-[11px] font-medium">
+              <div className="text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-800 border-r py-2 text-center text-[11px] font-medium">
                 TUE
                 <br />
                 <span className="text-xs">2</span>
               </div>
-              <div className="text-google-gray border-google-border border-r py-2 text-center text-[11px] font-medium">
+              <div className="text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-800 border-r py-2 text-center text-[11px] font-medium">
                 WED
                 <br />
                 <span className="text-xs">3</span>
               </div>
-              <div className="text-google-gray border-google-border border-r py-2 text-center text-[11px] font-medium">
+              <div className="text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-800 border-r py-2 text-center text-[11px] font-medium">
                 THU
                 <br />
                 <span className="text-xs">4</span>
               </div>
-              <div className="text-google-gray border-google-border border-r py-2 text-center text-[11px] font-medium">
+              <div className="text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-800 border-r py-2 text-center text-[11px] font-medium">
                 FRI
                 <br />
                 <span className="text-xs">5</span>
               </div>
-              <div className="text-google-gray py-2 text-center text-[11px] font-medium">
+              <div className="text-gray-500 dark:text-slate-400 py-2 text-center text-[11px] font-medium">
                 SAT
                 <br />
                 <span className="text-xs">6</span>

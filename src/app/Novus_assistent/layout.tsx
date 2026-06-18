@@ -73,7 +73,7 @@ export default function NovusAssistantLayout({ children }: { children: React.Rea
         <AppSidebar isOpen={isSidebarOpen} />
         
         {/* Main Content Area */}
-        <main className="flex-1 flex flex-col overflow-hidden relative w-full bg-gradient-to-br from-[#f7f9fc] via-[#eef3fb] to-[#e2eaf5] pr-12">
+        <main className="flex-1 flex flex-col overflow-hidden relative w-full bg-gradient-to-br from-[#f7f9fc] via-[#eef3fb] to-[#e2eaf5] dark:from-[#0a0f1c] dark:via-[#0f172a] dark:to-[#1e293b] transition-colors duration-300 pr-12">
           {children}
         </main>
 
@@ -81,7 +81,7 @@ export default function NovusAssistantLayout({ children }: { children: React.Rea
         <div 
           onMouseEnter={() => setIsChatSidebarOpen(true)}
           onMouseLeave={() => setIsChatSidebarOpen(false)}
-          className={`absolute right-0 top-0 bottom-0 z-20 border-l border-outline-variant bg-[#F3F6FB] transition-all duration-300 ease-in-out flex flex-col ${isChatSidebarOpen ? 'w-64 shadow-2xl' : 'w-12'}`}
+          className={`absolute right-0 top-0 bottom-0 z-20 border-l border-outline-variant dark:border-slate-800 bg-[#F3F6FB] dark:bg-[#0a0f1c] transition-all duration-300 ease-in-out flex flex-col ${isChatSidebarOpen ? 'w-64 shadow-2xl dark:shadow-black/50' : 'w-12'}`}
         >
           {isChatSidebarOpen && (
             <div className="flex flex-col h-full overflow-hidden message-fade-in w-64">
@@ -110,7 +110,7 @@ export default function NovusAssistantLayout({ children }: { children: React.Rea
                     >
                       <div className="flex items-center gap-2">
                         <MessageSquare size={14} className={activeChatId === chat.chatId ? "text-primary" : "text-outline"} />
-                        <span className={`text-sm truncate font-medium ${activeChatId === chat.chatId ? 'text-primary' : 'text-on-surface'}`}>
+                        <span className={`text-sm truncate font-medium ${activeChatId === chat.chatId ? 'text-primary' : 'text-on-surface dark:text-slate-300'}`}>
                           {chat.initialText || "New Conversation"}
                         </span>
                       </div>
@@ -125,7 +125,7 @@ export default function NovusAssistantLayout({ children }: { children: React.Rea
           )}
           
           {!isChatSidebarOpen && (
-            <div className="flex flex-col items-center py-4 w-12 h-full border-l border-outline-variant bg-[#F3F6FB]">
+            <div className="flex flex-col items-center py-4 w-12 h-full border-l border-outline-variant dark:border-slate-800 bg-[#F3F6FB] dark:bg-[#0a0f1c]">
                <button
                   onClick={() => router.push('/Novus_assistent')}
                   className="p-2 bg-primary text-white rounded-lg hover:bg-primary-container transition-colors shadow-sm"

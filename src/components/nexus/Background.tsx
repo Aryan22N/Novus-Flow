@@ -23,14 +23,14 @@ export function AuroraBackground() {
       className="pointer-events-none absolute inset-0 overflow-hidden"
       style={{
         background:
-          "radial-gradient(600px circle at var(--mx,30%) var(--my,20%), rgba(26,115,232,0.18), transparent 60%), radial-gradient(700px circle at calc(100% - var(--mx,30%)) calc(100% - var(--my,20%)), rgba(96,99,238,0.18), transparent 60%), radial-gradient(1200px circle at 50% -10%, rgba(232,240,254,0.9), transparent 60%)",
+          "radial-gradient(600px circle at var(--mx,30%) var(--my,20%), var(--aurora-1), transparent 60%), radial-gradient(700px circle at calc(100% - var(--mx,30%)) calc(100% - var(--my,20%)), var(--aurora-2), transparent 60%), radial-gradient(1200px circle at 50% -10%, var(--aurora-3), transparent 60%)",
       }}
     >
       <div
         className="absolute inset-0 opacity-[0.35]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(16,24,40,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(16,24,40,0.06) 1px, transparent 1px)",
+            "linear-gradient(var(--aurora-grid) 1px, transparent 1px), linear-gradient(90deg, var(--aurora-grid) 1px, transparent 1px)",
           backgroundSize: "56px 56px",
           maskImage:
             "radial-gradient(ellipse at 50% 30%, black 40%, transparent 75%)",

@@ -98,21 +98,21 @@ export default function WorkspacePage() {
 
       <div className="relative w-full max-w-3xl z-10 flex flex-col items-center">
         <div className="text-center mb-10 space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <h1 className="font-serif text-5xl md:text-7xl text-on-surface tracking-tight leading-tight">
+          <h1 className="font-serif text-5xl md:text-7xl text-on-surface dark:text-white tracking-tight leading-tight">
             {greeting}{userName ? `, ${userName}` : ''}
           </h1>
-          <p className="text-on-surface-variant max-w-md mx-auto">
+          <p className="text-on-surface-variant dark:text-slate-400 max-w-md mx-auto">
             Your workspace is optimized. Novus AI continuously learns from every interaction to deliver a flawless experience.          </p>
         </div>
 
         <div className="w-full space-y-6">
-          <div className="bg-white/90 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-3xl p-2 transition-all duration-300 focus-within:shadow-2xl focus-within:ring-4 focus-within:ring-blue-500/10 input-glow-expand flex flex-col">
+          <div className="bg-white/90 dark:bg-slate-900/60 backdrop-blur-2xl border border-white dark:border-slate-800/60 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] rounded-3xl p-2 transition-all duration-300 focus-within:shadow-2xl focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 input-glow-expand flex flex-col">
             {attachments.length > 0 && (
               <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {attachments.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-gray-100 border border-gray-200 shadow-sm rounded-xl px-3 py-1.5 text-sm font-medium text-gray-700">
+                  <div key={idx} className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm rounded-xl px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-slate-200">
                     <span className="truncate max-w-[150px]">{file.name}</span>
-                    <button onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-red-500 transition-colors">
+                    <button onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -127,7 +127,7 @@ export default function WorkspacePage() {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 spellCheck={false}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-lg font-body-md text-gray-800 placeholder:text-gray-400 outline-none w-full"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-lg font-body-md text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder-slate-500 outline-none w-full"
                 placeholder="How can I help you today?"
               />
               <div className="flex items-center gap-1">

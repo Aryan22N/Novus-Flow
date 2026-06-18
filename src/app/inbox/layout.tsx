@@ -10,7 +10,8 @@ export default function InboxLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const router = useRouter();
   const pathname = usePathname();
 

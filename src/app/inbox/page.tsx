@@ -29,11 +29,11 @@ function InboxContent() {
   }, [page, category, searchQuery]);
 
   return (
-    <div className="bg-background text-on-background flex h-screen overflow-hidden flex-col">
+    <div className="bg-background text-on-background flex h-screen flex-col overflow-hidden">
       <TopSearchBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <AppSidebar isOpen={isSidebarOpen} />
-        <main className="bg-surface flex flex-1 flex-col p-1 transition-all overflow-hidden min-w-0">
+        <main className="bg-surface flex min-w-0 flex-1 flex-col overflow-hidden p-1 transition-all">
           <InboxHeader
             page={page}
             onPageChange={setPage}
@@ -57,7 +57,6 @@ function InboxContent() {
             />
             <div className="flex min-w-0 flex-[0.42] flex-col gap-6">
               <UpcomingMeetings />
-
             </div>
           </div>
         </main>

@@ -207,7 +207,7 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                     <AppSidebar isOpen={isSidebarOpen} />
 
                     {/* Voice Interaction Canvas */}
-                    <main className="flex-1 flex flex-col lg:flex-row relative overflow-hidden rounded-xl " style={{ backgroundImage: "linear-gradient(to top, #dfe9f3 0%, white 100%)" }} >
+                    <main className="flex-1 flex flex-col lg:flex-row relative overflow-hidden rounded-xl bg-gradient-to-t from-[#dfe9f3] to-white dark:from-[#0f172a] dark:to-[#0a0f1c]" >
                         {/* Radial Gradient Background Effect */}
                         {/* <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-fixed/30 via-background to-background pointer-events-none"></div> */}
 
@@ -253,7 +253,7 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                                         return (
                                             <div
                                                 key={i}
-                                                className={`bar bg-gradient-to-t from-primary via-primary-container to-primary-fixed-dim ${statusText === 'listening' ? 'bar-anim' : statusText === 'processing' ? 'bar-anim-fast' : ''
+                                                className={`bar bg-gradient-to-t from-primary via-primary-container to-primary-fixed-dim dark:from-indigo-500 dark:via-indigo-400 dark:to-indigo-300 ${statusText === 'listening' ? 'bar-anim' : statusText === 'processing' ? 'bar-anim-fast' : ''
                                                     }`}
                                                 style={{
                                                     height: statusText === 'paused' ? '4px' : `${height}px`,
@@ -279,7 +279,7 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                                             &quot;{transcript.split(' ').map((word: string, idx: number) => {
                                                 const isHighlighted = ['schedule', 'briefing', 'analytics', 'reply', 'unread', 'emails', 'calendar'].includes(word.toLowerCase().replace(/[^a-z]/g, ''));
                                                 return (
-                                                    <span key={idx} className={isHighlighted ? 'ai-gradient-text font-semibold' : 'text-on-surface'}>
+                                                    <span key={idx} className={isHighlighted ? 'ai-gradient-text font-semibold' : 'text-on-surface dark:text-slate-300'}>
                                                         {word}{' '}
                                                     </span>
                                                 );
@@ -356,7 +356,7 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                         </div>
 
                         {/* Right Rail: Assistant Context */}
-                        <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l-2 border-outline-variant/50 p-5 flex flex-col gap-5 overflow-y-auto flex-shrink-0 z-10 relative" style={{ backgroundImage: "linear-gradient(to top, #dfe9f3 0%, white 100%)" }}>
+                        <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l-2 border-outline-variant/50 dark:border-slate-800 p-5 flex flex-col gap-5 overflow-y-auto flex-shrink-0 z-10 relative bg-gradient-to-t from-[#dfe9f3] to-white dark:from-[#0f172a] dark:to-[#0a0f1c]">
                             <div className="flex items-center gap-2 mb-1">
                                 <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                                 <h3 className="text-xs font-semibold text-on-surface tracking-wider uppercase">Nexus Insight Drawer</h3>
@@ -365,12 +365,12 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                             {/* Detected Tasks Checklist */}
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Action Items</span>
-                                    <span className="text-[9px] bg-surface-container-low text-on-surface-variant px-1.5 py-0.5 rounded font-mono font-semibold">
+                                    <span className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant dark:text-slate-400">Action Items</span>
+                                    <span className="text-[9px] bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 px-1.5 py-0.5 rounded font-mono font-semibold">
                                         {tasks.filter(t => t.completed).length}/{tasks.length} Done
                                     </span>
                                 </div>
-                                <div className="bg-surface border border-outline-variant p-3.5 rounded-xl space-y-3 shadow-xs">
+                                <div className="bg-surface dark:bg-slate-800/50 border border-outline-variant dark:border-slate-800 p-3.5 rounded-xl space-y-3 shadow-xs">
                                     {tasks.map((task) => (
                                         <div
                                             key={task.id}
@@ -385,11 +385,11 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                                                 )}
                                             </button>
                                             <div className="min-w-0">
-                                                <p className={`text-xs font-medium transition-colors ${task.completed ? 'line-through text-on-surface-variant/60' : 'text-on-surface group-hover:text-primary'
+                                                <p className={`text-xs font-medium transition-colors ${task.completed ? 'line-through text-on-surface-variant/60 dark:text-slate-500' : 'text-on-surface dark:text-slate-200 group-hover:text-primary dark:group-hover:text-indigo-400'
                                                     }`}>
                                                     {task.text}
                                                 </p>
-                                                <p className="text-[10px] text-on-surface-variant/70 mt-0.5 truncate">{task.source}</p>
+                                                <p className="text-[10px] text-on-surface-variant/70 dark:text-slate-400 mt-0.5 truncate">{task.source}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -403,16 +403,16 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                             {/* Confirmation UI */}
                             {novaState === "confirming" && pendingAction && (
                                 <div className="space-y-2 mb-4">
-                                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-error">Action Required</h4>
-                                    <div className="bg-error-container/30 border border-error/20 p-3.5 rounded-xl space-y-3">
+                                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-error dark:text-red-400">Action Required</h4>
+                                    <div className="bg-error-container/30 dark:bg-red-900/20 border border-error/20 dark:border-red-900/50 p-3.5 rounded-xl space-y-3">
                                         <div className="flex flex-col gap-3">
                                             {Array.isArray(pendingAction) ? pendingAction.map((action: any, idx: number) => {
                                                 if (action.tool === "sendEmail") {
                                                     return (
                                                         <div key={idx} className="flex flex-col gap-2">
-                                                            <div className="text-[10px] font-bold text-error uppercase tracking-wider">Send Email</div>
+                                                            <div className="text-[10px] font-bold text-error dark:text-red-400 uppercase tracking-wider">Send Email</div>
                                                             <input
-                                                                className="text-xs p-1.5 border border-error/20 rounded bg-white w-full"
+                                                                className="text-xs p-1.5 border border-error/20 dark:border-red-900/50 rounded bg-white dark:bg-slate-900 dark:text-slate-200 w-full"
                                                                 value={action.args.to || ""}
                                                                 onChange={(e) => {
                                                                     const newActions = [...pendingAction];
@@ -421,7 +421,7 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                                                                 }}
                                                             />
                                                             <input
-                                                                className="text-xs p-1.5 border border-error/20 rounded bg-white w-full"
+                                                                className="text-xs p-1.5 border border-error/20 dark:border-red-900/50 rounded bg-white dark:bg-slate-900 dark:text-slate-200 w-full"
                                                                 value={action.args.subject || ""}
                                                                 onChange={(e) => {
                                                                     const newActions = [...pendingAction];
@@ -430,7 +430,7 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                                                                 }}
                                                             />
                                                             <textarea
-                                                                className="text-xs p-1.5 border border-error/20 rounded bg-white w-full min-h-[60px]"
+                                                                className="text-xs p-1.5 border border-error/20 dark:border-red-900/50 rounded bg-white dark:bg-slate-900 dark:text-slate-200 w-full min-h-[60px]"
                                                                 value={action.args.body || ""}
                                                                 onChange={(e) => {
                                                                     const newActions = [...pendingAction];
@@ -442,12 +442,12 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                                                     );
                                                 }
                                                 return (
-                                                    <p key={idx} className="text-xs text-on-surface font-medium leading-relaxed">
+                                                    <p key={idx} className="text-xs text-on-surface dark:text-slate-200 font-medium leading-relaxed">
                                                         {action.draft}
                                                     </p>
                                                 );
                                             }) : (
-                                                <p className="text-xs text-on-surface font-medium leading-relaxed">
+                                                <p className="text-xs text-on-surface dark:text-slate-200 font-medium leading-relaxed">
                                                     {pendingAction.draft}
                                                 </p>
                                             )}
@@ -458,13 +458,13 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
                                                     const actionsToSubmit = Array.isArray(pendingAction) ? [...pendingAction] : [];
                                                     confirm(true, actionsToSubmit);
                                                 }}
-                                                className="flex-1 bg-primary text-on-primary text-xs py-1.5 rounded-lg hover:bg-primary/90 transition-colors"
+                                                className="flex-1 bg-primary dark:bg-indigo-600 text-on-primary dark:text-white text-xs py-1.5 rounded-lg hover:bg-primary/90 dark:hover:bg-indigo-500 transition-colors"
                                             >
                                                 Confirm
                                             </button>
                                             <button
                                                 onClick={() => confirm(false)}
-                                                className="flex-1 bg-surface-container text-on-surface text-xs py-1.5 rounded-lg hover:bg-surface-container-high transition-colors"
+                                                className="flex-1 bg-surface-container dark:bg-slate-800 text-on-surface dark:text-slate-200 text-xs py-1.5 rounded-lg hover:bg-surface-container-high dark:hover:bg-slate-700 transition-colors"
                                             >
                                                 Cancel
                                             </button>
@@ -475,10 +475,10 @@ function VoiceInteractionInner({ isSidebarOpen, setIsSidebarOpen }: { isSidebarO
 
                             {/* Voice Insights */}
                             <div className="space-y-2">
-                                <h4 className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Live Insight</h4>
-                                <div className="bg-primary-fixed/30 p-3.5 rounded-xl flex items-start gap-2.5 border-l-2 border-l-primary border-t-0 border-r-0 border-b-0">
-                                    <Lightbulb className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                                    <p className="text-xs text-on-surface leading-relaxed">
+                                <h4 className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant dark:text-slate-400">Live Insight</h4>
+                                <div className="bg-primary-fixed/30 dark:bg-indigo-900/20 p-3.5 rounded-xl flex items-start gap-2.5 border-l-2 border-l-primary dark:border-l-indigo-500 border-t-0 border-r-0 border-b-0">
+                                    <Lightbulb className="w-4 h-4 text-primary dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs text-on-surface dark:text-slate-300 leading-relaxed">
                                         {insight}
                                     </p>
                                 </div>
@@ -516,13 +516,13 @@ export default function NexusAIVoiceInteraction() {
                 <TopSearchBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                 <div className="flex flex-1 pt-1 overflow-hidden">
                     <AppSidebar isOpen={isSidebarOpen} />
-                    <main className="flex-1 flex items-center justify-center bg-slate-50 p-6 rounded-xl relative" style={{ backgroundImage: "linear-gradient(to top, #dfe9f3 0%, white 100%)" }}>
-                        <div className="bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-10 max-w-lg w-full text-center shadow-xl">
-                            <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <main className="flex-1 flex items-center justify-center p-6 rounded-xl relative bg-gradient-to-t from-[#dfe9f3] to-white dark:from-[#0f172a] dark:to-[#0a0f1c]">
+                        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/60 dark:border-slate-800 rounded-3xl p-10 max-w-lg w-full text-center shadow-xl dark:shadow-2xl">
+                            <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
                                 <Lock className="w-10 h-10" />
                             </div>
-                            <h2 className="text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">Nova Voice is Pro Only</h2>
-                            <p className="text-slate-500 mb-10 text-base leading-relaxed">
+                            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-3 tracking-tight">Nova Voice is Pro Only</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mb-10 text-base leading-relaxed">
                                 Upgrade to Pro to unlock the interactive voice assistant. Speak naturally to Nova, create tasks instantly, and supercharge your productivity.
                             </p>
                             <button

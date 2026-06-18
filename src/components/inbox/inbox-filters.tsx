@@ -14,9 +14,9 @@ export default function InboxFilters({
   const { data: unreadCounts } = api.email.getUnreadCounts.useQuery();
 
   const getButtonClass = (isActive: boolean) =>
-    `flex items-center gap-2 px-4 pb-1.5 text-[16px] font-medium transition-colors hover:bg-surface-container-high rounded-md border-b-3 ${isActive
-      ? "text-[#2656C9] border-[#2656C9]"
-      : "text-on-surface-variant border-transparent"
+    `flex items-center gap-2 px-4 pt-2 pb-1.5 text-[15px] font-medium transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-t-lg border-b-[3px] ${isActive
+      ? "text-[#2656C9] dark:text-blue-400 border-[#2656C9] dark:border-blue-400 bg-slate-50/50 dark:bg-slate-800/20"
+      : "text-slate-600 dark:text-slate-400 border-transparent"
     }`;
 
   const renderBadge = (count: number | undefined, bgColor: string) => {

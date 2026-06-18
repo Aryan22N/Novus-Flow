@@ -28,8 +28,8 @@ export default function EmailRow({
   time,
   isAi = false,
 }: EmailRowProps) {
-  const containerClasses = `group flex items-center p-3 border-b border-surface-container-highest hover:bg-surface-container-low  transition-colors cursor-pointer ${
-    isAi ? "ai-gradient ai-border m-1 rounded-md" : ""
+  const containerClasses = `group flex items-center p-3 border-b border-surface-container-highest dark:border-slate-800 hover:bg-surface-container-low dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${
+    isAi ? "ai-gradient dark:!bg-slate-800/80 ai-border dark:border-blue-900/50 m-1 rounded-md" : ""
   }`;
 
   return (
@@ -51,7 +51,7 @@ export default function EmailRow({
         <div className="flex items-center gap-2">
           {icon}
           <span
-            className={`text-body-md text-on-surface truncate ${isAi ? "font-bold" : ""}`}
+            className={`text-body-md text-on-surface dark:text-slate-200 truncate ${isAi ? "font-bold" : ""}`}
           >
             {title}
           </span>
@@ -60,11 +60,11 @@ export default function EmailRow({
       <div className="flex flex-1 items-center gap-2 truncate pr-4">
         {isAi && <Sparkles size={14} className="text-violet-600" />}
         <span
-          className={`text-body-md text-on-surface ${isAi ? "font-bold" : ""}`}
+          className={`text-body-md text-on-surface dark:text-slate-200 ${isAi ? "font-bold" : ""}`}
         >
           {subject}
         </span>
-        <span className="text-on-surface-variant text-body-md truncate">
+        <span className="text-on-surface-variant dark:text-slate-400 text-body-md truncate">
           - {snippet}
         </span>
       </div>
@@ -75,7 +75,7 @@ export default function EmailRow({
           {tagLabel}
         </span>
         <span
-          className={`text-body-sm whitespace-nowrap ${isAi ? "text-on-surface font-bold" : "text-on-surface-variant"}`}
+          className={`text-body-sm whitespace-nowrap ${isAi ? "text-on-surface dark:text-slate-200 font-bold" : "text-on-surface-variant dark:text-slate-400"}`}
         >
           {time}
         </span>

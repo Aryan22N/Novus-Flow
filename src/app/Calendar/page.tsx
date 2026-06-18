@@ -122,25 +122,25 @@ function MiniCalendar({
   return (
     <div>
       <div className="mb-3 flex items-center justify-between px-1">
-        <span className="text-sm font-medium text-[#3c4043]">
+        <span className="text-sm font-medium text-[#3c4043] dark:text-slate-300">
           {MONTHS[miniMonth - 1]} {miniYear}
         </span>
         <div className="flex gap-1">
           <button
             onClick={prev}
-            className="rounded-full p-1 hover:bg-[#f1f3f4]"
+            className="rounded-full p-1 hover:bg-[#f1f3f4] dark:hover:bg-slate-800"
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={14} className="dark:text-slate-300" />
           </button>
           <button
             onClick={next}
-            className="rounded-full p-1 hover:bg-[#f1f3f4]"
+            className="rounded-full p-1 hover:bg-[#f1f3f4] dark:hover:bg-slate-800"
           >
-            <ChevronRight size={14} />
+            <ChevronRight size={14} className="dark:text-slate-300" />
           </button>
         </div>
       </div>
-      <div className="mb-1 grid grid-cols-7 text-center text-[10px] font-medium text-[#70757a]">
+      <div className="mb-1 grid grid-cols-7 text-center text-[10px] font-medium text-[#70757a] dark:text-slate-400">
         {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
           <span key={i}>{d}</span>
         ))}
@@ -155,7 +155,7 @@ function MiniCalendar({
             <button
               key={i}
               onClick={() => onSelect(date.getFullYear(), date.getMonth() + 1)}
-              className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[10px] transition-colors ${isToday ? "bg-[#1a73e8] font-semibold text-white" : ""} ${!isToday && isSelected ? "bg-[#e8f0fe] font-semibold text-[#1a73e8]" : ""} ${!isToday && !isSelected && isCurrentMonth ? "text-[#3c4043] hover:bg-[#f1f3f4]" : ""} ${!isToday && !isSelected && !isCurrentMonth ? "text-[#b0b5ba] hover:bg-[#f1f3f4]" : ""} `}
+              className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[10px] transition-colors ${isToday ? "bg-[#1a73e8] font-semibold text-white" : ""} ${!isToday && isSelected ? "bg-[#e8f0fe] dark:bg-blue-900/40 font-semibold text-[#1a73e8] dark:text-blue-400" : ""} ${!isToday && !isSelected && isCurrentMonth ? "text-[#3c4043] dark:text-slate-300 hover:bg-[#f1f3f4] dark:hover:bg-slate-800" : ""} ${!isToday && !isSelected && !isCurrentMonth ? "text-[#b0b5ba] dark:text-slate-600 hover:bg-[#f1f3f4] dark:hover:bg-slate-800" : ""} `}
             >
               {date.getDate()}
             </button>
@@ -223,15 +223,15 @@ function EventPill({ event }: { event: CalEvent }) {
           }}
         >
           <div 
-            className="w-full max-w-sm rounded-lg bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30 overflow-hidden"
+            className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30 dark:border-slate-800 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header / Actions */}
-            <div className="flex justify-end p-2 gap-1 bg-[#f1f3f4] border-b border-outline-variant/50">
+            <div className="flex justify-end p-2 gap-1 bg-[#f1f3f4] dark:bg-slate-800/50 border-b border-outline-variant/50 dark:border-slate-800">
               <button 
                 onClick={handleDelete}
                 disabled={deleteMutation.isPending}
-                className="rounded-full p-1.5 text-[#5f6368] hover:bg-[#e8eaed] transition-colors cursor-pointer disabled:opacity-50"
+                className="rounded-full p-1.5 text-[#5f6368] dark:text-slate-400 hover:bg-[#e8eaed] dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-50"
                 title="Delete"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -241,7 +241,7 @@ function EventPill({ event }: { event: CalEvent }) {
                   e.stopPropagation();
                   setIsOpen(false);
                 }}
-                className="rounded-full p-1.5 text-[#5f6368] hover:bg-[#e8eaed] transition-colors cursor-pointer"
+                className="rounded-full p-1.5 text-[#5f6368] dark:text-slate-400 hover:bg-[#e8eaed] dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
@@ -252,11 +252,11 @@ function EventPill({ event }: { event: CalEvent }) {
               <div className="flex items-start gap-3">
                 <div className={`mt-1 h-4 w-4 rounded shrink-0 ${color.replace('bg-', 'bg-')}`}></div>
                 <div>
-                  <h3 className="text-xl leading-tight font-normal text-[#3c4043] mb-1">
+                  <h3 className="text-xl leading-tight font-normal text-[#3c4043] dark:text-slate-200 mb-1">
                     {event.title}
                   </h3>
                   {event.start && (
-                    <p className="text-sm text-[#3c4043]">
+                    <p className="text-sm text-[#3c4043] dark:text-slate-300">
                       {new Date(event.start).toLocaleDateString("en-US", {
                         weekday: "long",
                         month: "long",
@@ -270,15 +270,15 @@ function EventPill({ event }: { event: CalEvent }) {
               </div>
 
               {event.location && (
-                <div className="flex items-start gap-4 text-sm text-[#3c4043]">
-                  <svg className="w-5 h-5 text-[#5f6368] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <div className="flex items-start gap-4 text-sm text-[#3c4043] dark:text-slate-300">
+                  <svg className="w-5 h-5 text-[#5f6368] dark:text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                   <p>{event.location}</p>
                 </div>
               )}
               
               {event.description && (
-                <div className="flex items-start gap-4 text-sm text-[#3c4043]">
-                  <svg className="w-5 h-5 text-[#5f6368] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                <div className="flex items-start gap-4 text-sm text-[#3c4043] dark:text-slate-300">
+                  <svg className="w-5 h-5 text-[#5f6368] dark:text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                   <p className="whitespace-pre-wrap">{event.description}</p>
                 </div>
               )}
@@ -398,20 +398,20 @@ export default function CalendarPage() {
   const isBusy = isLoading || isRefetching || syncMutation.isPending;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white font-sans">
+    <div className="flex h-screen flex-col overflow-hidden bg-white dark:bg-[#0a0f1c] font-sans transition-colors duration-300">
       {/* ── Top Header ── */}
-      <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-[#dadce0] px-4">
+      <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-[#dadce0] dark:border-slate-800 px-4">
         <div className="flex items-center">
           <button
-            className="rounded-full pl-2 transition-colors hover:bg-[#f1f3f4]"
+            className="rounded-full pl-2 transition-colors hover:bg-[#f1f3f4] dark:hover:bg-slate-800"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
             <svg
-              className="h-6 w-6 text-[#3c4043]"
+              className="h-6 w-6 text-[#3c4043] dark:text-slate-300"
               focusable="false"
               viewBox="0 0 24 24"
             >
-              <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+              <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" className="fill-current"></path>
             </svg>
           </button>
           <Link href="/inbox">
@@ -425,23 +425,23 @@ export default function CalendarPage() {
           <div className="ml-6 flex items-center gap-2">
             <button
               onClick={goToday}
-              className="rounded-lg border border-[#dadce0] px-4 py-1.5 text-sm font-medium text-[#3c4043] transition-colors hover:bg-[#f1f3f4]"
+              className="rounded-lg border border-[#dadce0] dark:border-slate-700 px-4 py-1.5 text-sm font-medium text-[#3c4043] dark:text-slate-300 transition-colors hover:bg-[#f1f3f4] dark:hover:bg-slate-800"
             >
               Today
             </button>
             <button
               onClick={prevMonth}
-              className="rounded-full p-2 transition-colors hover:bg-[#f1f3f4]"
+              className="rounded-full p-2 transition-colors hover:bg-[#f1f3f4] dark:hover:bg-slate-800"
             >
-              <ChevronLeft size={18} className="text-[#3c4043]" />
+              <ChevronLeft size={18} className="text-[#3c4043] dark:text-slate-300" />
             </button>
             <button
               onClick={nextMonth}
-              className="rounded-full p-2 transition-colors hover:bg-[#f1f3f4]"
+              className="rounded-full p-2 transition-colors hover:bg-[#f1f3f4] dark:hover:bg-slate-800"
             >
-              <ChevronRight size={18} className="text-[#3c4043]" />
+              <ChevronRight size={18} className="text-[#3c4043] dark:text-slate-300" />
             </button>
-            <h1 className="ml-2 text-[22px] font-normal text-[#3c4043]">
+            <h1 className="ml-2 text-[22px] font-normal text-[#3c4043] dark:text-slate-200">
               {MONTHS[month - 1]} {year}
             </h1>
           </div>
@@ -453,7 +453,7 @@ export default function CalendarPage() {
             onClick={() => syncMutation.mutate({ daysAhead: 90 })}
             disabled={isBusy}
             title="Sync from Google Calendar"
-            className="flex items-center gap-1.5 rounded-lg border border-[#dadce0] px-3 py-1.5 text-sm text-[#3c4043] transition-colors hover:bg-[#f1f3f4] disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg border border-[#dadce0] dark:border-slate-700 px-3 py-1.5 text-sm text-[#3c4043] dark:text-slate-300 transition-colors hover:bg-[#f1f3f4] dark:hover:bg-slate-800 disabled:opacity-50"
           >
             {isBusy ? (
               <Loader2 size={15} className="animate-spin" />
@@ -473,11 +473,11 @@ export default function CalendarPage() {
         {/* ── Month Grid ── */}
         <section className="flex flex-1 flex-col overflow-hidden">
           {/* Day headers */}
-          <div className="grid flex-shrink-0 grid-cols-7 border-b border-[#dadce0]">
+          <div className="grid flex-shrink-0 grid-cols-7 border-b border-[#dadce0] dark:border-slate-800">
             {DAYS.map((d) => (
               <div
                 key={d}
-                className="border-r border-[#dadce0] py-2 text-center text-[11px] font-medium text-[#70757a] last:border-r-0"
+                className="border-r border-[#dadce0] dark:border-slate-800 py-2 text-center text-[11px] font-medium text-[#70757a] dark:text-slate-400 last:border-r-0"
               >
                 {d}
               </div>
@@ -504,12 +504,12 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={idx}
-                    className={`flex min-h-[100px] flex-col gap-0.5 border-r border-b border-[#dadce0] p-1.5 ${!isCurrentMonth ? "bg-[#fafafa]" : "bg-white"} ${idx % 7 === 6 ? "border-r-0" : ""} `}
+                    className={`flex min-h-[100px] flex-col gap-0.5 border-r border-b border-[#dadce0] dark:border-slate-800 p-1.5 ${!isCurrentMonth ? "bg-[#fafafa] dark:bg-slate-900/50" : "bg-white dark:bg-transparent"} ${idx % 7 === 6 ? "border-r-0" : ""} `}
                   >
                     {/* Date number */}
                     <div className="mb-0.5 flex justify-center">
                       <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${isToday ? "bg-[#1a73e8] text-white" : isCurrentMonth ? "text-[#3c4043]" : "text-[#b0b5ba]"} `}
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${isToday ? "bg-[#1a73e8] text-white" : isCurrentMonth ? "text-[#3c4043] dark:text-slate-300" : "text-[#b0b5ba] dark:text-slate-600"} `}
                       >
                         {date.getDate()}
                       </span>
@@ -538,13 +538,13 @@ export default function CalendarPage() {
 
         {/* Right Sidebar (Calendar Specific) */}
         <aside
-          className="flex w-64 flex-shrink-0 flex-col gap-6 border-l border-[#dadce0] p-4"
+          className="flex w-64 flex-shrink-0 flex-col gap-6 border-l border-[#dadce0] dark:border-slate-800 p-4"
           data-purpose="sidebar-navigation"
         >
           <div className="relative">
             <button
               onClick={() => setIsCreateOpen(!isCreateOpen)}
-              className="flex items-center gap-3 rounded-full border border-[#dadce0] px-4 py-2 shadow-md transition-shadow hover:shadow-lg bg-white relative z-10"
+              className="flex items-center gap-3 rounded-full border border-[#dadce0] dark:border-slate-700 px-4 py-2 shadow-md transition-shadow hover:shadow-lg bg-white dark:bg-slate-800 relative z-10"
             >
               <svg height="36" viewBox="0 0 36 36" width="36">
                 <path d="M16 16v14h4V20z rounded-full" fill="#74B9DE"></path>
@@ -553,7 +553,7 @@ export default function CalendarPage() {
                 <path d="M20 16V6h-4v14z rounded-full" fill="#74B9DE"></path>
                 <path d="M0 0h36v36H0 rounded-full" fill="none"></path>
               </svg>
-              <span className="text-sm font-medium">Create</span>
+              <span className="text-sm font-medium dark:text-slate-200">Create</span>
               <svg
                 className="ml-2 h-4 w-4"
                 fill="currentColor"
@@ -572,10 +572,10 @@ export default function CalendarPage() {
                   className="fixed inset-0 z-40"
                   onClick={() => setIsCreateOpen(false)}
                 />
-                <div className="absolute top-14 left-0 z-50 w-56 rounded-md bg-white py-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)] ring-1 ring-black ring-opacity-5">
-                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] hover:bg-[#f1f3f4]" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Event"); setCreateModalOpen(true); }}>Event</button>
-                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] hover:bg-[#f1f3f4]" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Task"); setCreateModalOpen(true); }}>Task</button>
-                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] hover:bg-[#f1f3f4]" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Appointment"); setCreateModalOpen(true); }}>Appointment schedule</button>
+                <div className="absolute top-14 left-0 z-50 w-56 rounded-md bg-white dark:bg-slate-800 py-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)] dark:shadow-black/50 ring-1 ring-black ring-opacity-5 dark:ring-white/10">
+                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] dark:text-slate-300 hover:bg-[#f1f3f4] dark:hover:bg-slate-700" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Event"); setCreateModalOpen(true); }}>Event</button>
+                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] dark:text-slate-300 hover:bg-[#f1f3f4] dark:hover:bg-slate-700" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Task"); setCreateModalOpen(true); }}>Task</button>
+                  <button className="flex w-full items-center px-4 py-2 text-sm text-[#3c4043] dark:text-slate-300 hover:bg-[#f1f3f4] dark:hover:bg-slate-700" onClick={() => { setIsCreateOpen(false); setCreateModalTab("Appointment"); setCreateModalOpen(true); }}>Appointment schedule</button>
                 </div>
               </>
             )}
@@ -597,7 +597,7 @@ export default function CalendarPage() {
 
           {/* Assigned Tasks */}
           <div className="space-y-3" data-purpose="calendar-tasks">
-            <div className="flex items-center justify-between text-sm font-medium text-[#3c4043] border-b border-outline-variant/30 pb-2">
+            <div className="flex items-center justify-between text-sm font-medium text-[#3c4043] dark:text-slate-300 border-b border-outline-variant/30 dark:border-slate-800 pb-2">
               <span className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-[#1a73e8]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"></path></svg>
                 Assigned Tasks
@@ -614,7 +614,7 @@ export default function CalendarPage() {
                   });
 
                 if (tasks.length === 0) {
-                  return <p className="text-xs text-[#70757a] text-center py-4">No tasks assigned.</p>;
+                  return <p className="text-xs text-[#70757a] dark:text-slate-500 text-center py-4">No tasks assigned.</p>;
                 }
 
                 return tasks.map(task => {
@@ -624,14 +624,14 @@ export default function CalendarPage() {
                   const title = task.title.replace("[Task]", "").trim();
 
                   return (
-                    <div key={task.id} className="group relative flex flex-col gap-1 rounded-lg border border-[#dadce0] p-3 hover:shadow-md transition-shadow bg-white">
+                    <div key={task.id} className="group relative flex flex-col gap-1 rounded-lg border border-[#dadce0] dark:border-slate-700 p-3 hover:shadow-md transition-shadow bg-white dark:bg-slate-800">
                       <div className="flex items-start justify-between">
-                        <span className="text-sm font-semibold text-[#3c4043] leading-tight break-words pr-2">{title}</span>
+                        <span className="text-sm font-semibold text-[#3c4043] dark:text-slate-200 leading-tight break-words pr-2">{title}</span>
                         <div className="h-3 w-3 rounded-full bg-[#1a73e8] shrink-0 mt-0.5"></div>
                       </div>
-                      <span className="text-xs text-[#d93025] font-medium mt-1">Due: {deadline}</span>
+                      <span className="text-xs text-[#d93025] dark:text-red-400 font-medium mt-1">Due: {deadline}</span>
                       {task.description && (
-                        <p className="text-xs text-[#5f6368] line-clamp-2 mt-1">{task.description}</p>
+                        <p className="text-xs text-[#5f6368] dark:text-slate-400 line-clamp-2 mt-1">{task.description}</p>
                       )}
                     </div>
                   );
@@ -645,13 +645,13 @@ export default function CalendarPage() {
       {/* Create Modal overlay */}
       {createModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm transition-opacity">
-          <div className="w-full max-w-[480px] rounded-xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30">
+          <div className="w-full max-w-[480px] rounded-xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30 dark:border-slate-800">
             {/* Header */}
-            <div className="flex items-center justify-between bg-[#f1f3f4] px-4 py-2 border-b border-outline-variant/50">
-              <span className="text-xs font-semibold text-[#5f6368] uppercase tracking-wider">
+            <div className="flex items-center justify-between bg-[#f1f3f4] dark:bg-slate-800/80 px-4 py-2 border-b border-outline-variant/50 dark:border-slate-800">
+              <span className="text-xs font-semibold text-[#5f6368] dark:text-slate-400 uppercase tracking-wider">
                 Create new {createModalTab}
               </span>
-              <button onClick={() => setCreateModalOpen(false)} className="rounded-full p-1.5 text-[#5f6368] hover:bg-[#e8eaed] transition-colors cursor-pointer">
+              <button onClick={() => setCreateModalOpen(false)} className="rounded-full p-1.5 text-[#5f6368] dark:text-slate-400 hover:bg-[#e8eaed] dark:hover:bg-slate-700 transition-colors cursor-pointer">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
@@ -662,18 +662,18 @@ export default function CalendarPage() {
                 placeholder="Add title"
                 value={formData.title}
                 onChange={(e) => setFormData(f => ({ ...f, title: e.target.value }))}
-                className="w-full text-2xl font-normal bg-transparent border-b-2 border-transparent focus:border-[#1a73e8] outline-none pb-2 text-[#3c4043] placeholder-[#70757a] transition-colors"
+                className="w-full text-2xl font-normal bg-transparent border-b-2 border-transparent focus:border-[#1a73e8] outline-none pb-2 text-[#3c4043] dark:text-slate-200 placeholder-[#70757a] dark:placeholder-slate-500 transition-colors"
               />
 
               {/* Tabs */}
-              <div className="flex gap-1 border-b border-outline-variant/50 pb-2">
-                <button onClick={() => setCreateModalTab("Event")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Event" ? "bg-[#e8f0fe] text-[#1a73e8]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>Event</button>
-                <button onClick={() => setCreateModalTab("Task")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Task" ? "bg-[#e8f0fe] text-[#1a73e8]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>Task</button>
-                <button onClick={() => setCreateModalTab("Appointment")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Appointment" ? "bg-[#e8f0fe] text-[#1a73e8]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>Appointment schedule</button>
+              <div className="flex gap-1 border-b border-outline-variant/50 dark:border-slate-800 pb-2">
+                <button onClick={() => setCreateModalTab("Event")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Event" ? "bg-[#e8f0fe] dark:bg-blue-900/40 text-[#1a73e8] dark:text-blue-400" : "text-[#5f6368] dark:text-slate-400 hover:bg-[#f1f3f4] dark:hover:bg-slate-800"}`}>Event</button>
+                <button onClick={() => setCreateModalTab("Task")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Task" ? "bg-[#e8f0fe] dark:bg-blue-900/40 text-[#1a73e8] dark:text-blue-400" : "text-[#5f6368] dark:text-slate-400 hover:bg-[#f1f3f4] dark:hover:bg-slate-800"}`}>Task</button>
+                <button onClick={() => setCreateModalTab("Appointment")} className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${createModalTab === "Appointment" ? "bg-[#e8f0fe] dark:bg-blue-900/40 text-[#1a73e8] dark:text-blue-400" : "text-[#5f6368] dark:text-slate-400 hover:bg-[#f1f3f4] dark:hover:bg-slate-800"}`}>Appointment schedule</button>
               </div>
 
               {/* Dynamic Content */}
-              <div className="min-h-[140px] flex flex-col gap-5 text-[#3c4043] text-sm">
+              <div className="min-h-[140px] flex flex-col gap-5 text-[#3c4043] dark:text-slate-300 text-sm">
                 
                 {/* Event or Appointment Date/Time */}
                 {createModalTab !== "Task" && (
@@ -681,23 +681,23 @@ export default function CalendarPage() {
                     <svg className="w-5 h-5 text-[#5f6368] mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"></path></svg>
                     <div className="flex flex-col gap-2 w-full">
                       <div className="flex gap-2">
-                        <input type="date" value={formData.date} onChange={(e) => setFormData(f => ({ ...f, date: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] font-medium cursor-pointer hover:bg-[#f1f3f4] rounded px-1" />
-                        <input type="time" value={formData.time} onChange={(e) => setFormData(f => ({ ...f, time: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] font-medium cursor-pointer hover:bg-[#f1f3f4] rounded px-1" />
+                        <input type="date" value={formData.date} onChange={(e) => setFormData(f => ({ ...f, date: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] dark:text-slate-300 font-medium cursor-pointer hover:bg-[#f1f3f4] dark:hover:bg-slate-800 rounded px-1" />
+                        <input type="time" value={formData.time} onChange={(e) => setFormData(f => ({ ...f, time: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] dark:text-slate-300 font-medium cursor-pointer hover:bg-[#f1f3f4] dark:hover:bg-slate-800 rounded px-1" />
                       </div>
-                      <span className="text-xs text-[#70757a]">Time zone · Does not repeat</span>
+                      <span className="text-xs text-[#70757a] dark:text-slate-500">Time zone · Does not repeat</span>
                     </div>
                   </div>
                 )}
 
                 {/* Task Specific Deadline */}
                 {createModalTab === "Task" && (
-                  <div className="flex items-start gap-4 border-b border-outline-variant/30 pb-4">
+                  <div className="flex items-start gap-4 border-b border-outline-variant/30 dark:border-slate-800 pb-4">
                     <svg className="w-5 h-5 text-[#1a73e8] mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"></path></svg>
                     <div className="flex flex-col gap-1 w-full">
                       <span className="text-xs font-semibold text-[#1a73e8] uppercase tracking-wider">Add Deadline</span>
                       <div className="flex gap-2 mt-1">
-                        <input type="date" value={formData.date} onChange={(e) => setFormData(f => ({ ...f, date: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] font-medium cursor-pointer hover:bg-[#f1f3f4] rounded px-1" />
-                        <input type="time" value={formData.time} onChange={(e) => setFormData(f => ({ ...f, time: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] font-medium cursor-pointer hover:bg-[#f1f3f4] rounded px-1" />
+                        <input type="date" value={formData.date} onChange={(e) => setFormData(f => ({ ...f, date: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] dark:text-slate-300 font-medium cursor-pointer hover:bg-[#f1f3f4] dark:hover:bg-slate-800 rounded px-1" />
+                        <input type="time" value={formData.time} onChange={(e) => setFormData(f => ({ ...f, time: e.target.value }))} className="bg-transparent border-none outline-none text-[#3c4043] dark:text-slate-300 font-medium cursor-pointer hover:bg-[#f1f3f4] dark:hover:bg-slate-800 rounded px-1" />
                       </div>
                     </div>
                   </div>
@@ -705,20 +705,20 @@ export default function CalendarPage() {
 
                 {/* Description (Shared) */}
                 <div className="flex items-center gap-4">
-                  <svg className="w-5 h-5 text-[#5f6368] shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"></path></svg>
+                  <svg className="w-5 h-5 text-[#5f6368] dark:text-slate-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"></path></svg>
                   <input
                     type="text"
                     placeholder="Add description"
                     value={formData.description}
                     onChange={(e) => setFormData(f => ({ ...f, description: e.target.value }))}
-                    className="w-full text-sm bg-transparent border-b border-transparent focus:border-[#1a73e8] outline-none pb-1 text-[#3c4043] placeholder-[#70757a] transition-colors"
+                    className="w-full text-sm bg-transparent border-b border-transparent focus:border-[#1a73e8] outline-none pb-1 text-[#3c4043] dark:text-slate-300 placeholder-[#70757a] dark:placeholder-slate-500 transition-colors"
                   />
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end p-4 pt-2 bg-[#f8f9fa] border-t border-outline-variant/30">
+            <div className="flex justify-end p-4 pt-2 bg-[#f8f9fa] dark:bg-slate-800/30 border-t border-outline-variant/30 dark:border-slate-800">
               <button
                 onClick={handleSave}
                 disabled={createEventMutation.isPending || !formData.title.trim()}

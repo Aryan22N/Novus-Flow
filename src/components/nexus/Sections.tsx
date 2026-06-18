@@ -96,9 +96,9 @@ function FakeAppUI() {
     { from: "Stripe", subj: "Your November payout is on its way", time: "Yesterday", tag: "Finance", color: "bg-[#005BBF]" },
   ];
   return (
-    <div className="grid h-full grid-cols-[180px_1fr_240px] text-[11px] text-white/85">
+    <div className="grid h-full grid-cols-1 md:grid-cols-[180px_1fr_240px] text-[11px] text-white/85">
       {/* sidebar */}
-      <div className="border-r border-white/5 bg-white/[0.02] p-3">
+      <div className="hidden border-r border-white/5 bg-white/[0.02] p-3 md:block">
         <div className="flex items-center gap-2 px-1 pb-3">
           <span className="grid h-6 w-6 place-items-center rounded-md bg-cta">
             <Sparkles className="h-3 w-3 text-white" />
@@ -164,7 +164,7 @@ function FakeAppUI() {
       </div>
 
       {/* ai panel */}
-      <div className="border-l border-white/5 bg-gradient-to-b from-[#1A73E8]/[0.10] to-[#6063EE]/[0.08] p-3">
+      <div className="hidden border-l border-white/5 bg-gradient-to-b from-[#1A73E8]/[0.10] to-[#6063EE]/[0.08] p-3 md:block">
         <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold text-white/90">
           <Sparkles className="h-3 w-3 text-[#9DC2FF]" /> Nexus AI
         </div>
@@ -219,7 +219,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative pt-32 pb-37">
+    <section className="relative pb-24 pt-32 md:pb-32">
       <div className="relative mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-2 lg:items-center">
         <div>
 
@@ -327,21 +327,21 @@ export function Problem() {
     <section className="relative py-8">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-[36px] font-semibold tracking-[-0.02em] text-ink sm:text-[44px]">
+          <h2 className="text-3xl font-semibold tracking-[-0.02em] text-ink sm:text-[44px]">
             Stop switching between five different apps.
           </h2>
           <p className="mt-4 text-[17px] text-ink-soft">Modern work is fragmented. Novus Flow brings it back together.</p>
         </div>
 
         <div className="mt-16 grid items-center gap-12 lg:grid-cols-2">
-          <div className="relative h-[420px]">
+          <div className="relative mx-auto h-[420px] w-full max-w-[450px]">
             {apps.map((a, i) => {
               const positions = [
-                "left-2 top-4",
-                "right-6 top-0",
-                "left-16 top-40",
-                "right-2 top-44",
-                "left-1/3 bottom-2",
+                "left-[2%] top-[4%]",
+                "right-[6%] top-[0%]",
+                "left-[12%] top-[38%]",
+                "right-[2%] top-[42%]",
+                "left-[33%] bottom-[2%]",
               ];
               return (
                 <motion.div
@@ -350,7 +350,7 @@ export function Problem() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
-                  className={`absolute ${positions[i]} glass rounded-2xl px-4 py-3`}
+                  className={`absolute ${positions[i]} glass rounded-2xl px-4 py-3 z-10`}
                   suppressHydrationWarning
                   style={{ animation: `float-y ${5 + i}s ease-in-out ${i * 0.4}s infinite` }}
                 >
@@ -366,7 +366,7 @@ export function Problem() {
                 </motion.div>
               );
             })}
-            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 420" fill="none">
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 420" preserveAspectRatio="none" fill="none">
               <defs>
                 <linearGradient id="cline" x1="0" x2="1">
                   <stop offset="0" stopColor="#1A73E8" stopOpacity="0.0" />
@@ -396,23 +396,23 @@ export function Problem() {
                   <div className="text-[12px] text-ink-soft">One context. Everything connected.</div>
                 </div>
               </div>
-              <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
                   { i: Mail, t: "Inbox" },
                   { i: CalendarDays, t: "Calendar" },
                   { i: Sparkles, t: "AI Threads" },
                   { i: Mic, t: "Nova" },
                 ].map((c, i) => (
-                  <div key={i} className="rounded-2xl bg-white/70 p-3 ring-1 ring-black/[0.04]">
+                  <div key={i} className="rounded-2xl bg-white/70 dark:bg-slate-800/50 p-3 ring-1 ring-black/[0.04] dark:ring-white/[0.05] transition-colors">
                     <c.i className="h-4 w-4 text-[#1A73E8]" />
                     <div className="mt-2 text-sm font-semibold text-ink">{c.t}</div>
                     <div className="text-[11px] text-ink-soft">Unified · live</div>
                   </div>
                 ))}
               </div>
-              <div className="mt-5 rounded-2xl bg-ai p-4">
-                <div className="text-[12px] font-semibold text-[#1c2541]">Nova just now</div>
-                <div className="text-[13px] text-[#1c2541]/80">Summarized 12 emails, scheduled 2 meetings, drafted 1 reply.</div>
+              <div className="mt-5 rounded-2xl bg-ai p-4 transition-colors">
+                <div className="text-[12px] font-semibold text-[#1c2541] dark:text-blue-300">Nova just now</div>
+                <div className="text-[13px] text-[#1c2541]/80 dark:text-blue-200/80">Summarized 12 emails, scheduled 2 meetings, drafted 1 reply.</div>
               </div>
             </div>
           </div>
@@ -555,17 +555,15 @@ export function Overview() {
   };
 
   return (
-    <section id="features" className="relative overflow-hidden bg-[#f8fafc] py-24 sm:py-32">
-      {/* Subtle Background Elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/20 via-[#f8fafc] to-[#f8fafc]"></div>
+    <section id="features" className="relative overflow-hidden bg-[#f8fafc] dark:bg-transparent py-24 sm:py-32 transition-colors duration-500">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/20 dark:from-blue-900/20 via-[#f8fafc] dark:via-transparent to-[#f8fafc] dark:to-transparent"></div>
 
       <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-900 shadow-sm">
+          <span className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 px-4 py-1.5 text-sm font-semibold text-slate-900 dark:text-white shadow-sm">
             Never Miss an Opportunity
           </span>
-          <h2 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+          <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
             Everything you need.{" "}
             <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
               One workspace.
@@ -573,9 +571,8 @@ export function Overview() {
           </h2>
         </div>
 
-        {/* Bento Grid Container */}
         <div className="mx-auto mt-20 max-w-7xl">
-          <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {overview.map((c, i) => (
               <motion.div
                 key={c.title}
@@ -583,31 +580,23 @@ export function Overview() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
-                className={`group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-white p-8 sm:p-10 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-slate-200/50 ${getSpanClass(i)}`}
+                className={`group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900/40 p-8 sm:p-10 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 ${getSpanClass(i)}`}
               >
-                {/* Decorative Background Gradient for visual interest */}
-                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-blue-50/50 to-indigo-50/50 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-blue-50/50 dark:from-blue-900/20 to-indigo-50/50 dark:to-indigo-900/20 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
 
                 <div className={`relative z-10 flex h-full flex-col ${i === 0 || i === 3 ? "lg:flex-row lg:gap-10" : ""}`}>
 
-                  {/* Text & Icon Content */}
                   <div className="flex flex-1 flex-col">
-                    {/* REMOVED: group-hover classes to disable the icon animation */}
-                    <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-900 ring-1 ring-inset ring-slate-100">
+                    <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white ring-1 ring-inset ring-slate-100 dark:ring-slate-700">
                       <c.icon className="h-5 w-5" strokeWidth={2.5} />
                     </div>
 
-                    <h3 className="mb-3 text-xl font-bold text-slate-900">{c.title}</h3>
+                    <h3 className="mb-3 text-xl font-bold text-slate-900 dark:text-white">{c.title}</h3>
 
-                    <p className="mb-8 text-sm leading-relaxed text-slate-500">
-                      With our intuitive workflow, you can easily manage your tasks and deployments without complex steps.
-                    </p>
-
-                    {/* Feature List pushes to bottom */}
-                    <ul className="mt-auto flex flex-col gap-3">
+                    <ul className="mt-auto flex flex-col gap-3 pt-6">
                       {c.features.map((f) => (
-                        <li key={f} className="flex items-start text-sm font-medium text-slate-700">
-                          <span className="mr-3 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <li key={f} className="flex items-start text-sm text-slate-600 dark:text-slate-300">
+                          <span className="mr-3 mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                             <Check className="h-3 w-3" strokeWidth={3} />
                           </span>
                           {f}
@@ -684,7 +673,7 @@ export function Nova() {
       <div className="relative mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <span className="rounded-full glass px-3 py-1 text-[12px] font-medium text-ink-soft">Nova Voice</span>
-          <h2 className="mt-4 text-[36px] font-semibold tracking-[-0.02em] text-ink sm:text-[48px]">
+          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.02em] text-ink sm:text-[48px]">
             Talk to your <span className="text-gradient">inbox.</span>
           </h2>
           <p className="mt-4 text-[17px] text-ink-soft">
@@ -693,7 +682,7 @@ export function Nova() {
         </div>
 
         <div className="mt-16 grid items-center gap-12 lg:grid-cols-2">
-          <div className="relative flex h-[420px] items-center justify-center">
+          <div className="relative flex h-[300px] items-center justify-center md:h-[420px]">
             <span className="absolute h-56 w-56 rounded-full border border-[#1A73E8]/30 animate-pulse-ring" />
             <span className="absolute h-56 w-56 rounded-full border border-[#6063EE]/30 animate-pulse-ring" style={{ animationDelay: "0.8s" }} />
             <span className="absolute h-56 w-56 rounded-full border border-[#1A73E8]/30 animate-pulse-ring" style={{ animationDelay: "1.6s" }} />
@@ -854,7 +843,7 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section className="relative overflow-hidden bg-white py-24 sm:py-32">
+    <section className="relative overflow-hidden bg-white dark:bg-transparent py-24 sm:py-32 transition-colors duration-500">
       {/* Interactive Aurora & Grid Background */}
       <AuroraBackground />
       <Particles count={15} />
@@ -862,13 +851,13 @@ export function HowItWorksSection() {
       <div className="relative z-10 mx-auto max-w-5xl px-6 lg:px-8">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-600 shadow-sm">
+          <span className="inline-flex items-center rounded-full border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 px-4 py-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 shadow-sm">
             The Process
           </span>
-          <h2 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+          <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
             How Novus works.
           </h2>
-          <p className="mt-4 text-lg text-slate-500">
+          <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">
             Get up and running in minutes with our simple, streamlined workflow.
           </p>
         </div>
@@ -876,7 +865,7 @@ export function HowItWorksSection() {
         {/* Timeline Container */}
         <div className="relative mt-20">
           {/* Central Line (Left-aligned on mobile, centered on desktop) */}
-          <div className="absolute bottom-4 left-[23px] top-4 w-0.5 bg-gradient-to-b from-transparent via-slate-200 to-transparent md:left-1/2 md:-ml-[1px]" />
+          <div className="absolute bottom-4 left-[23px] top-4 w-0.5 bg-gradient-to-b from-transparent via-slate-200 dark:via-slate-800 to-transparent md:left-1/2 md:-ml-[1px]" />
 
           <div className="space-y-12 md:space-y-8">
             {steps.map((s, i) => {
@@ -893,10 +882,10 @@ export function HowItWorksSection() {
                 >
                   {/* Icon Indicator */}
                   <div className="absolute left-0 top-4 flex h-12 w-12 items-center justify-center md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2">
-                    <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-4 ring-white transition-transform duration-300 hover:scale-110">
+                    <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 dark:bg-blue-500 text-white shadow-lg shadow-blue-600/30 dark:shadow-blue-500/20 ring-4 ring-white dark:ring-[#0B0F19] transition-transform duration-300 hover:scale-110">
                       <s.i className="h-6 w-6" strokeWidth={2} />
                       {/* Pulse effect */}
-                      <span className="absolute inset-0 rounded-2xl ring-2 ring-blue-600/20 animate-[ping_3s_ease-in-out_infinite]" />
+                      <span className="absolute inset-0 rounded-2xl ring-2 ring-blue-600/20 dark:ring-blue-500/20 animate-[ping_3s_ease-in-out_infinite]" />
                     </span>
                   </div>
 
@@ -907,14 +896,14 @@ export function HowItWorksSection() {
                       : "pl-20 md:ml-auto md:pl-16"
                       }`}
                   >
-                    <div className="group relative rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-blue-100 hover:shadow-md sm:p-8">
-                      <div className="mb-2 font-mono text-xs font-bold tracking-widest text-blue-600 uppercase">
+                    <div className="group relative rounded-3xl border border-slate-100 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] p-6 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-blue-100 dark:hover:border-white/20 hover:shadow-md dark:hover:shadow-black/50 sm:p-8">
+                      <div className="mb-2 font-mono text-xs font-bold tracking-widest text-blue-600 dark:text-blue-400 uppercase">
                         Step 0{i + 1}
                       </div>
-                      <h3 className="mb-3 text-xl font-bold text-slate-900">
+                      <h3 className="mb-3 text-xl font-bold text-slate-900 dark:text-white">
                         {s.t}
                       </h3>
-                      <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                      <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
                         {s.d}
                       </p>
                     </div>
@@ -985,21 +974,21 @@ export function Screenshots() {
   const x = useTransform(scrollYProgress, [0, 1], ["0%", "-35%"]);
 
   return (
-    <div ref={targetRef} className="relative h-[200vh] bg-white">
-      <section id="demo" className="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white">
+    <div ref={targetRef} className="relative h-[200vh] bg-white dark:bg-transparent transition-colors duration-500">
+      <section id="demo" className="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white dark:bg-transparent transition-colors duration-500">
         {/* Subtle Background Accent */}
-        <div className="absolute top-0 left-1/2 -ml-[50vw] h-1/2 w-screen bg-gradient-to-b from-slate-50 to-white" />
+        <div className="absolute top-0 left-1/2 -ml-[50vw] h-1/2 w-screen bg-gradient-to-b from-slate-50 dark:from-slate-900/20 to-white dark:to-transparent pointer-events-none" />
 
         <div className="relative mx-auto w-full max-w-7xl shrink-0 px-6 lg:px-8">
           {/* Header */}
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
               Designed for{" "}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
                 modern work.
               </span>
             </h2>
-            <p className="mt-4 text-lg text-slate-500">
+            <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">
               A seamless interface that adapts to your workflow, not the other way around.
             </p>
           </div>
@@ -1007,16 +996,16 @@ export function Screenshots() {
 
         {/* Scrolling Carousel Area */}
         <div className="relative mt-16 flex w-full shrink-0 items-center overflow-hidden">
-          <motion.div style={{ x }} className="flex w-max gap-6 px-6 lg:px-[10vw]">
+          <motion.div style={{ x }} className="flex w-max gap-4 px-4 sm:gap-6 sm:px-6 lg:px-[10vw]">
             {shots.map((s, i) => (
               <div
                 key={s.t}
                 className="group relative w-[85vw] max-w-[460px] shrink-0 sm:w-[460px]"
               >
                 {/* Card Container */}
-                <div className="flex flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-slate-200">
+                <div className="flex flex-col overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-slate-200 dark:hover:shadow-black/50">
                   {/* Image / Mockup Area */}
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-inset ring-slate-900/5">
+                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 ring-1 ring-inset ring-slate-900/5 dark:ring-white/10">
                     {s.video ? (
                       <video
                         src={s.video}
@@ -1030,18 +1019,18 @@ export function Screenshots() {
                       <ScreenshotsFakeUI />
                     )}
                     {/* Subtle inner overlay for gloss effect */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/5 dark:from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </div>
 
                   {/* Meta details */}
                   <div className="mt-4 flex items-center justify-between px-3 pb-2">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900">{s.t}</h3>
-                      <p className="text-sm font-medium text-slate-500">{s.sub}</p>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">{s.t}</h3>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{s.sub}</p>
                     </div>
 
                     {/* Index Pill */}
-                    <span className="flex h-8 items-center justify-center rounded-full bg-blue-50 px-3 font-mono text-xs font-bold text-blue-600 ring-1 ring-inset ring-blue-100 transition-colors group-hover:bg-blue-600 group-hover:text-white group-hover:ring-blue-600">
+                    <span className="flex h-8 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 font-mono text-xs font-bold text-blue-600 dark:text-blue-400 ring-1 ring-inset ring-blue-100 dark:ring-blue-800 transition-colors group-hover:bg-blue-600 group-hover:text-white group-hover:ring-blue-600 dark:group-hover:ring-blue-500">
                       0{i + 1}
                     </span>
                   </div>
@@ -1077,13 +1066,13 @@ export function CTA() {
   };
 
   return (
-    <section id="cta" className="relative px-6 py-24 sm:py-32 bg-slate-50">
+    <section id="cta" className="relative px-6 py-24 sm:py-32 bg-slate-50 dark:bg-transparent transition-colors duration-500">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative mx-auto max-w-5xl overflow-hidden rounded-[3rem] border border-slate-200 bg-white p-10 text-center shadow-xl shadow-blue-900/5 sm:p-16"
+        className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-10 text-center shadow-xl shadow-blue-900/5 dark:shadow-black/50 sm:rounded-[3rem] sm:p-16"
       >
         {/* Soft, Light Background Glow - No dark/violet colors */}
         <div className="absolute inset-0 pointer-events-none opacity-80" style={{ background: "radial-gradient(ellipse at bottom, var(--color-blue-400), transparent 70%)" }} />
@@ -1092,10 +1081,10 @@ export function CTA() {
         <div className="relative z-10">
 
 
-          <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+          <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
             Ready to work smarter?
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-500">
+          <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-500 dark:text-slate-300">
             Join the future of email, calendar, and AI productivity. Experience the workspace that adapts to your rhythm.
           </p>
 
@@ -1111,9 +1100,9 @@ export function CTA() {
 
             <a
               href="#demo"
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-bold text-slate-700 ring-1 ring-inset ring-slate-200 transition-all duration-300 hover:bg-slate-50 sm:w-auto"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-800 px-8 py-3.5 text-sm font-bold text-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-700 transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-700 sm:w-auto"
             >
-              <PlayCircle className="h-4 w-4 text-slate-400 transition-colors duration-300 group-hover:text-blue-600" />
+              <PlayCircle className="h-4 w-4 text-slate-400 dark:text-slate-300 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
               Watch Demo
             </a>
           </div>
@@ -1131,9 +1120,9 @@ export function Footer() {
     { h: "Company", l: ["About", "Contact"] },
   ];
   return (
-    <footer className="border-t border-black/[0.06] bg-white/60 px-6 py-14">
-      <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div>
+    <footer className="border-t border-black/[0.06] dark:border-white/[0.06] bg-white/60 dark:bg-transparent px-6 py-14 transition-colors duration-500">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:gap-10">
+        <div className="col-span-2 md:col-span-1">
           <div className="flex items-center gap-2.5">
 
             <span className="text-[15px] font-semibold text-ink">

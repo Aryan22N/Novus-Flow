@@ -255,7 +255,7 @@ export default function CalendarEvents() {
   const activeList = getActiveList();
 
   return (
-    <div className="border-outline-variant flex h-[450px] flex-col rounded-xl border pt-4 shrink-0 bg-white shadow-sm" style={{ backgroundImage: 'linear-gradient(to top, #dfe9f3 0%, white 100%)' }}>
+    <div className="border-outline-variant dark:border-slate-800 flex h-[450px] flex-col rounded-xl border pt-4 shrink-0 shadow-sm transition-colors duration-300 bg-gradient-to-t from-[#dfe9f3] to-white dark:from-slate-900 dark:to-slate-900">
       <h3 className="text-title-sm font-title-sm text-on-surface mb-3 pl-4 flex shrink-0 items-center gap-2 select-none">
         <CalendarDays size={18} className="text-secondary" />
         Calendar Events
@@ -264,21 +264,21 @@ export default function CalendarEvents() {
       <div className="flex gap-2 px-4 mb-3 shrink-0">
         <button
           onClick={() => setActiveTab("events")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "events" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant"}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "events" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300"}`}
         >
           <Calendar size={14} />
           Events ({events.length})
         </button>
         <button
           onClick={() => setActiveTab("appointments")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "appointments" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant"}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "appointments" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300"}`}
         >
           <Briefcase size={14} />
           Appointments ({appointments.length})
         </button>
         <button
           onClick={() => setActiveTab("tasks")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "tasks" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant"}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${activeTab === "tasks" ? "bg-primary text-white shadow-sm" : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300"}`}
         >
           <CheckSquare size={14} />
           Tasks ({tasks.length})
@@ -291,7 +291,7 @@ export default function CalendarEvents() {
             return (
               <div
                 key={meeting.id}
-                className="border-primary bg-white/80 backdrop-blur-sm rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-md"
+                className="border-primary bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-md dark:hover:shadow-black/40"
               >
                 <div className="mb-1 flex items-start justify-between gap-2">
                   <span
@@ -333,7 +333,7 @@ export default function CalendarEvents() {
             return (
               <div
                 key={meeting.id}
-                className="border-secondary bg-white/80 backdrop-blur-sm animate-fadeIn rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-md"
+                className="border-secondary bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm animate-fadeIn rounded-r-lg border-l-4 p-3 transition-shadow hover:shadow-md dark:hover:shadow-black/40"
               >
                 <div className="mb-1 flex items-start justify-between gap-2">
                   <span
@@ -371,8 +371,8 @@ export default function CalendarEvents() {
               className="absolute inset-0 bg-[length:100%_100%] bg-no-repeat bg-center opacity-80"
               style={{ backgroundImage: "url('/meetings_illus.jpg')" }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-100/90 to-gray-50/70" />
-            <p className="text-on-surface-variant relative z-10 p-4 text-center text-sm italic font-medium select-none shadow-sm drop-shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-100/90 dark:from-slate-900/90 to-gray-50/70 dark:to-slate-900/70" />
+            <p className="text-on-surface-variant dark:text-slate-400 relative z-10 p-4 text-center text-sm italic font-medium select-none shadow-sm drop-shadow-sm">
               No {activeTab} scheduled.
             </p>
           </div>

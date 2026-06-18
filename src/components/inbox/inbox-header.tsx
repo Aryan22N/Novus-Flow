@@ -144,7 +144,7 @@ export default function InboxHeader({
   const isLast = page >= pageCount || total === 0;
 
   return (
-    <div className="mb-1 flex shrink-0 flex-col gap-4 rounded-xl bg-[#ffffff] p-3">
+    <div className="mb-1 flex shrink-0 flex-col gap-4 rounded-xl bg-[#ffffff] dark:bg-[#0a0f1c] p-3 transition-colors duration-300">
       <div className="flex items-center justify-between">
         {/* Left Actions */}
         <div className="flex items-center gap-2">
@@ -161,13 +161,13 @@ export default function InboxHeader({
                     setSelectedEmails([]);
                   }
                 }}
-                className="appearance-none h-full w-full cursor-pointer rounded border border-gray-300 bg-white checked:bg-gray-300 checked:border-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+                className="appearance-none h-full w-full cursor-pointer rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 checked:bg-gray-300 dark:checked:bg-slate-500 checked:border-gray-800 dark:checked:border-slate-400 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-slate-700 focus:ring-offset-1 dark:focus:ring-offset-slate-900 transition-colors"
               />
 
               {/* The custom tick mark */}
               {emails.length > 0 && selectedEmails.length === emails.length && (
                 <svg
-                  className="absolute pointer-events-none w-3.5 h-3.5 text-gray-800"
+                  className="absolute pointer-events-none w-3.5 h-3.5 text-gray-800 dark:text-slate-900"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -181,12 +181,12 @@ export default function InboxHeader({
 
           {selectedEmails.length > 0 ? (
             <>
-              <div className="mx-1 h-6 w-px bg-slate-200" />
+              <div className="mx-1 h-6 w-px bg-slate-200 dark:bg-slate-700" />
 
               <button
                 onClick={() => archiveMutation.mutate({ ids: selectedEmails })}
                 title="Archive"
-                className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                className="rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
               >
                 <Archive size={18} />
               </button>
@@ -194,7 +194,7 @@ export default function InboxHeader({
               <button
                 onClick={() => deleteMutation.mutate({ ids: selectedEmails })}
                 title="Delete"
-                className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                className="rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400"
               >
                 <Trash2 size={18} />
               </button>
@@ -202,7 +202,7 @@ export default function InboxHeader({
               <button
                 onClick={() => markReadStatusMutation.mutate({ ids: selectedEmails, isRead: true })}
                 title="Mark as read"
-                className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                className="rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
               >
                 <MailOpen size={18} />
               </button>
@@ -210,7 +210,7 @@ export default function InboxHeader({
               <button
                 onClick={() => markReadStatusMutation.mutate({ ids: selectedEmails, isRead: false })}
                 title="Mark as unread"
-                className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                className="rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
               >
                 <Mail size={18} />
               </button>
@@ -221,7 +221,7 @@ export default function InboxHeader({
                 onClick={() => refreshInbox()}
                 disabled={isRefreshing}
                 title="Sync inbox from Gmail"
-                className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50"
+                className="rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               >
                 <RefreshCw
                   size={18}
@@ -229,7 +229,7 @@ export default function InboxHeader({
                 />
               </button>
 
-              <button className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100">
+              <button className="rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
                 <MoreVertical size={18} />
               </button>
             </>
@@ -237,7 +237,7 @@ export default function InboxHeader({
         </div>
 
         {/* Right Pagination */}
-        <div className="flex items-center gap-1 text-[13px] font-medium text-[#5f6368]">
+        <div className="flex items-center gap-1 text-[13px] font-medium text-[#5f6368] dark:text-slate-400">
           <span className="mr-2 tabular-nums">
             {total === 0 ? "0" : `${start}–${end}`} of {total}
           </span>
@@ -245,7 +245,7 @@ export default function InboxHeader({
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={isFirst}
-            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-[#f1f3f4] disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-[#f1f3f4] dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Previous page"
           >
             <ChevronLeft size={18} strokeWidth={2} />
@@ -254,7 +254,7 @@ export default function InboxHeader({
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={isLast}
-            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-[#f1f3f4] disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-[#f1f3f4] dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Next page"
           >
             <ChevronRight size={18} strokeWidth={2} />
@@ -263,8 +263,8 @@ export default function InboxHeader({
       </div>
 
       {searchQuery ? (
-        <div className="flex items-center px-2 py-1 text-[15px] text-gray-800 border-b border-gray-100 pb-2">
-          Search Results for <span className="font-semibold mx-1">"{searchQuery}"</span> ({total} emails found)
+        <div className="flex items-center px-2 py-1 text-[15px] text-gray-800 dark:text-slate-200 border-b border-gray-100 dark:border-slate-800 pb-2">
+          Search Results for <span className="font-semibold mx-1 text-black dark:text-white">"{searchQuery}"</span> ({total} emails found)
         </div>
       ) : (
         <InboxFilters category={category} onCategoryChange={onCategoryChange} />

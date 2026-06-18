@@ -104,11 +104,34 @@
   --spacing-sidebar-width: 260px;
   --spacing-row-height-dense: 40px;
   --spacing-container-margin: 24px;
+
+  /* Aurora Light Mode */
+  --aurora-1: rgba(26,115,232,0.18);
+  --aurora-2: rgba(96,99,238,0.18);
+  --aurora-3: rgba(232,240,254,0.9);
+  --aurora-grid: rgba(16,24,40,0.06);
+}
+
+.dark {
+  --color-background: #0B0F19;
+  --color-surface: #0a0f1c;
+  --color-on-background: #f8fafc;
+  --color-on-surface: #f8fafc;
+  --color-ink: #f8fafc;
+  --color-ink-soft: #94a3b8;
+  --color-ai: rgba(30, 64, 175, 0.15); /* Deep transparent blue for dark mode AI backgrounds */
+
+  /* Aurora Dark Mode */
+  --aurora-1: rgba(30, 58, 138, 0.25);
+  --aurora-2: rgba(79, 70, 229, 0.25);
+  --aurora-3: rgba(15, 23, 42, 0.9);
+  --aurora-grid: rgba(255, 255, 255, 0.05);
 }
 
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--color-background);
+  color: var(--color-ink);
 }
 .ai-gradient {
   background: linear-gradient(135deg, #e8f0fe 0%, #f3e8ff 100%);
@@ -141,12 +164,20 @@ body {
 }
 
 /* Custom Utilities */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @utility glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+  &:where(.dark, .dark *) {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  }
 }
 
 @utility glass-strong {
@@ -155,6 +186,12 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+  &:where(.dark, .dark *) {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  }
 }
 
 @utility text-gradient {

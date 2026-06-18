@@ -44,7 +44,7 @@ export default function DraftsHeader({
   };
 
   return (
-    <div className="mb-1 flex shrink-0 flex-col gap-4 rounded-xl bg-[#ffffff] p-3">
+    <div className="mb-1 flex shrink-0 flex-col gap-4 rounded-xl bg-[#ffffff] dark:bg-slate-900/50 p-3">
       <div className="flex items-center justify-between">
         {/* Left Actions */}
         <div className="flex items-center gap-2">
@@ -79,12 +79,12 @@ export default function DraftsHeader({
 
           {selectedDrafts.length > 0 ? (
             <>
-              <div className="mx-1 h-6 w-px bg-slate-200" />
+              <div className="mx-1 h-6 w-px bg-slate-200 dark:bg-slate-700" />
 
               <button
                 onClick={() => archiveMutation.mutate({ ids: selectedDrafts })}
                 title="Archive"
-                className="hover:bg-slate-100 hover:text-slate-800 rounded p-1.5 text-slate-500 transition-colors"
+                className="hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <Archive size={18} />
               </button>
@@ -92,7 +92,7 @@ export default function DraftsHeader({
               <button
                 onClick={() => deleteMutation.mutate({ ids: selectedDrafts })}
                 title="Delete"
-                className="hover:bg-slate-100 hover:text-red-600 rounded p-1.5 text-slate-500 transition-colors"
+                className="hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400 rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <Trash2 size={18} />
               </button>
@@ -100,7 +100,7 @@ export default function DraftsHeader({
               <button
                 onClick={() => markReadStatusMutation.mutate({ ids: selectedDrafts, isRead: true })}
                 title="Mark as read"
-                className="hover:bg-slate-100 hover:text-slate-800 rounded p-1.5 text-slate-500 transition-colors"
+                className="hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <MailOpen size={18} />
               </button>
@@ -108,7 +108,7 @@ export default function DraftsHeader({
               <button
                 onClick={() => markReadStatusMutation.mutate({ ids: selectedDrafts, isRead: false })}
                 title="Mark as unread"
-                className="hover:bg-slate-100 hover:text-slate-800 rounded p-1.5 text-slate-500 transition-colors"
+                className="hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <Mail size={18} />
               </button>
@@ -118,12 +118,12 @@ export default function DraftsHeader({
               <button
                 onClick={handleRefresh}
                 title="Sync drafts"
-                className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50"
+                className="rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
               >
                 <RefreshCw size={18} />
               </button>
 
-              <button className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100">
+              <button className="rounded p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
                 <MoreVertical size={18} />
               </button>
             </>
@@ -131,7 +131,7 @@ export default function DraftsHeader({
         </div>
 
         {/* Right Label */}
-        <div className="flex items-center gap-1 text-[13px] font-medium text-[#5f6368]">
+        <div className="flex items-center gap-1 text-[13px] font-medium text-[#5f6368] dark:text-slate-400">
           <span className="mr-2 tabular-nums">
             {drafts.length === 0 ? "0" : `1–${drafts.length}`} of {drafts.length}
           </span>

@@ -52,9 +52,9 @@ export default function ThreadPage(props: {
   const [showAiReplies, setShowAiReplies] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('superman_settings_auto_summarize');
+    const stored = localStorage.getItem("superman_settings_auto_summarize");
     if (stored !== null) {
-      setShowAiReplies(stored === 'true');
+      setShowAiReplies(stored === "true");
     }
   }, []);
 
@@ -108,7 +108,7 @@ export default function ThreadPage(props: {
   }, [thread, params.threadId]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white text-[#202124] antialiased select-none">
+    <div className="flex h-screen flex-col overflow-hidden bg-white text-[#202124] antialiased select-none dark:bg-[#0B0F19] dark:text-slate-100">
       <style>{`
         .email-content img {
           max-width: 100%;
@@ -129,66 +129,66 @@ export default function ThreadPage(props: {
         <AppSidebar isOpen={isSidebarOpen} />
 
         {/* Main Workspace Area */}
-        <main className="flex flex-1 flex-col overflow-y-auto bg-white">
+        <main className="flex flex-1 flex-col overflow-y-auto bg-white dark:bg-[#0a0f1c]">
           {/* Email Context Actions Row */}
-          <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between bg-white/95 px-4 backdrop-blur">
+          <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between bg-white/95 px-4 backdrop-blur dark:bg-[#0a0f1c]/95">
             <div className="flex items-center space-x-1">
               <button
                 onClick={() => router.back()}
-                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="Back to Inbox"
               >
                 <ChevronLeft size={20} />
               </button>
-              <div className="mx-2 h-6 w-[1px] bg-gray-200"></div>
+              <div className="mx-2 h-6 w-[1px] bg-gray-200 dark:bg-slate-700"></div>
 
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="Archive"
               >
                 <Archive size={20} />
               </button>
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="Report spam"
               >
                 <AlertTriangle size={20} />
               </button>
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="Delete"
               >
                 <Trash2 size={20} />
               </button>
 
-              <div className="mx-2 h-6 w-[1px] bg-gray-200"></div>
+              <div className="mx-2 h-6 w-[1px] bg-gray-200 dark:bg-slate-700"></div>
 
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="Mark as unread"
               >
                 <Mail size={20} />
               </button>
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="Move to"
               >
                 <Folder size={20} />
               </button>
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="More"
               >
                 <MoreVertical size={20} />
               </button>
             </div>
 
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="flex items-center text-sm text-gray-500 dark:text-slate-400">
               <span className="mr-4">1 of 1</span>
-              <button className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full p-2 text-gray-300">
+              <button className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full p-2 text-gray-300 dark:text-slate-600">
                 <ChevronLeft size={16} />
               </button>
-              <button className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full p-2 text-gray-300">
+              <button className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full p-2 text-gray-300 dark:text-slate-600">
                 <ChevronLeft size={16} className="rotate-180" />
               </button>
             </div>
@@ -210,25 +210,25 @@ export default function ThreadPage(props: {
                   {/* Subject Line & Thread Properties */}
                   <div className="mb-8 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-[32px] font-light tracking-tight text-[#202124]">
+                      <h1 className="text-[32px] font-light tracking-tight text-[#202124] dark:text-slate-100">
                         {thread.subject}
                       </h1>
-                      <span className="ml-2 flex items-center gap-1 rounded bg-[#f1f3f4] px-2 py-0.5 text-xs font-medium text-[#5f6368]">
+                      <span className="ml-2 flex items-center gap-1 rounded bg-[#f1f3f4] px-2 py-0.5 text-xs font-medium text-[#5f6368] dark:bg-slate-800 dark:text-slate-300">
                         Inbox
-                        <button className="ml-0.5 hover:text-black">
+                        <button className="ml-0.5 hover:text-black dark:hover:text-white">
                           <X size={12} />
                         </button>
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                        className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                         title="Print all"
                       >
                         <Printer size={20} />
                       </button>
                       <button
-                        className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                        className="flex h-10 w-10 items-center justify-center rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
                         title="In new window"
                       >
                         <ExternalLink size={20} />
@@ -241,7 +241,7 @@ export default function ThreadPage(props: {
                     {thread.messages.map((msg) => (
                       <div
                         key={msg.id}
-                        className="overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+                        className="overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50"
                       >
                         {/* Message Sender Metadata Row */}
                         <div className="mb-4 flex items-start">
@@ -251,36 +251,36 @@ export default function ThreadPage(props: {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between">
                               <div>
-                                <span className="text-[15px] font-semibold text-[#202124]">
+                                <span className="text-[15px] font-semibold text-[#202124] dark:text-slate-100">
                                   {msg.sender}
                                 </span>
-                                <span className="ml-1.5 text-xs text-gray-500">
+                                <span className="ml-1.5 text-xs text-gray-500 dark:text-slate-400">
                                   &lt;{msg.senderEmail}&gt;
                                 </span>
                               </div>
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
                                 <span>
                                   {formatDistanceToNow(msg.date, {
                                     addSuffix: true,
                                   })}
                                 </span>
                                 <div className="ml-1 flex items-center">
-                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100">
+                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800">
                                     <Star size={18} />
                                   </button>
-                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100">
+                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800">
                                     <Reply size={18} />
                                   </button>
-                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100">
+                                  <button className="flex h-8 w-8 items-center justify-center rounded-full p-1 text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800">
                                     <MoreVertical size={18} />
                                   </button>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="mt-0.5 flex items-center gap-0.5 text-xs text-gray-500">
+                            <div className="mt-0.5 flex items-center gap-0.5 text-xs text-gray-500 dark:text-slate-400">
                               <span>to {msg.to || "me"}</span>
-                              <button className="rounded p-0.5 hover:bg-gray-100">
+                              <button className="rounded p-0.5 hover:bg-gray-100 dark:hover:bg-slate-800">
                                 <ChevronDown size={12} />
                               </button>
                             </div>
@@ -289,7 +289,7 @@ export default function ThreadPage(props: {
 
                         {/* Cleaned Message Content Box */}
                         <article className="mb-6 pl-[52px]">
-                          <div className="prose prose-sm prose-a:text-[#1a73e8] max-w-none text-sm leading-relaxed text-[#202124]">
+                          <div className="prose prose-sm prose-a:text-[#1a73e8] dark:prose-a:text-blue-400 max-w-none text-sm leading-relaxed text-[#202124] dark:text-slate-300">
                             {msg.htmlBody ? (
                               <div
                                 className="email-content"
@@ -311,20 +311,20 @@ export default function ThreadPage(props: {
                             {msg.attachments.map((att: any) => (
                               <div
                                 key={att.id}
-                                className="flex max-w-xs cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs transition-colors hover:bg-gray-100"
+                                className="flex max-w-xs cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs transition-colors hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
                               >
                                 <Paperclip
                                   size={14}
-                                  className="shrink-0 text-gray-500"
+                                  className="shrink-0 text-gray-500 dark:text-slate-400"
                                 />
                                 <span
-                                  className="truncate font-medium text-gray-700"
+                                  className="truncate font-medium text-gray-700 dark:text-slate-300"
                                   title={att.filename}
                                 >
                                   {att.filename}
                                 </span>
                                 {att.size > 0 && (
-                                  <span className="shrink-0 font-normal text-gray-400">
+                                  <span className="shrink-0 font-normal text-gray-400 dark:text-slate-500">
                                     ({Math.round(att.size / 1024)} KB)
                                   </span>
                                 )}
@@ -342,21 +342,21 @@ export default function ThreadPage(props: {
                               setShowHelpMeWrite(false);
                               setHelpMeWritePrompt("");
                             }}
-                            className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-300 px-5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-300 px-5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                             suppressHydrationWarning
                           >
                             <Reply size={14} />
                             Reply
                           </button>
                           <button
-                            className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                             suppressHydrationWarning
                           >
                             <Forward size={14} />
                             Forward
                           </button>
                           <button
-                            className="rounded-full border border-transparent p-1.5 text-gray-500 hover:border-gray-200 hover:bg-gray-50"
+                            className="rounded-full border border-transparent p-1.5 text-gray-500 hover:border-gray-200 hover:bg-gray-50 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800"
                             title="Add reaction"
                             suppressHydrationWarning
                           >
@@ -403,7 +403,7 @@ export default function ThreadPage(props: {
                               {/* Editor Body */}
                               <div className="relative flex flex-1 flex-col gap-3 px-6 py-4">
                                 {showHelpMeWrite && (
-                                  <div className="animate-fadeIn flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/50 p-3 shadow-sm">
+                                  <div className="animate-fadeIn flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/50 p-3 shadow-sm dark:border-blue-900/50 dark:bg-blue-900/20">
                                     <Sparkles
                                       size={16}
                                       className="shrink-0 animate-pulse text-blue-600"
@@ -432,7 +432,7 @@ export default function ThreadPage(props: {
                                         }
                                       }}
                                       placeholder="What should the reply say? (e.g. say yes, but ask to reschedule to Tuesday)"
-                                      className="flex-1 border-none bg-transparent font-sans text-sm text-[#202124] outline-none placeholder:text-gray-400"
+                                      className="flex-1 border-none bg-transparent font-sans text-sm text-[#202124] outline-none placeholder:text-gray-400 dark:text-slate-200 dark:placeholder:text-slate-500"
                                       autoFocus
                                       suppressHydrationWarning
                                     />
@@ -472,7 +472,7 @@ export default function ThreadPage(props: {
                                           setReplyText("");
                                         }
                                       }}
-                                      className="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:bg-gray-200"
+                                      className="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 dark:text-slate-400 dark:hover:bg-slate-700"
                                       suppressHydrationWarning
                                     >
                                       <X size={14} />
