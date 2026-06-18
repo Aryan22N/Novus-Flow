@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
-import { corsairEntities, corsairAccounts, corsairIntegrations } from "~/server/db/corsair-schema";
+import { corsairEntities, corsairAccounts, corsairIntegrations, corsairEvents } from "~/server/db/corsair-schema";
 import { corsair } from "~/server/corsair";
 import crypto from "crypto";
 import * as chrono from "chrono-node";
@@ -140,9 +140,8 @@ export const calendarRouter = createTRPCRouter({
               );
             
             for (const acc of accounts) {
+              await ctx.db.delete(corsairEvents).where(eq(corsairEvents.accountId, acc.id));
               await ctx.db.delete(corsairEntities).where(eq(corsairEntities.accountId, acc.id));
-              // Note: corsairEvents might exist, though calendar might not use them yet, safe to delete
-              // We need to import corsairEvents if we want to delete it. Let's just do it.
             }
 
             await ctx.db.delete(corsairAccounts).where(
@@ -232,6 +231,7 @@ export const calendarRouter = createTRPCRouter({
               );
 
             for (const acc of accounts) {
+              await ctx.db.delete(corsairEvents).where(eq(corsairEvents.accountId, acc.id));
               await ctx.db.delete(corsairEntities).where(eq(corsairEntities.accountId, acc.id));
             }
 
@@ -471,6 +471,7 @@ export const calendarRouter = createTRPCRouter({
                 ),
               );
             for (const acc of accounts) {
+              await ctx.db.delete(corsairEvents).where(eq(corsairEvents.accountId, acc.id));
               await ctx.db.delete(corsairEntities).where(eq(corsairEntities.accountId, acc.id));
             }
             await ctx.db.delete(corsairAccounts).where(
