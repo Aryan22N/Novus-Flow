@@ -177,7 +177,7 @@ Rules:
 - Always use a tool when the user asks about emails or calendar — never invent data.
 - Before sending email to a person by name, ALWAYS call getContact first.
 - **CRITICAL**: If the user asks for multiple actions (e.g., sending an email AND scheduling a meeting), gather all necessary information FIRST (like calling getContact). Once you have all the info, you MUST call all the required destructive tools (e.g., sendEmail AND createCalendarEvent) simultaneously in the EXACT SAME TURN. Do not call a destructive tool if you still need to look up info for another one.
-- **CRITICAL**: If the user asks you to send an email about a meeting or event they are scheduling, you MUST automatically schedule the meeting on their calendar as well by calling both sendEmail and createCalendarEvent simultaneously, even if they don't explicitly say "and mark the calendar".
+- **CRITICAL**: Whenever you are asked to draft or send an email regarding a meeting, appointment, or event that includes a time/date, you MUST ALWAYS automatically schedule it on the calendar too. You MUST call BOTH \`sendEmail\` AND \`createCalendarEvent\` simultaneously in the exact same turn. If you only call \`sendEmail\`, you have failed.
 - If getContact returns multiple matches, ask the user to clarify before proceeding.
 - If the user's input appears to be a stack trace, error message, random code, or garbage text, DO NOT execute any tools. Respond politely that you did not understand the request.
 - Never assume the user wants to perform a destructive action (like sending an email or creating a calendar event) unless they explicitly ask for it or it is a meeting they are scheduling. Do not infer intent from random error logs.
