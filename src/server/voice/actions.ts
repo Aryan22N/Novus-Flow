@@ -32,7 +32,11 @@ export async function executeTool(
   if (toolName === "readInbox") {
     const filter = (args.filter as string) ?? "unread";
     const count  = Math.min((args.count as number) ?? 5, 10);
-    const result = await caller.email.getInboxThreads({ page: 1 });
+    const result = await caller.email.getInboxThreads({ 
+      page: 1,
+      unreadOnly: filter === "unread",
+      isStarred: filter === "starred" ? true : undefined,
+    });
     const emails = result.emails.slice(0, count).map((e) => ({
       from:    e.sender,
       subject: e.subject,
@@ -49,48 +53,35 @@ export async function executeTool(
   }
 
   if (toolName === "searchEmails") {
-    const query  = (args.query as string).toLowerCase();
-    const inbox  = await caller.email.getInboxThreads({ page: 1 });
-    const matches = inbox.emails
-      .filter(
-        (e) =>
-          e.subject?.toLowerCase().includes(query) ||
-          e.sender?.toLowerCase().includes(query) ||
-          e.snippet?.toLowerCase().includes(query),
-      )
+    const query  = (args.query as string);
+    const result = await caller.email.searchEmails({ query });
+    const matches = result.emails
       .slice(0, 8)
       .map((e) => ({ from: e.sender, subject: e.subject, threadId: e.threadId, date: e.date }));
     return { data: { matches, count: matches.length } };
   }
 
   if (toolName === "getContact") {
-    const name  = (args.name as string).toLowerCase();
-    const inbox = await caller.email.getInboxThreads({ page: 1 });
-    const seen  = new Map<string, { name: string; email: string }>();
+    // Problem 3 fix: query the contacts table (all historical contacts) instead
+    // of scanning the last 50 inbox threads which misses older contacts.
+    const name    = (args.name as string).toLowerCase();
+    const results = await caller.email.searchContacts({ query: name });
 
-    for (const email of inbox.emails) {
-      if (!email.sender) continue;
-      const match       = email.sender.match(/^(.+?)\s*<(.+?)>$/) ?? [null, null, email.senderEmail || email.sender];
-      const displayName = (match[1] ?? "").trim();
-      const emailAddr   = (match[2] ?? "").trim();
-      if (emailAddr && !seen.has(emailAddr)) {
-        seen.set(emailAddr, { name: displayName || emailAddr, email: emailAddr });
-      }
-    }
-
-    const contacts = [...seen.values()].filter(
-      (c) =>
-        c.name.toLowerCase().includes(name) ||
-        c.email.toLowerCase().includes(name),
-    );
-
-    if (contacts.length === 0)
+    if (results.length === 0)
       return { data: { found: false, message: `No contact found matching "${args.name as string}".` } };
-    if (contacts.length === 1) {
-      novaSession.lastContext.emailAddress = contacts[0]!.email;
-      return { data: { found: true, contact: contacts[0] } };
+
+    if (results.length === 1) {
+      novaSession.lastContext.emailAddress = results[0]!.email;
+      return { data: { found: true, contact: { name: results[0]!.name, email: results[0]!.email } } };
     }
-    return { data: { found: true, multiple: true, contacts: contacts.slice(0, 5) } };
+
+    return {
+      data: {
+        found:    true,
+        multiple: true,
+        contacts: results.map(c => ({ name: c.name, email: c.email })),
+      },
+    };
   }
 
   if (toolName === "getCalendarEvents") {

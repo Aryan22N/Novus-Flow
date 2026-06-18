@@ -102,7 +102,7 @@ export default function NovusAssistantLayout({ children }: { children: React.Rea
                 ) : chats?.length === 0 ? (
                   <div className="px-2 text-sm text-outline">No recent chats.</div>
                 ) : (
-                  chats?.slice(0, 3).map((chat) => (
+                  chats?.map((chat) => (
                     <Link
                       key={chat.chatId}
                       href={`/Novus_assistent/${chat.chatId}`}

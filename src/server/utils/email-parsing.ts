@@ -77,3 +77,11 @@ export function parsePayload(payload: any) {
 
   return { htmlBody, plainBody, attachments };
 }
+
+export function getEmailCategory(labelIds?: string[]) {
+  if (!labelIds) return "primary";
+  if (labelIds.includes("CATEGORY_PROMOTIONS")) return "promotions";
+  if (labelIds.includes("CATEGORY_SOCIAL")) return "socials";
+  if (labelIds.includes("CATEGORY_UPDATES")) return "updates";
+  return "primary";
+}

@@ -15,6 +15,7 @@ import {
   getHeader,
   extractSender,
   parsePayload,
+  getEmailCategory,
 } from "~/server/utils/email-parsing";
 import { db } from "~/server/db";
 import { invalidateUserContext } from "./ai-context";
@@ -28,6 +29,7 @@ export const emailRouter = createTRPCRouter({
         page: z.number().int().min(1).default(1),
         category: z.string().optional(),
         isStarred: z.boolean().optional(),
+        unreadOnly: z.boolean().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -72,14 +74,6 @@ export const emailRouter = createTRPCRouter({
             ? new Date(dateHeader).getTime()
             : NaN;
 
-          const getEmailCategory = (labelIds?: string[]) => {
-            if (!labelIds) return "primary";
-            if (labelIds.includes("CATEGORY_PROMOTIONS")) return "promotions";
-            if (labelIds.includes("CATEGORY_SOCIAL")) return "socials";
-            if (labelIds.includes("CATEGORY_UPDATES")) return "updates";
-            return "primary";
-          };
-
           return {
             id: message.entityId,
             threadId: data.threadId,
@@ -111,6 +105,7 @@ export const emailRouter = createTRPCRouter({
           if (seen.has(email.id)) return false;
           if (input.category && email.category !== input.category) return false;
           if (input.isStarred && !email.isStarred) return false;
+          if (input.unreadOnly && !email.unread) return false;
           seen.add(email.id);
           return true;
         })
@@ -157,8 +152,7 @@ export const emailRouter = createTRPCRouter({
             or(
               ilike(sql`${corsairEntities.data}->>'subject'`, searchTerms),
               ilike(sql`${corsairEntities.data}->>'snippet'`, searchTerms),
-              ilike(sql`${corsairEntities.data}->>'from'`, searchTerms),
-              ilike(sql`${corsairEntities.data}->>'to'`, searchTerms)
+              ilike(sql`${corsairEntities.data}::text`, searchTerms)
             )
           )
         )
@@ -184,14 +178,6 @@ export const emailRouter = createTRPCRouter({
           const headerTimestamp = dateHeader
             ? new Date(dateHeader).getTime()
             : NaN;
-
-          const getEmailCategory = (labelIds?: string[]) => {
-            if (!labelIds) return "primary";
-            if (labelIds.includes("CATEGORY_PROMOTIONS")) return "promotions";
-            if (labelIds.includes("CATEGORY_SOCIAL")) return "socials";
-            if (labelIds.includes("CATEGORY_UPDATES")) return "updates";
-            return "primary";
-          };
 
           return {
             id: message.entityId,
@@ -274,10 +260,7 @@ export const emailRouter = createTRPCRouter({
       seen.add(entity.entityId);
 
       const labelIds = data.labelIds as string[];
-      let cat = "primary";
-      if (labelIds.includes("CATEGORY_PROMOTIONS")) cat = "promotions";
-      else if (labelIds.includes("CATEGORY_SOCIAL")) cat = "socials";
-      else if (labelIds.includes("CATEGORY_UPDATES")) cat = "updates";
+      const cat = getEmailCategory(labelIds);
 
       counts[cat as keyof typeof counts]++;
     }
@@ -780,46 +763,53 @@ export const emailRouter = createTRPCRouter({
         })) as { messages?: { id: string }[] } | null;
 
         const messageIds = listResult?.messages ?? [];
-        if (messageIds.length === 0) return [];
-
-        const emails = await Promise.all(
-          messageIds.map(async (msg) => {
-            const fullMsg = (await client.gmail!.api!.messages!.get({
-              id: msg.id,
-              format: "full",
-            })) as any;
-            
-            const headers = fullMsg.payload?.headers ?? [];
-            const to = getHeader(headers, "To") || "Unknown";
-            const subject = getHeader(headers, "Subject") || "(no subject)";
-            const dateHeader = getHeader(headers, "Date");
-            const date = dateHeader ? new Date(dateHeader) : new Date(Number(fullMsg.internalDate || Date.now()));
-            
-            return {
-              id: fullMsg.id as string,
-              threadId: fullMsg.threadId as string,
-              to: extractSender(to),
-              cc: null,
-              bcc: null,
-              subject: subject as string,
-              body: (fullMsg.snippet as string) || "",
-              messageId: fullMsg.id as string,
-              createdAt: date,
-            };
-          })
-        );
         
-        return emails.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        if (messageIds.length > 0) {
+          const emailsToCache = await Promise.all(
+            messageIds.map(async (msg) => {
+              const fullMsg = (await client.gmail!.api!.messages!.get({
+                id: msg.id,
+                format: "full",
+              })) as any;
+              
+              const headers = fullMsg.payload?.headers ?? [];
+              const to = getHeader(headers, "To") || "Unknown";
+              const subject = getHeader(headers, "Subject") || "(no subject)";
+              const dateHeader = getHeader(headers, "Date");
+              const date = dateHeader ? new Date(dateHeader) : new Date(Number(fullMsg.internalDate || Date.now()));
+              
+              return {
+                id: fullMsg.id as string,
+                tenantId,
+                to: extractSender(to),
+                cc: null,
+                bcc: null,
+                subject: subject as string,
+                body: (fullMsg.snippet as string) || "",
+                messageId: fullMsg.id as string,
+                createdAt: date,
+              };
+            })
+          );
+          
+          await ctx.db
+            .insert(sentMail)
+            .values(emailsToCache)
+            .onConflictDoNothing();
+        }
       } catch (error) {
-        console.error("Failed to fetch sent emails from Gmail:", error);
-        // Fallback to local DB if Gmail API fails
-        const localSent = await ctx.db
-          .select()
-          .from(sentMail)
-          .where(eq(sentMail.tenantId, tenantId))
-          .orderBy(desc(sentMail.createdAt));
-        return localSent.map(({ tenantId, ...rest }) => rest);
+        console.error("Failed to sync sent emails from Gmail:", error);
       }
+
+      // Always return from DB cache
+      const localSent = await ctx.db
+        .select()
+        .from(sentMail)
+        .where(eq(sentMail.tenantId, tenantId))
+        .orderBy(desc(sentMail.createdAt))
+        .limit(50);
+        
+      return localSent.map(({ tenantId, ...rest }) => rest);
     }),
 
   saveDraft: protectedProcedure
@@ -913,7 +903,8 @@ export const emailRouter = createTRPCRouter({
     .input(z.object({ query: z.string().default("") }))
     .query(async ({ ctx, input }) => {
       const tenantId = ctx.session.user.id;
-      const cleanQuery = input.query.trim();
+      const cleanQuery = input.query.trim().toLowerCase();
+      const q = cleanQuery ? `%${cleanQuery}%` : undefined;
 
       const results = await ctx.db
         .select()
@@ -921,10 +912,10 @@ export const emailRouter = createTRPCRouter({
         .where(
           and(
             eq(contacts.userId, tenantId),
-            cleanQuery
+            q
               ? or(
-                  ilike(contacts.name, `%${cleanQuery}%`),
-                  ilike(contacts.email, `%${cleanQuery}%`),
+                  sql`lower(coalesce(${contacts.name}, '')) like ${q}`,
+                  ilike(contacts.email, q),
                 )
               : undefined,
           ),
@@ -1081,6 +1072,8 @@ export const emailRouter = createTRPCRouter({
       };
     }
   }),
+
+
 });
 
 async function captureCorrection(data: {

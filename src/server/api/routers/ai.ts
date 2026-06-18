@@ -412,6 +412,11 @@ export const aiRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { getNovaSession } = await import("~/server/voice/session");
       const session = await getNovaSession(ctx.session.user.id, input.chatId);
-      return session.history;
+      return {
+        history:        session.history,
+        // Problem 4 fix: return pending actions so the client can restore the
+        // confirmation UI if the user refreshes mid-flow
+        pendingActions: session.pendingActions ?? null,
+      };
     }),
 });

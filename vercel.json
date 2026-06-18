@@ -3,6 +3,10 @@
     {
       "path": "/api/jobs/summarize-context",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/jobs/renew-webhooks",
+      "schedule": "0 1 * * *"
     }
   ]
 }
