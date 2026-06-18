@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
-import { corsairEntities, corsairAccounts } from "~/server/db/corsair-schema";
+import { corsairEntities, corsairAccounts, corsairIntegrations } from "~/server/db/corsair-schema";
 import { corsair } from "~/server/corsair";
 import crypto from "crypto";
 import * as chrono from "chrono-node";
@@ -135,7 +135,7 @@ export const calendarRouter = createTRPCRouter({
               .where(
                 and(
                   eq(corsairAccounts.tenantId, tenantId),
-                  eq(corsairAccounts.integrationId, "googlecalendar"),
+                  inArray(corsairAccounts.integrationId, ctx.db.select({ id: corsairIntegrations.id }).from(corsairIntegrations).where(eq(corsairIntegrations.name, "googlecalendar"))),
                 ),
               );
             
@@ -148,7 +148,7 @@ export const calendarRouter = createTRPCRouter({
             await ctx.db.delete(corsairAccounts).where(
               and(
                 eq(corsairAccounts.tenantId, tenantId),
-                eq(corsairAccounts.integrationId, "googlecalendar")
+                inArray(corsairAccounts.integrationId, ctx.db.select({ id: corsairIntegrations.id }).from(corsairIntegrations).where(eq(corsairIntegrations.name, "googlecalendar")))
               )
             );
             console.log("[calendar.getEvents] Successfully deleted revoked Google Calendar account for tenant", tenantId);
@@ -190,7 +190,15 @@ export const calendarRouter = createTRPCRouter({
       const accountRows = await ctx.db
         .select({ id: corsairAccounts.id })
         .from(corsairAccounts)
-        .where(eq(corsairAccounts.tenantId, tenantId));
+        .where(
+          and(
+            eq(corsairAccounts.tenantId, tenantId),
+            inArray(
+              corsairAccounts.integrationId,
+              ctx.db.select({ id: corsairIntegrations.id }).from(corsairIntegrations).where(eq(corsairIntegrations.name, "googlecalendar"))
+            )
+          )
+        );
 
       if (accountRows.length === 0) return { synced: 0, deleted: 0, total: 0 };
 
@@ -219,7 +227,7 @@ export const calendarRouter = createTRPCRouter({
               .where(
                 and(
                   eq(corsairAccounts.tenantId, tenantId),
-                  eq(corsairAccounts.integrationId, "googlecalendar"),
+                  inArray(corsairAccounts.integrationId, ctx.db.select({ id: corsairIntegrations.id }).from(corsairIntegrations).where(eq(corsairIntegrations.name, "googlecalendar"))),
                 ),
               );
 
@@ -230,7 +238,7 @@ export const calendarRouter = createTRPCRouter({
             await ctx.db.delete(corsairAccounts).where(
               and(
                 eq(corsairAccounts.tenantId, tenantId),
-                eq(corsairAccounts.integrationId, "googlecalendar")
+                inArray(corsairAccounts.integrationId, ctx.db.select({ id: corsairIntegrations.id }).from(corsairIntegrations).where(eq(corsairIntegrations.name, "googlecalendar")))
               )
             );
             console.log("[syncEvents] Successfully deleted revoked Google Calendar account for tenant", tenantId);
@@ -459,7 +467,7 @@ export const calendarRouter = createTRPCRouter({
               .where(
                 and(
                   eq(corsairAccounts.tenantId, tenantId),
-                  eq(corsairAccounts.integrationId, "googlecalendar"),
+                  inArray(corsairAccounts.integrationId, ctx.db.select({ id: corsairIntegrations.id }).from(corsairIntegrations).where(eq(corsairIntegrations.name, "googlecalendar"))),
                 ),
               );
             for (const acc of accounts) {
@@ -468,7 +476,7 @@ export const calendarRouter = createTRPCRouter({
             await ctx.db.delete(corsairAccounts).where(
               and(
                 eq(corsairAccounts.tenantId, tenantId),
-                eq(corsairAccounts.integrationId, "googlecalendar")
+                inArray(corsairAccounts.integrationId, ctx.db.select({ id: corsairIntegrations.id }).from(corsairIntegrations).where(eq(corsairIntegrations.name, "googlecalendar")))
               )
             );
           } catch (dbErr) {
