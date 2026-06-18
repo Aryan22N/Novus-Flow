@@ -1,6 +1,6 @@
 "use client";
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { authClient } from "~/server/better-auth/client";
 import { useRouter } from "next/navigation";
 import {
@@ -23,6 +23,7 @@ import {
   Cpu,
   Zap,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { AuroraBackground, Particles } from "./Background";
 
@@ -966,6 +967,7 @@ const ScreenshotsFakeUI = () => (
 
 export function Screenshots() {
   const targetRef = useRef<HTMLDivElement>(null);
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const { scrollYProgress } = useScroll({
     target: targetRef,
   });
@@ -1005,7 +1007,10 @@ export function Screenshots() {
                 {/* Card Container */}
                 <div className="flex flex-col overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-slate-200 dark:hover:shadow-black/50">
                   {/* Image / Mockup Area */}
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 ring-1 ring-inset ring-slate-900/5 dark:ring-white/10">
+                  <div 
+                    className={`relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 ring-1 ring-inset ring-slate-900/5 dark:ring-white/10 ${s.video ? 'cursor-pointer' : ''}`}
+                    onClick={() => s.video && setActiveVideo(s.video)}
+                  >
                     {s.video ? (
                       <video
                         src={s.video}
@@ -1013,13 +1018,19 @@ export function Screenshots() {
                         loop
                         muted
                         playsInline
-                        className="h-full w-full object-cover object-left-top"
+                        className="h-full w-full object-cover object-left-top pointer-events-none"
                       />
                     ) : (
                       <ScreenshotsFakeUI />
                     )}
                     {/* Subtle inner overlay for gloss effect */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/5 dark:from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    {/* Play indicator on hover */}
+                    {s.video && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
+                        <PlayCircle className="w-12 h-12 text-white drop-shadow-md" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Meta details */}
@@ -1042,6 +1053,48 @@ export function Screenshots() {
           </motion.div>
         </div>
       </section>
+
+      {/* Video Modal Overlay */}
+      <AnimatePresence>
+        {activeVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setActiveVideo(null)}
+          >
+            <motion.button
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveVideo(null);
+              }}
+            >
+              <X className="w-6 h-6" />
+            </motion.button>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-5xl aspect-video rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20 bg-black"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <video
+                src={activeVideo}
+                autoPlay
+                controls
+                playsInline
+                className="w-full h-full object-contain outline-none"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

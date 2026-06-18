@@ -5,7 +5,8 @@ import { Sparkles, Paperclip, Send, Loader2, X, Copy, Check } from 'lucide-react
 import { api } from "~/trpc/react";
 import ComposeModal from "~/components/compose/compose-modal";
 import { useSearchParams } from 'next/navigation';
-import { CldUploadWidget } from 'next-cloudinary';
+import { FileUpload } from "~/components/ui/file-upload";
+import { env } from "~/env";
 import { toast } from 'sonner';
 
 export default function ChatPage({ params }: { params: Promise<{ chatId: string }> }) {
@@ -32,17 +33,33 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   const [pendingNovaAction, setPendingNovaAction] = useState<any>(null);
   // Copy-button UX
   const [copiedIdx, setCopiedIdx]         = useState<number | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleUploadSuccess = (result: any) => {
-    if (result.event === 'success') {
-      setAttachments(prev => [
-        ...prev,
-        {
-          name: result.info.original_filename + '.' + result.info.format,
-          url: result.info.secure_url,
-        },
-      ]);
+  const handleAceternityUpload = async (files: File[]) => {
+    setIsUploading(true);
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "superman_preset");
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          setAttachments(prev => [...prev, { name: file.name, url: data.secure_url }]);
+        } else if (data.error) {
+          toast.error("Cloudinary Upload Error: " + data.error.message);
+        }
+      } catch (err) {
+        console.error("Upload error:", err);
+        toast.error("Upload failed. Please check the console.");
+      }
     }
+    setIsUploading(false);
+    setShowUploadModal(false);
   };
 
   const utils = api.useUtils();
@@ -655,16 +672,13 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                 rows={1}
               />
               <div className="flex items-center gap-1 h-full pb-1">
-                <CldUploadWidget uploadPreset="superman_preset" onSuccess={handleUploadSuccess}>
-                  {({ open }) => (
-                    <button
-                      onClick={() => open()}
-                      className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
-                    >
-                      <Paperclip className="w-5 h-5 cursor-pointer" />
-                    </button>
-                  )}
-                </CldUploadWidget>
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
+                  disabled={generateDraftMutation.isPending || isNovaPending}
+                >
+                  <Paperclip className="w-5 h-5 cursor-pointer" />
+                </button>
                 <button
                   onClick={handleSend}
                   disabled={
@@ -691,6 +705,30 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
           initialDraft={generatedDraft}
           onClose={() => setGeneratedDraft(null)}
         />
+      )}
+
+      {showUploadModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setShowUploadModal(false)}>
+          <div className="w-full max-w-xl bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl p-6 relative overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6 relative z-10">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">Upload Files</h3>
+              <button onClick={() => setShowUploadModal(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="relative z-10 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-gray-50/50 dark:bg-neutral-950/50">
+              <FileUpload onChange={handleAceternityUpload} />
+            </div>
+
+            {isUploading && (
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm">
+                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">Uploading to Cloudinary...</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
