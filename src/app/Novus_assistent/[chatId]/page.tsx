@@ -322,7 +322,7 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   const hasActivity = messages.length > 0 || isNovaPending || generateDraftMutation.isPending;
 
   return (
-    <div className="flex-1 relative flex flex-col bg-background/50 overflow-hidden h-full">
+    <div className="flex-1 relative flex flex-col bg-transparent overflow-hidden h-full">
       {/* Background blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-400/10 rounded-full blur-[120px] mix-blend-multiply" />
@@ -345,7 +345,7 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
           {messages.map((msg, idx) =>
             msg.role === 'user' ? (
               <div key={idx} className="flex flex-col items-end message-fade-in">
-                <div className="max-w-[85%] md:max-w-[70%] p-4 rounded-2xl rounded-tr-none shadow-sm bg-primary-fixed text-on-primary-fixed">
+                <div className="max-w-[85%] md:max-w-[70%] p-4 rounded-2xl rounded-tr-none shadow-sm bg-[#3C69A0] text-white dark:bg-blue-600">
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 </div>
               </div>
@@ -354,13 +354,13 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                 <div className="max-w-full md:max-w-[90%] space-y-4">
                   {/* Copy button appears on hover */}
                   <div className="relative group">
-                    <div className="bg-surface-container-lowest p-4 md:p-5 rounded-2xl rounded-tl-none border border-outline-variant shadow-sm text-on-surface leading-relaxed">
+                    <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl rounded-tl-none border border-gray-100 dark:border-slate-700 shadow-sm text-gray-800 dark:text-slate-200 leading-relaxed">
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                     </div>
                     <button
                       onClick={() => handleCopy(msg.content, idx)}
                       title="Copy response"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-surface hover:bg-surface-container text-on-surface-variant"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-gray-50 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-500 dark:text-slate-300"
                     >
                       {copiedIdx === idx
                         ? <Check className="w-3.5 h-3.5 text-green-500" />
@@ -377,13 +377,13 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
           {pendingNovaAction && Array.isArray(pendingNovaAction) && (
             <div className="flex flex-col items-start message-fade-in mt-6 w-full">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-primary-container text-white rounded-full flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 fill-white" />
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 fill-current" />
                 </div>
-                <span className="font-bold text-primary">Confirmation Required</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">Confirmation Required</span>
               </div>
-              <div className="bg-surface-container-lowest p-4 md:p-5 rounded-2xl rounded-tl-none border border-outline-variant shadow-sm text-on-surface w-full max-w-[90%] md:max-w-[75%]">
-                <p className="text-sm mb-4 text-on-surface-variant font-medium">
+              <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl rounded-tl-none border border-gray-100 dark:border-slate-700 shadow-sm text-gray-800 dark:text-slate-200 w-full max-w-[90%] md:max-w-[75%]">
+                <p className="text-sm mb-4 text-gray-600 dark:text-slate-400 font-medium">
                   Novus wants to proceed. Please review and edit before confirming:
                 </p>
 
@@ -391,15 +391,15 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                   {pendingNovaAction.map((action: any, idx: number) => {
                     if (action.tool === 'sendEmail') {
                       return (
-                        <div key={idx} className="border border-outline-variant/60 p-4 rounded-xl flex flex-col gap-3 bg-surface w-full shadow-sm">
-                          <div className="text-[11px] font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                        <div key={idx} className="border border-gray-200 dark:border-slate-700 p-4 rounded-xl flex flex-col gap-3 bg-gray-50 dark:bg-slate-900 w-full shadow-sm">
+                          <div className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
                             <Send className="w-3.5 h-3.5" /> Send Email
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">To</label>
+                            <label className="text-[11px] font-medium text-gray-500 dark:text-slate-400 ml-1">To</label>
                             {/* Bug 5 fix: spreads a new args object — no direct state mutation */}
                             <input
-                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                              className="text-sm p-2.5 border border-gray-200 dark:border-slate-700 rounded-lg w-full bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-800 dark:text-slate-200"
                               value={action.args.to || ''}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -412,9 +412,9 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                             />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Subject</label>
+                            <label className="text-[11px] font-medium text-gray-500 dark:text-slate-400 ml-1">Subject</label>
                             <input
-                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                              className="text-sm p-2.5 border border-gray-200 dark:border-slate-700 rounded-lg w-full bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-800 dark:text-slate-200"
                               value={action.args.subject || ''}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -427,9 +427,9 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                             />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Message</label>
+                            <label className="text-[11px] font-medium text-gray-500 dark:text-slate-400 ml-1">Message</label>
                             <textarea
-                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[120px] resize-y"
+                              className="text-sm p-2.5 border border-gray-200 dark:border-slate-700 rounded-lg w-full bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all min-h-[120px] resize-y text-gray-800 dark:text-slate-200"
                               value={action.args.body || ''}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -447,12 +447,12 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
 
                     if (action.tool === 'createCalendarEvent') {
                       return (
-                        <div key={idx} className="border border-outline-variant/60 p-4 rounded-xl flex flex-col gap-3 bg-surface w-full shadow-sm">
-                          <div className="text-[11px] font-bold text-primary uppercase tracking-wider">Create Calendar Event</div>
+                        <div key={idx} className="border border-gray-200 dark:border-slate-700 p-4 rounded-xl flex flex-col gap-3 bg-gray-50 dark:bg-slate-900 w-full shadow-sm">
+                          <div className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Create Calendar Event</div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Title</label>
+                            <label className="text-[11px] font-medium text-gray-500 dark:text-slate-400 ml-1">Title</label>
                             <input
-                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                              className="text-sm p-2.5 border border-gray-200 dark:border-slate-700 rounded-lg w-full bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-800 dark:text-slate-200"
                               value={action.args.summary || ''}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -465,9 +465,9 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                             />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Time</label>
+                            <label className="text-[11px] font-medium text-gray-500 dark:text-slate-400 ml-1">Time</label>
                             <input
-                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                              className="text-sm p-2.5 border border-gray-200 dark:border-slate-700 rounded-lg w-full bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-800 dark:text-slate-200"
                               value={action.args.time || ''}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -480,9 +480,9 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                             />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-on-surface-variant ml-1">Description</label>
+                            <label className="text-[11px] font-medium text-gray-500 dark:text-slate-400 ml-1">Description</label>
                             <textarea
-                              className="text-sm p-2.5 border border-outline-variant/60 rounded-lg w-full bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[60px] resize-y"
+                              className="text-sm p-2.5 border border-gray-200 dark:border-slate-700 rounded-lg w-full bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all min-h-[60px] resize-y text-gray-800 dark:text-slate-200"
                               value={action.args.description || ''}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -500,19 +500,19 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
 
                     if (action.tool === 'deleteCalendarEvent') {
                       return (
-                        <div key={idx} className="border border-red-500/30 p-4 rounded-xl flex flex-col gap-3 bg-red-50/50 w-full shadow-sm">
-                          <div className="text-[11px] font-bold text-red-600 uppercase tracking-wider flex items-center gap-2">
+                        <div key={idx} className="border border-red-500/30 p-4 rounded-xl flex flex-col gap-3 bg-red-50/50 dark:bg-red-900/20 w-full shadow-sm">
+                          <div className="text-[11px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center gap-2">
                             <X className="w-3.5 h-3.5" /> Cancel Calendar Event
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-red-800/70 ml-1">Title</label>
+                            <label className="text-[11px] font-medium text-red-800/70 dark:text-red-300 ml-1">Title</label>
                             <input
-                              className="text-sm p-2.5 border border-red-200/60 rounded-lg w-full bg-white focus:ring-2 focus:ring-red-500/20 outline-none transition-all text-red-900"
+                              className="text-sm p-2.5 border border-red-200/60 dark:border-red-800/60 rounded-lg w-full bg-white dark:bg-slate-800 focus:ring-2 focus:ring-red-500/20 outline-none transition-all text-red-900 dark:text-red-200"
                               value={action.args.summary || 'Unknown Event'}
                               readOnly
                             />
                           </div>
-                          <p className="text-xs text-red-600 font-medium mt-1">
+                          <p className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">
                             This will permanently delete the event from your Google Calendar.
                           </p>
                         </div>
@@ -520,7 +520,7 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                     }
 
                     return (
-                      <div key={idx} className="text-sm p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/60">
+                      <div key={idx} className="text-sm p-3 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-200">
                         {action.draft}
                       </div>
                     );
@@ -534,7 +534,7 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                       setPendingNovaAction(null);
                       void handleAskNova('Yes, proceed.', true, actionsToSubmit);
                     }}
-                    className="px-5 py-2.5 bg-primary hover:bg-primary-container hover:text-on-primary-container text-white rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all"
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 transition-all"
                   >
                     Confirm & Execute
                   </button>
@@ -543,7 +543,7 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                       setPendingNovaAction(null);
                       void handleAskNova('No, cancel that.', false);
                     }}
-                    className="px-5 py-2.5 bg-surface hover:bg-surface-container-highest text-on-surface-variant rounded-xl text-sm font-bold border border-outline-variant transition-all"
+                    className="px-5 py-2.5 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-bold border border-gray-200 dark:border-slate-600 transition-all"
                   >
                     Cancel
                   </button>
@@ -556,52 +556,52 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
           {summaryResult && (
             <div className="flex flex-col items-start message-fade-in mt-6">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-primary-container text-white rounded-full flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 fill-white" />
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 fill-current" />
                 </div>
-                <span className="font-bold text-primary">Novus Summary</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">Novus Summary</span>
               </div>
-              <div className="bg-surface-container-lowest p-4 md:p-5 rounded-2xl rounded-tl-none border border-outline-variant shadow-sm text-on-surface flex flex-col gap-4 max-w-[80%]">
+              <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl rounded-tl-none border border-gray-100 dark:border-slate-700 shadow-sm text-gray-800 dark:text-slate-200 flex flex-col gap-4 max-w-[80%]">
                 {summaryResult.updates.length > 0 && (
                   <div className="flex flex-col gap-1.5">
-                    <div className="font-bold text-[12px] uppercase text-on-surface-variant tracking-wider">Inbox Updates</div>
+                    <div className="font-bold text-[12px] uppercase text-gray-500 dark:text-slate-400 tracking-wider">Inbox Updates</div>
                     {summaryResult.updates.map((update: string, i: number) => (
                       <div key={i} className="flex gap-2">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="text-sm leading-relaxed">{update}</span>
+                        <span className="text-blue-500 dark:text-blue-400 mt-1">•</span>
+                        <span className="text-sm leading-relaxed text-gray-700 dark:text-slate-300">{update}</span>
                       </div>
                     ))}
                   </div>
                 )}
                 {summaryResult.meetings.length > 0 && (
                   <div className="flex flex-col gap-1.5 mt-2">
-                    <div className="font-bold text-[12px] uppercase text-on-surface-variant tracking-wider">Upcoming Meetings</div>
+                    <div className="font-bold text-[12px] uppercase text-gray-500 dark:text-slate-400 tracking-wider">Upcoming Meetings</div>
                     {summaryResult.meetings.map((meeting: string, i: number) => (
                       <div key={i} className="flex gap-2">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="text-sm leading-relaxed">{meeting}</span>
+                        <span className="text-blue-500 dark:text-blue-400 mt-1">•</span>
+                        <span className="text-sm leading-relaxed text-gray-700 dark:text-slate-300">{meeting}</span>
                       </div>
                     ))}
                   </div>
                 )}
                 {summaryResult.deadlines.length > 0 && (
                   <div className="flex flex-col gap-1.5 mt-2">
-                    <div className="font-bold text-[12px] uppercase text-on-surface-variant tracking-wider">Critical Deadlines</div>
+                    <div className="font-bold text-[12px] uppercase text-gray-500 dark:text-slate-400 tracking-wider">Critical Deadlines</div>
                     {summaryResult.deadlines.map((deadline: string, i: number) => (
                       <div key={i} className="flex gap-2">
-                        <span className="text-primary mt-1">•</span>
-                        <span className="text-sm leading-relaxed">{deadline}</span>
+                        <span className="text-blue-500 dark:text-blue-400 mt-1">•</span>
+                        <span className="text-sm leading-relaxed text-gray-700 dark:text-slate-300">{deadline}</span>
                       </div>
                     ))}
                   </div>
                 )}
                 {summaryResult.tasks.length > 0 && (
                   <div className="flex flex-col gap-2 mt-2">
-                    <div className="font-bold text-[12px] uppercase text-on-surface-variant tracking-wider">Extracted Tasks</div>
+                    <div className="font-bold text-[12px] uppercase text-gray-500 dark:text-slate-400 tracking-wider">Extracted Tasks</div>
                     {summaryResult.tasks.map((task: string, i: number) => (
-                      <div key={i} className="flex gap-3 items-start p-2.5 rounded-lg border border-outline-variant/50 bg-surface">
-                        <span className="text-outline-variant text-lg leading-none pt-0.5">☐</span>
-                        <span className="text-sm font-medium">{task}</span>
+                      <div key={i} className="flex gap-3 items-start p-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
+                        <span className="text-gray-400 dark:text-slate-500 text-lg leading-none pt-0.5">☐</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{task}</span>
                       </div>
                     ))}
                   </div>
@@ -613,14 +613,14 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
           {/* ── Loading indicator with live status text (Problem 5 fix) ──── */}
           {(summarizeEmailsMutation.isPending || generateDraftMutation.isPending || isNovaPending) && (
             <div className="flex flex-col items-start message-fade-in mt-6">
-              <div className="flex items-center gap-3 rounded-2xl rounded-tl-none border border-outline-variant bg-surface p-4 px-5 shadow-sm min-h-[52px]">
+              <div className="flex items-center gap-3 rounded-2xl rounded-tl-none border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 px-5 shadow-sm min-h-[52px]">
                 <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
                 {novaStatus && (
-                  <span className="text-xs text-on-surface-variant animate-pulse ml-1">{novaStatus}</span>
+                  <span className="text-xs text-gray-500 dark:text-slate-400 animate-pulse ml-1">{novaStatus}</span>
                 )}
               </div>
             </div>
@@ -637,12 +637,12 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
               {attachments.map((file, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2 bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-full px-3 py-1.5 text-sm font-medium text-gray-700"
+                  className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm rounded-xl px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-slate-200"
                 >
                   <span className="truncate max-w-[150px]">{file.name}</span>
                   <button
                     onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -652,7 +652,7 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
           )}
 
           <div
-            className={`bg-surface-container-highest/60 backdrop-blur-xl border border-outline-variant rounded-2xl shadow-2xl p-2 transition-all focus-within:ring-2 focus-within:ring-primary/20 ${!hasActivity ? 'input-glow-expand' : ''}`}
+            className={`bg-white/90 dark:bg-slate-900/60 backdrop-blur-2xl border border-white dark:border-slate-800/60 shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] rounded-3xl p-2 transition-all duration-300 focus-within:shadow-2xl focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 ${!hasActivity ? 'input-glow-expand' : ''}`}
           >
             <div className="flex items-end gap-2 p-2">
               <textarea
@@ -667,14 +667,14 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                     handleSend();
                   }
                 }}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-sm md:text-base resize-none max-h-48 py-2 px-2 outline-none placeholder:text-on-surface-variant/40 disabled:opacity-50"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-sm md:text-base resize-none max-h-48 py-2 px-2 outline-none placeholder:text-gray-400 dark:placeholder-slate-500 text-gray-800 dark:text-white disabled:opacity-50"
                 placeholder="Ask Novus..."
                 rows={1}
               />
               <div className="flex items-center gap-1 h-full pb-1">
                 <button
                   onClick={() => setShowUploadModal(true)}
-                  className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50"
+                  className="bg-[#3C69A0] text-white p-2.5 rounded-2xl flex items-center justify-center shadow-md hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
                   disabled={generateDraftMutation.isPending || isNovaPending}
                 >
                   <Paperclip className="w-5 h-5 cursor-pointer" />
@@ -686,7 +686,7 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                     isNovaPending ||
                     (!inputValue.trim() && attachments.length === 0)
                   }
-                  className="p-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-container transition-all active:scale-95 group disabled:opacity-50"
+                  className="bg-[#3C69A0] text-white p-2.5 rounded-2xl flex items-center justify-center shadow-md hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 group"
                 >
                   {generateDraftMutation.isPending || isNovaPending ? (
                     <Loader2 className="w-5 h-5 animate-spin" />

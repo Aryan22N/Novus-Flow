@@ -245,7 +245,10 @@ export const aiRouter = createTRPCRouter({
     }),
 
   summarizeRecentEmails: protectedProcedure
-    .input(z.object({ onlyImportant: z.boolean().optional() }).optional())
+    .input(z.object({ 
+      onlyImportant: z.boolean().optional(),
+      scope: z.enum(["today", "unread"]).optional()
+    }).optional())
     .mutation(async ({ ctx, input }) => {
     const tenantId = ctx.session.user.id;
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -266,7 +269,9 @@ export const aiRouter = createTRPCRouter({
       .filter(({ entity: message }) => {
         const data = message.data as any;
         if (!data?.payload) return false;
-        if (!data.labelIds?.includes("UNREAD")) return false;
+        
+        const scope = input?.scope ?? "unread";
+        if (scope === "unread" && !data.labelIds?.includes("UNREAD")) return false;
 
         if (input?.onlyImportant) {
           if (data.labelIds?.includes("CATEGORY_PROMOTIONS")) return false;
@@ -297,8 +302,9 @@ export const aiRouter = createTRPCRouter({
       });
 
     if (recentUnreadEmails.length === 0) {
+      const scopeText = input?.scope === "today" ? "from today" : "unread";
       return {
-        updates: ["No recent unread emails from the last 24 hours."],
+        updates: [`No recent ${scopeText} emails found matching your criteria.`],
         tasks: [],
         meetings: [],
         deadlines: [],

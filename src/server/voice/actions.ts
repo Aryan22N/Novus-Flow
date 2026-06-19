@@ -49,7 +49,8 @@ export async function executeTool(
 
     if (toolName === "summarizeInbox") {
       const onlyImportant = (args.onlyImportant as boolean) ?? false;
-      const result = await caller.ai.summarizeRecentEmails({ onlyImportant });
+      const scope = (args.scope as "today" | "unread") ?? "unread";
+      const result = await caller.ai.summarizeRecentEmails({ onlyImportant, scope });
       return { data: result };
     }
 
@@ -86,11 +87,22 @@ export async function executeTool(
     }
 
     if (toolName === "getCalendarEvents") {
-      const result = await caller.calendar.getEvents({});
       const now    = new Date();
       const when   = (args.when as string) ?? "today";
 
-      const filtered = result.events.filter((e) => {
+      let endDate = new Date(now);
+      if (when === "today") endDate = now;
+      else if (when === "tomorrow") endDate.setDate(endDate.getDate() + 1);
+      else endDate.setDate(endDate.getDate() + 7);
+
+      let allEvents = (await caller.calendar.getEvents({ year: now.getFullYear(), month: now.getMonth() + 1 })).events;
+
+      if (endDate.getMonth() !== now.getMonth()) {
+        const nextMonthEvents = (await caller.calendar.getEvents({ year: endDate.getFullYear(), month: endDate.getMonth() + 1 })).events;
+        allEvents = [...allEvents, ...nextMonthEvents];
+      }
+
+      const filtered = allEvents.filter((e) => {
         const start = new Date(e.start || Date.now());
         if (when === "today")    return start.toDateString() === now.toDateString();
         if (when === "tomorrow") {
@@ -98,12 +110,17 @@ export async function executeTool(
           tom.setDate(tom.getDate() + 1);
           return start.toDateString() === tom.toDateString();
         }
-        const weekEnd = new Date(now);
-        weekEnd.setDate(weekEnd.getDate() + 7);
-        return start >= now && start <= weekEnd;
+        return start >= now && start <= endDate;
       });
 
-      return { data: { events: filtered.slice(0, 8) } };
+      const seen = new Set<string>();
+      const finalFiltered = filtered.filter(e => {
+        if (!e.id || seen.has(e.id)) return false;
+        seen.add(e.id);
+        return true;
+      });
+
+      return { data: { events: finalFiltered.slice(0, 8) } };
     }
 
     // ── CONFIRMATION GATE ─────────────────────────────────────────────────────
